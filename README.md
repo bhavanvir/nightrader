@@ -13,9 +13,8 @@ The remainder of this document serves as template for you and your team acting a
 ---
 
 ## Document History
-|  |  |  |  |
-| ---- | ---- | ---- | ---- |
 | Version | When | Who | What |
+| ---- | ---- | ---- | ---- |
 | 1.0 | 2024-01-16 | *Team Name | Initial Drafting |
 |  |  |  |  |
 
