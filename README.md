@@ -1,5 +1,3 @@
-**
-
 # Request for Proposal (RFP) Instructions
 
 ## RFP Overview
@@ -144,7 +142,5 @@ Jacob Arychuk
 
 Project jargon, or jargon from client organization should be included here so that this document is readable by those external to the project.
 
-  
-**
 
 ![](https://lh7-us.googleusercontent.com/OGJbJquyDJIKNmUUdx9tTtht9OCVCmQ7o_tsBikc0ox3fxZp-PfzcIol4WmMWC5qxnr91GS0DYX10rElWOAfll1vpIJ566cPwaquQdIXjJY_z-syVNr6dmQrsZveAbomzDdEoGED9ij_t5UiKySlpFI)
