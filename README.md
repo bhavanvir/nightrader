@@ -9,10 +9,7 @@ $ https://github.com/bhavanvir/day-trader.git
 ### Local setup using Docker
 - First, install [docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/install/).
 ```bash
-$ cd Microservice1
-```
-```bash
-$ docker compose up
+$ docker compose up --build
 ```
 
 - In a new terminal
@@ -30,4 +27,10 @@ $ npm start
 
 ```bash
 $ docker compose down
+```
+
+## API
+To use createStock post request
+```
+$ curl -X POST -H "Content-Type: application/json" -d '{"stock_name": "ExampleStock"}' http://localhost:8080/createStock
 ```
