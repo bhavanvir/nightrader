@@ -27,3 +27,17 @@ services:
       context: ./Client/app
     ports:
       - "80:3000"
+
+  database:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: db123
+      POSTGRES_USER: nt_user
+      POSTGRES_DB: nt_db
+
+  adminer:
+      image: adminer
+      restart: always
+      ports:
+        - "8181:8181"
