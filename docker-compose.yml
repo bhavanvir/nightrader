@@ -35,6 +35,10 @@ services:
       POSTGRES_PASSWORD: db123
       POSTGRES_USER: nt_user
       POSTGRES_DB: nt_db
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
 
   adminer:
       image: adminer
