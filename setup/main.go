@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	_ "github.com/lib/pq"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -95,8 +96,7 @@ func saveStocksToFile(stocks []Stock) error {
 
 func main() {
 	// Define formatted string for database connection
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+	postgresqlDbInfo := fmt.Sprintf("host=day-trader-database-1 port=%d user=%s password=%s dbname=%s sslmode=disable", port, user, password, dbname)
 
 	// Attempt to connect to database
 	db, err := sql.Open("postgres", postgresqlDbInfo)
