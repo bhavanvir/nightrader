@@ -29,6 +29,7 @@ services:
       - "80:3000"
 
   database:
+    container_name: database
     image: postgres:16-bullseye
     restart: always
     environment:
@@ -41,7 +42,8 @@ services:
       - ./postgres/data:/var/lib/postgresql/data
 
   adminer:
-      image: adminer
-      restart: always
-      ports:
-        - "8181:8181"
+    container_name: adminer
+    image: adminer
+    restart: always
+    ports:
+      - "8181:8181"

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	_ "github.com/lib/pq"
 
+	_ "github.com/lib/pq"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -20,7 +20,7 @@ type Stock struct {
 }
 
 const (
-	host     = "localhost"
+	host     = "database"
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -63,9 +63,9 @@ func createStock(c *gin.Context) {
 
 	stocks = append(stocks, newStock)
 
-	// Save stocks to JSON file
-	if err := saveStocksToFile(stocks); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save stocks to file"})
+	// Save stocks to database
+	if err := saveStockToDatabase(newStock); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save stock to database"})
 		return
 	}
 
@@ -77,16 +77,29 @@ func createStock(c *gin.Context) {
 	})
 }
 
-// TODO: Instead of saving to a JSON file we need to save to a database
-func saveStocksToFile(stocks []Stock) error {
-	// Convert stocks slice to JSON
-	jsonData, err := json.Marshal(stocks)
+func saveStockToDatabase(stock Stock) error {
+	// Define formatted string for database connection
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+
+	// Attempt to connect to database
+	db, err := sql.Open("postgres", postgresqlDbInfo)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	// Create the stocks table if it doesn't exist
+	_, err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS stocks (
+			id UUID PRIMARY KEY,
+			stock_name VARCHAR(255) NOT NULL
+		)`)
 	if err != nil {
 		return err
 	}
 
-	// Write JSON data to file
-	err = ioutil.WriteFile(jsonFilePath, jsonData, 0644)
+	// Insert stock into the stocks table
+	_, err = db.Exec("INSERT INTO stocks (id, stock_name) VALUES ($1, $2)", stock.ID, stock.StockName)
 	if err != nil {
 		return err
 	}
@@ -96,7 +109,7 @@ func saveStocksToFile(stocks []Stock) error {
 
 func main() {
 	// Define formatted string for database connection
-	postgresqlDbInfo := fmt.Sprintf("host=day-trader-database-1 port=%d user=%s password=%s dbname=%s sslmode=disable", port, user, password, dbname)
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
 	// Attempt to connect to database
 	db, err := sql.Open("postgres", postgresqlDbInfo)
