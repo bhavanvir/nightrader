@@ -1,5 +1,6 @@
 package main
 import (
+  "fmt"
   "time"
   "github.com/dgrijalva/jwt-go"
   "net/http"
@@ -44,63 +45,65 @@ var userToPassword = map[string]string{
 }
 
 func postLogin(c *gin.Context) {
-  var login Login
+	var login Login
 
-  // verify request body
-  if err := c.BindJSON(&login); err != nil {
-    errorResponse := Error{
-      Success: false,
-      Data:    nil,
-      Message: err.Error(),
-    }
-    c.IndentedJSON(http.StatusBadRequest, errorResponse) 
-    return
-  }
+	// Verify request body
+	if err := c.BindJSON(&login); err != nil {
+		handleError(c, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
 
-  expectedPassword, ok := userToPassword[login.UserName]
+	// Verify username and password
+	expectedPassword, ok := userToPassword[login.UserName]
+	if !ok || expectedPassword != login.Password {
+		handleError(c, http.StatusBadRequest, "Unsuccessful Authentication", nil)
+		return
+	}
 
-  // verify username and password
-  if !ok || expectedPassword != login.Password {
-    errorResponse := Error{
-      Success: false,
-      Data:    nil,
-      Message: "Insuccessful Authentication",
-    }
-    c.IndentedJSON(http.StatusBadRequest, errorResponse) 
-    return
-  }
+	// Create token
+	expirationTime := time.Now().Add(10 * time.Minute)
+	token, err := createToken(login.UserName, expirationTime)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to create token", err)
+		return
+	}
 
-  // create token
-  expirationTime := time.Now().Add(10 * time.Minute)
-  claims := &Claims{
-    UserName: login.UserName,
-    StandardClaims: jwt.StandardClaims{
-      ExpiresAt: expirationTime.Unix(),
-    },
-  }
-  token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-  tokenString, err := token.SignedString(secretKey)
+	// Create a cookie session
+	createSession(c, token, expirationTime)
 
-  if err != nil {
-    errorResponse := Error{
-      Success: false,
-      Data:    nil,
-      Message: "Fail to create token",
-    }
-    c.IndentedJSON(http.StatusInternalServerError, errorResponse)
-    return
-  }
-    
-  loginResponse := Response{
-    Success: true,
-    Data:    &tokenString,
-  }
+	// Respond
+	loginResponse := Response{
+		Success: true,
+		Data:    &token,
+	}
 
-  // Create a cookie session
-	c.SetCookie("session_token", tokenString, int(expirationTime.Unix()), "/", "", false, true)
-
-  c.IndentedJSON(http.StatusOK, loginResponse) 
+	c.IndentedJSON(http.StatusOK, loginResponse)
 }
+
+func handleError(c *gin.Context, statusCode int, message string, err error) {
+	errorResponse := Error{
+		Success: false,
+		Data:    nil,
+		Message: fmt.Sprintf("%s: %v", message, err),
+	}
+	c.IndentedJSON(statusCode, errorResponse)
+}
+
+func createToken(username string, expirationTime time.Time) (string, error) {
+	claims := &Claims{
+		UserName: username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(secretKey)
+}
+
+func createSession(c *gin.Context, token string, expirationTime time.Time) {
+	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "", false, true)
+}
+
 
 func postRegister(c *gin.Context) {
 
