@@ -44,6 +44,30 @@ var userToPassword = map[string]string{
   "test3": "test003",
 }
 
+func handleError(c *gin.Context, statusCode int, message string, err error) {
+	errorResponse := Error{
+		Success: false,
+		Data:    nil,
+		Message: fmt.Sprintf("%s: %v", message, err),
+	}
+	c.IndentedJSON(statusCode, errorResponse)
+}
+
+func createToken(username string, expirationTime time.Time) (string, error) {
+	claims := &Claims{
+		UserName: username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(secretKey)
+}
+
+func createSession(c *gin.Context, token string, expirationTime time.Time) {
+	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "", false, true)
+}
+
 func postLogin(c *gin.Context) {
 	var login Login
 
@@ -52,6 +76,8 @@ func postLogin(c *gin.Context) {
 		handleError(c, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
+
+  // TODO: Check if the username already exists in real DB instead of userToPassword map
 
 	// Verify username and password
 	expectedPassword, ok := userToPassword[login.UserName]
@@ -78,30 +104,6 @@ func postLogin(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, loginResponse)
-}
-
-func handleError(c *gin.Context, statusCode int, message string, err error) {
-	errorResponse := Error{
-		Success: false,
-		Data:    nil,
-		Message: fmt.Sprintf("%s: %v", message, err),
-	}
-	c.IndentedJSON(statusCode, errorResponse)
-}
-
-func createToken(username string, expirationTime time.Time) (string, error) {
-	claims := &Claims{
-		UserName: username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(secretKey)
-}
-
-func createSession(c *gin.Context, token string, expirationTime time.Time) {
-	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "", false, true)
 }
 
 
