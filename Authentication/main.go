@@ -112,12 +112,7 @@ func postRegister(c *gin.Context) {
   // yes? return error, otherwise continue
 
   if err := c.BindJSON(&newRegister); err != nil {
-    errorResponse := Error{
-      Success: false,
-      Data:    nil,
-      Message: err.Error(),
-    }
-    c.IndentedJSON(http.StatusBadRequest, errorResponse) 
+    handleError(c, http.StatusBadRequest, "Invalid request body", err)
     return
   }
 
