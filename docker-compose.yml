@@ -37,3 +37,23 @@ services:
       context: ./Client/app
     ports:
       - "80:3000"
+
+  database:
+    container_name: database
+    image: postgres:16-bullseye
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: db123
+      POSTGRES_USER: nt_user
+      POSTGRES_DB: nt_db
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+
+  adminer:
+    container_name: adminer
+    image: adminer
+    restart: always
+    ports:
+      - "8181:8181"
