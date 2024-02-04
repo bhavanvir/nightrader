@@ -4,9 +4,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	_ "github.com/lib/pq"
@@ -28,8 +26,6 @@ const (
 )
 
 var stocks = []Stock{}
-
-const jsonFilePath = "stocks.json"
 
 func generateUUID() (string, error) {
 	uuidBytes := make([]byte, 16)
@@ -108,29 +104,6 @@ func saveStockToDatabase(stock Stock) error {
 }
 
 func main() {
-	// Define formatted string for database connection
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
-	// Attempt to connect to database
-	db, err := sql.Open("postgres", postgresqlDbInfo)
-	if err != nil {
-		panic(err)
-	}
-	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Established a successful connection!")
-
-	// Load existing stocks from JSON file
-	if jsonData, err := ioutil.ReadFile(jsonFilePath); err == nil {
-		err := json.Unmarshal(jsonData, &stocks)
-		if err != nil {
-			panic(err)
-		}
-	}
-
 	router := gin.Default()
 	router.Use(cors.Default())
 
