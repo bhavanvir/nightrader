@@ -21,16 +21,6 @@ services:
       PORT: 8888
       GIN_MODE: release
 
-  authentication:
-    container_name: authentication
-    build:
-      context: ./Authentication
-    ports:
-      - "8888:8888"
-    environment:
-      PORT: 8888
-      GIN_MODE: release
-
   frontend:
     container_name: frontend
     build:
