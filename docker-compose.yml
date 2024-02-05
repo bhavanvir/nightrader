@@ -34,7 +34,7 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: ./Client/app
+      context: ./client/app
     ports:
       - "80:3000"
 
