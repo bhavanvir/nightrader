@@ -6,7 +6,7 @@ import ("fmt"
 	"github.com/dgrijalva/jwt-go"
 	"example/Transactions/middleware")
 
-// TODO: need env to store secret key
+// TODO: need env to store a secret key
 var secretKey = []byte("secret")
 
 type Error struct {
