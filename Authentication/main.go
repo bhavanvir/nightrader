@@ -17,6 +17,7 @@ type Error struct {
 }
 
 
+// user_name is a primary key in the DB used to identify user
 type Register struct {
   UserName string `json:"user_name"`
   Password string `json:"password"`
@@ -69,6 +70,7 @@ func createSession(c *gin.Context, token string, expirationTime time.Time) {
 }
 
 func postLogin(c *gin.Context) {
+	fmt.Println("Authentication: %s", secretKey)
 	var login Login
 
 	// Verify request body
@@ -126,7 +128,7 @@ func postRegister(c *gin.Context) {
 func getCookies(c *gin.Context) {
   cookie, err := c.Cookie("session_token")
   if err != nil {
-    c.String(http.StatusUnauthorized, "Unauthorized")
+	handleError(c, http.StatusBadRequest, "Unauthorized", err)
     return
   }
   c.String(http.StatusOK, "Cookie: " + cookie)
@@ -134,9 +136,9 @@ func getCookies(c *gin.Context) {
 
 func main() {
   router := gin.Default()
-	router.Use(cors.Default())
-	router.POST("/login", postLogin)
+  router.Use(cors.Default())
+  router.POST("/login", postLogin)
   router.POST("/register", postRegister)
   router.GET("/eatCookies", getCookies)
-	router.Run(":8888")
+  router.Run(":8888")
 }

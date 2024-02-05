@@ -1,0 +1,12 @@
+@hostname = http://localhost:5000
+
+post {{hostname}}/addMoneyToWallet
+Content-Type: application/json
+
+{
+    "amount": 100
+}
+
+###
+
+get {{hostname}}/eatCookies
