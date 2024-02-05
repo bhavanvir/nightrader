@@ -8,8 +8,8 @@ const LogoIcon = (props) => {
       xmlns="http://www.w3.org/2000/svg"
       className="h-8 w-8 stroke-current"
     >
-      <g clip-path="url(#clip0_381_1024)">
-        <circle cx="100" cy="100" r="88" stroke-width="24" />
+      <g clipPath="url(#clip0_381_1024)">
+        <circle cx="100" cy="100" r="88" strokeWidth="24" />
         <mask
           id="mask0_381_1024"
           style={{ maskType: "alpha" }}
@@ -22,7 +22,7 @@ const LogoIcon = (props) => {
           <circle cx="100" cy="100" r="100" fill="black" />
         </mask>
         <g mask="url(#mask0_381_1024)">
-          <circle cx="66.1763" cy="58.824" r="74.7647" stroke-width="24" />
+          <circle cx="66.1763" cy="58.824" r="74.7647" strokeWidth="24" />
         </g>
       </g>
       <defs>

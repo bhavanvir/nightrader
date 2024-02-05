@@ -2,18 +2,21 @@ import React, { useState } from "react";
 import LogoIcon from "../../assets/icons/LogoIcon";
 import { Link } from "react-router-dom";
 
-export default function SignInForm() {
+export default function SignUpForm() {
   const [formData, setFormData] = useState({
+    name: "",
     username: "",
     password: "",
   });
 
   const [fieldValidity, setFieldValidity] = useState({
+    name: true,
     username: true,
     password: true,
   });
 
   const [errorMessages, setErrorMessages] = useState({
+    name: "",
     username: "",
     password: "",
   });
@@ -32,10 +35,12 @@ export default function SignInForm() {
   };
 
   const validateFields = () => {
+    const nameRegex = /^[a-zA-Z\s]+$/;
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
 
     const newFieldValidity = {
+      name: nameRegex.test(formData.name.trim()),
       username: usernameRegex.test(formData.username.trim()),
       password: passwordRegex.test(formData.password.trim()),
     };
@@ -43,6 +48,7 @@ export default function SignInForm() {
     setFieldValidity(newFieldValidity);
 
     const newErrorMessages = {
+      name: newFieldValidity.name ? "" : "Please enter a valid name",
       username: newFieldValidity.username
         ? ""
         : "Username must contain only letters, numbers, and underscores",
@@ -79,6 +85,25 @@ export default function SignInForm() {
           </Link>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="name" className="name">
+              <span className="label-text text-base">Name</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="Name"
+              className={`input input-bordered w-full ${
+                fieldValidity.name ? "" : "border-red-500"
+              }`}
+              value={formData.name}
+              onChange={handleInputChange}
+            />
+            {errorMessages.name && (
+              <p className="text-sm text-red-500">{errorMessages.name}</p>
+            )}
+          </div>
           <div>
             <label htmlFor="username" className="username">
               <span className="label-text text-base">Username</span>
@@ -117,12 +142,9 @@ export default function SignInForm() {
               <p className="text-sm text-red-500">{errorMessages.password}</p>
             )}
           </div>
-          <a href="/" className="text-xs hover:underline">
-            Forget Password?
-          </a>
           <div>
             <button type="submit" className="btn btn-block btn-primary">
-              Sign in
+              Sign up
             </button>
           </div>
         </form>

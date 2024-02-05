@@ -19,9 +19,11 @@ export default function Hero() {
               Sign in
             </button>
           </Link>
-          <button className="btn btn-primary btn-outline btn-wide btn-md">
-            Sign up
-          </button>
+          <Link to="/signup">
+            <button className="btn btn-primary btn-outline btn-wide btn-md">
+              Sign up
+            </button>
+          </Link>
         </div>
       </div>
     </div>
