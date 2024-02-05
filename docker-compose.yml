@@ -14,7 +14,7 @@ services:
   authentication:
     container_name: authentication
     build:
-      context: ./Authentication
+      context: ./authentication
     ports:
       - "8888:8888"
     environment:
@@ -24,7 +24,7 @@ services:
   transaction:
     container_name: transaction
     build:
-      context: ./Transaction
+      context: ./transaction
     ports:
       - "5000:5000"
     environment:
@@ -34,7 +34,7 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: ./Client/app
+      context: ./client/app
     ports:
       - "80:3000"
 
