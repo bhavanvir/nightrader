@@ -1,7 +1,6 @@
-@hostname = http://localhost:5000
-
-post {{hostname}}/addMoneyToWallet
+POST http://localhost:5000/addMoneyToWallet
 Content-Type: application/json
+Authorization: Bearer <your_token_here>
 
 {
     "amount": 100
@@ -9,4 +8,5 @@ Content-Type: application/json
 
 ###
 
-get {{hostname}}/eatCookies
+GET http://localhost:5000/eatCookies
+Authorization: Bearer <your_token_here>
