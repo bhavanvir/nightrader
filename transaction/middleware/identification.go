@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -32,25 +32,18 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 }
 
 func Identification(c *gin.Context) {
-	fmt.Println("Identification Middleware: ")
+	fmt.Println("Identification Middleware:")
 
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
-		handleError(c, http.StatusBadRequest, "Authorization header missing", nil)
+	// Retrieve token from the cookie
+	cookie, err := c.Cookie("session_token")
+	if err != nil {
+		handleError(c, http.StatusBadRequest, "Failed to retrieve session token from cookie", err)
 		c.Abort()
 		return
 	}
-
-	parts := strings.Split(authHeader, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		handleError(c, http.StatusBadRequest, "Invalid authorization header format", nil)
-		c.Abort()
-		return
-	}
-	tokenString := parts[1]
 
 	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(cookie, claims, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
 
@@ -67,6 +60,13 @@ func Identification(c *gin.Context) {
 
 	if !token.Valid {
 		handleError(c, http.StatusBadRequest, "Invalid token", err)
+		c.Abort()
+		return
+	}
+
+	// Check token expiry
+	if time.Now().Unix() > claims.ExpiresAt {
+		handleError(c, http.StatusUnauthorized, "Token expired", nil)
 		c.Abort()
 		return
 	}
