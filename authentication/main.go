@@ -1,11 +1,13 @@
 package main
+
 import (
-  "fmt"
-  "time"
-  "github.com/dgrijalva/jwt-go"
-  "net/http"
-  "github.com/gin-contrib/cors"
-  "github.com/gin-gonic/gin")
+	"fmt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
+)
 
 // TODO: need env to store secret key
 var secretKey = []byte("secret")
@@ -16,33 +18,32 @@ type Error struct {
 	Message string  `json:"message"`
 }
 
-
 // user_name is a primary key in the DB used to identify user
 type Register struct {
-  UserName string `json:"user_name"`
-  Password string `json:"password"`
-  Name string `json:"name"`
+	UserName string `json:"user_name"`
+	Password string `json:"password"`
+	Name     string `json:"name"`
 }
 
 type Login struct {
-  UserName string `json:"user_name"`
-  Password string `json:"password"`
+	UserName string `json:"user_name"`
+	Password string `json:"password"`
 }
 
 type Response struct {
-  Success bool `json:"success"`
-  Data    *string `json:"data"`
+	Success bool    `json:"success"`
+	Data    *string `json:"data"`
 }
 
 type Claims struct {
-  UserName string `json:"user_name"`
-  jwt.StandardClaims
+	UserName string `json:"user_name"`
+	jwt.StandardClaims
 }
 
 var userToPassword = map[string]string{
-  "test1": "test001",
-  "test2": "test002",
-  "test3": "test003",
+	"test1": "testpassword001",
+	"test2": "testpassword002",
+	"test3": "testpassword003",
 }
 
 func handleError(c *gin.Context, statusCode int, message string, err error) {
@@ -66,7 +67,10 @@ func createToken(username string, expirationTime time.Time) (string, error) {
 }
 
 func createSession(c *gin.Context, token string, expirationTime time.Time) {
-	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "", false, true)
+	// Set the SameSite attribute to Lax mode for local development
+	c.SetSameSite(http.SameSiteLaxMode)
+	// Set the Secure attribute to false for local development
+	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "http://localhost", false, true)
 }
 
 func postLogin(c *gin.Context) {
@@ -79,7 +83,7 @@ func postLogin(c *gin.Context) {
 		return
 	}
 
-  // TODO: Check if the username already exists in real DB instead of userToPassword map
+	// TODO: Check if the username already exists in real DB instead of userToPassword map
 
 	// Verify username and password
 	expectedPassword, ok := userToPassword[login.UserName]
@@ -108,37 +112,43 @@ func postLogin(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, loginResponse)
 }
 
-
 func postRegister(c *gin.Context) {
 
-  var newRegister Register
-  // TODO: Check if the username already exists in DB
-  // yes? return error, otherwise continue
+	var newRegister Register
+	// TODO: Check if the username already exists in DB
+	// yes? return error, otherwise continue
 
-  if err := c.BindJSON(&newRegister); err != nil {
-    handleError(c, http.StatusBadRequest, "Invalid request body", err)
-    return
-  }
+	if err := c.BindJSON(&newRegister); err != nil {
+		handleError(c, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
 
-  // TODO: Insert new user to DB
-  // TODO: format return response
-  c.IndentedJSON(http.StatusCreated, newRegister)
+	// TODO: Insert new user to DB
+	// TODO: format return response
+	c.IndentedJSON(http.StatusCreated, newRegister)
 }
 
 func getCookies(c *gin.Context) {
-  cookie, err := c.Cookie("session_token")
-  if err != nil {
-	handleError(c, http.StatusBadRequest, "Unauthorized", err)
-    return
-  }
-  c.String(http.StatusOK, "Cookie: " + cookie)
+	cookie, err := c.Cookie("session_token")
+	if err != nil {
+		handleError(c, http.StatusBadRequest, "Unauthorized", err)
+		return
+	}
+	c.String(http.StatusOK, "Cookie: "+cookie)
 }
 
 func main() {
-  router := gin.Default()
-  router.Use(cors.Default())
-  router.POST("/login", postLogin)
-  router.POST("/register", postRegister)
-  router.GET("/eatCookies", getCookies)
-  router.Run(":8888")
+	router := gin.Default()
+
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"} // Adjust this to match your frontend domain
+	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowCredentials = true
+	router.Use(cors.New(config))
+
+	router.POST("/login", postLogin)
+	router.POST("/register", postRegister)
+	router.GET("/eatCookies", getCookies)
+	router.Run(":8888")
 }
