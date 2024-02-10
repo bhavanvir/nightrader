@@ -39,9 +39,9 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 }
 
 func addMoneyToWallet(c *gin.Context) {
-	user_name, _ := c.Get("user_name")
-
-	if user_name == nil {
+	user_name, err := c.Get("user_name")
+	
+	if !err {
 		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
 		return
 	}

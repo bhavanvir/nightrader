@@ -1,4 +1,4 @@
-package middleware
+package identification
 
 import (
 "net/http"
@@ -60,5 +60,14 @@ func Identification(c *gin.Context){
 	fmt.Println(claims.ExpiresAt)
 	fmt.Println(claims.UserName)
 	c.Set("user_name", claims.UserName)
+	c.Next()
+}
+
+func AuthTest(c *gin.Context) {
+	fmt.Println("Test Auth: ")
+}
+
+func AuthMiddlewareTest(c *gin.Context) {
+	fmt.Println("Test Auth Middleware: ")
 	c.Next()
 }

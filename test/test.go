@@ -1,4 +1,4 @@
-package middleware
+package test
 
 import (
 	"fmt"
@@ -7,5 +7,4 @@ import (
 
 func Test(c *gin.Context) {
 	fmt.Println("Test Middleware: ")
-	c.Next()
 }
