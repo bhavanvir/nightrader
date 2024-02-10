@@ -6,7 +6,7 @@ import (
   "net/http"
   "github.com/gin-contrib/cors"
   "github.com/gin-gonic/gin"
-  "github.com/Poomon001/day-trader/tree/poom/test")
+  "github.com/Poomon001/day-trader/tree/main/test")
 
 // TODO: need env to store secret key
 var secretKey = []byte("secret")
