@@ -6,7 +6,7 @@ import (
   "net/http"
   "github.com/gin-contrib/cors"
   "github.com/gin-gonic/gin"
-  "github.com/bhavanvir/day-trader/tree/main/transaction/middleware")
+  "github.com/Poomon001/day-trader/tree/poom/test")
 
 // TODO: need env to store secret key
 var secretKey = []byte("secret")
@@ -132,7 +132,7 @@ func getCookies(c *gin.Context) {
 	handleError(c, http.StatusBadRequest, "Unauthorized", err)
     return
   }
-  fmt.Println(middleware.Test())
+  fmt.Println(test.Test())
   c.String(http.StatusOK, "Cookie: " + cookie)
 }
 
