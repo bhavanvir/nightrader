@@ -2,9 +2,8 @@ package test
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	)
 
-func Test(c *gin.Context) {
+func Test() {
 	fmt.Println("Test Middleware: ")
 }

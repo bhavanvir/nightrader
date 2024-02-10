@@ -63,7 +63,7 @@ func Identification(c *gin.Context){
 	c.Next()
 }
 
-func AuthTest(c *gin.Context) {
+func AuthTest() {
 	fmt.Println("Test Auth: ")
 }
 
