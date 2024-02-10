@@ -1,13 +1,14 @@
 package main
-import ("fmt"
-	"net/http"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/cors"
-	"github.com/dgrijalva/jwt-go"
-	"example/Transactions/middleware")
 
-// TODO: need env to store a secret key
-var secretKey = []byte("secret")
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+
+	"example/Transactions/middleware"
+)
 
 type Error struct {
 	Success bool    `json:"success"`
@@ -15,17 +16,12 @@ type Error struct {
 	Message string  `json:"message"`
 }
 
-type Claims struct {
-	UserName string `json:"user_name"`
-	jwt.StandardClaims
-  }
-
 type AddMoney struct {
 	Amount int `json:"amount"`
 }
 
 type PostResponse struct {
-	Success bool `json:"success"`
+	Success bool    `json:"success"`
 	Data    *string `json:"data"`
 }
 
@@ -53,24 +49,26 @@ func addMoneyToWallet(c *gin.Context) {
 	}
 
 	// TODO: add the money to the user's wallet in database
-	fmt.Println("User: ", user_name)
+	fmt.Println("User: ", userName)
 	c.IndentedJSON(http.StatusOK, addMoney)
 }
 
 func getCookies(c *gin.Context) {
-	cookie, err := c.Cookie("session_token")
-	if err != nil {
-	  handleError(c, http.StatusBadRequest, "Unauthorized", err)
-	  return
+	cookie := c.GetHeader("Authorization")
+
+	if cookie == "" {
+		handleError(c, http.StatusBadRequest, "Authorization token missing", nil)
+		return
 	}
-	c.String(http.StatusOK, "Cookie: " + cookie)
-  }
+
+	c.String(http.StatusOK, "Authorization token: "+cookie)
+}
 
 func main() {
 	router := gin.Default()
-  	router.Use(cors.Default())
-	router.Use(middleware.Identification) // apply this middle where to any routes below
-	router.POST("/addMoneyToWallet", addMoneyToWallet)
-	router.GET("/eatCookies", getCookies)
+	router.Use(cors.Default())
+	fmt.Println(middleware.Identification)
+	router.POST("/addMoneyToWallet", middleware.Identification, addMoneyToWallet)
+	router.GET("/eatCookies", middleware.Identification, getCookies)
 	router.Run(":5000")
 }

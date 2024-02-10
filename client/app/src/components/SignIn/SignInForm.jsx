@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import LogoIcon from "../../assets/icons/LogoIcon";
 import { Link } from "react-router-dom";
 
@@ -62,8 +63,23 @@ export default function SignInForm() {
     const isValid = validateFields();
 
     if (isValid) {
-      console.log("Form Data:", formData);
-      // Add logic to send form data to the database
+      axios
+        .post(
+          "http://localhost:8888/login",
+          {
+            user_name: formData.username,
+            password: formData.password,
+          },
+          {
+            withCredentials: true, // Include this option
+          },
+        )
+        .then(function (response) {
+          console.log(response.data);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
     }
   };
 
