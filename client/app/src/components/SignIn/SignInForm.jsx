@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import axios from "axios";
-import LogoIcon from "../../assets/icons/LogoIcon";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
+import LogoIcon from "../../assets/icons/LogoIcon";
+import AuthApi from "../../AuthApi";
 
 export default function SignInForm() {
+  const Auth = React.useContext(AuthApi);
+
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -71,11 +75,11 @@ export default function SignInForm() {
             password: formData.password,
           },
           {
-            withCredentials: true, // Include this option
-          },
+            withCredentials: true,
+          }
         )
         .then(function (response) {
-          console.log(response.data);
+          Auth.setAuth(true);
         })
         .catch(function (error) {
           console.log(error);
