@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"time"
-)
+  "fmt"
+  "time"
+  "github.com/dgrijalva/jwt-go"
+  "net/http"
+  "github.com/gin-contrib/cors"
+  "github.com/gin-gonic/gin"
+  "day-trader/middleware"
+ )
 
 // TODO: need env to store secret key
 var secretKey = []byte("secret")
@@ -147,6 +148,6 @@ func main() {
 
 	router.POST("/login", postLogin)
 	router.POST("/register", postRegister)
-	router.GET("/eatCookies", getCookies)
+	router.GET("/eatCookies", identification.AuthMiddlewareTest, getCookies)
 	router.Run(":8888")
 }
