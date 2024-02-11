@@ -67,10 +67,8 @@ func createToken(username string, expirationTime time.Time) (string, error) {
 }
 
 func createSession(c *gin.Context, token string, expirationTime time.Time) {
-	// Set the SameSite attribute to Lax mode for local development
 	c.SetSameSite(http.SameSiteLaxMode)
-	// Set the Secure attribute to false for local development
-	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "http://localhost", false, true)
+	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "http://localhost:3000", false, false)
 }
 
 func postLogin(c *gin.Context) {
@@ -141,7 +139,7 @@ func main() {
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"} // Adjust this to match your frontend domain
+	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	config.AllowCredentials = true
