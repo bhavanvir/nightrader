@@ -9,7 +9,8 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 	"time"
-
+	"github.com/Poomon001/day-trading-package/identification"
+	"github.com/Poomon001/day-trading-package/tester"
 	_ "github.com/lib/pq"
 )
 
@@ -219,8 +220,9 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
-
-	router.POST("/login", postLogin)
+	identification.Test()
+	tester.TestUser() // example how to use function from a package 
+	router.POST("/login", identification.TestMiddleware, postLogin) // example how to use middlware from a package
 	router.POST("/register", postRegister)
 	router.GET("/eatCookies", getCookies)
 	router.Run(":8888")
