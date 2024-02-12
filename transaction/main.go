@@ -7,7 +7,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"example/Transactions/middleware"
+	"day-trader/transaction/middleware"
 )
 
 type Error struct {

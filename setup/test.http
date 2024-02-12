@@ -1,0 +1,8 @@
+@hostname = http://localhost:8080
+
+post {{hostname}}/createStock
+Content-Type: application/json
+
+{
+    "stock_name": "AMD"
+}
