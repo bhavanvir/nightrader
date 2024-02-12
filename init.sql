@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
     user_id TEXT PRIMARY KEY,
     user_name TEXT,
+    name TEXT,
     user_pass VARCHAR(100) NOT NULL,
     wallet NUMERIC(12,2) DEFAULT 0
 );
