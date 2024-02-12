@@ -50,7 +50,7 @@ const AllRoutes = ({ user }) => {
         path="/signin"
         element={<ProtectedLogin auth={Auth.auth} element={<SignIn />} />}
       />
-      <Route path="/signup" element={<SignUp />} />
+      <Route path="/signup" auth={Auth.auth} element={<SignUp />} />
       <Route
         path="/dashboard"
         element={
