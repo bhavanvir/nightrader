@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/Poomon001/day-trading-package/identification"
 )
 
 type Stock struct {
@@ -96,7 +97,7 @@ func saveStockToDatabase(stock Stock) error {
 func main() {
 	router := gin.Default()
 	router.Use(cors.Default())
-
+	router.Use(identification.TestMiddleware)
 	router.POST("/createStock", createStock)
 
 	router.Run(":8080")

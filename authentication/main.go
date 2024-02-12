@@ -7,6 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+	"github.com/Poomon001/day-trading-package/identification"
+	"github.com/Poomon001/day-trading-package/user"
 )
 
 // TODO: need env to store secret key
@@ -144,8 +146,9 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
-
-	router.POST("/login", postLogin)
+	identification.Test()
+	user.TestUser() // example how to use function from a package 
+	router.POST("/login", identification.TestMiddleware, postLogin) // example how to use middlware from a package
 	router.POST("/register", postRegister)
 	router.GET("/eatCookies", getCookies)
 	router.Run(":8888")

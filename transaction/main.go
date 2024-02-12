@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-
-	"day-trader/transaction/middleware"
+	"github.com/Poomon001/day-trading-package/identification"
 )
 
 type Error struct {
@@ -67,8 +65,8 @@ func getCookies(c *gin.Context) {
 func main() {
 	router := gin.Default()
 	router.Use(cors.Default())
-	fmt.Println(middleware.Identification)
-	router.POST("/addMoneyToWallet", middleware.Identification, addMoneyToWallet)
-	router.GET("/eatCookies", middleware.Identification, getCookies)
+	identification.Test()
+	router.POST("/addMoneyToWallet", identification.TestMiddleware, addMoneyToWallet)
+	router.GET("/eatCookies", getCookies)
 	router.Run(":5000")
 }
