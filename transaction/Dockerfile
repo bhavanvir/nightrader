@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy local code to the container image.
 COPY . .
 
+# Fetch the required package.
+RUN go get github.com/lib/pq
+
 # Build the command inside the container: to run go code
 RUN go build -v -o app .
 

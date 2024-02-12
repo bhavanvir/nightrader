@@ -1,11 +1,22 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/Poomon001/day-trading-package/identification"
+	_ "github.com/lib/pq"
+)
+
+const (
+	host     = "database"
+	port     = 5432
+	user     = "nt_user"
+	password = "db123"
+	dbname   = "nt_db"
 )
 
 type Error struct {
@@ -46,9 +57,30 @@ func addMoneyToWallet(c *gin.Context) {
 		return
 	}
 
-	// TODO: add the money to the user's wallet in database
-	fmt.Println("User: ", userName)
-	c.IndentedJSON(http.StatusOK, addMoney)
+	// PostgreSQL connection info
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+
+	// Connect to the PostgreSQL database
+	db, err := sql.Open("postgres", postgresqlDbInfo)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	// Execute SQL query to update user's wallet
+	_, err = db.Exec("UPDATE users SET wallet = wallet + $1 WHERE user_name = $2", addMoney.Amount, userName)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to update wallet", err)
+		return
+	}
+
+	// If everything succeeded, return success response
+	response := PostResponse{
+		Success: true,
+		Data:    nil,
+	}
+	c.IndentedJSON(http.StatusOK, response)
 }
 
 func getCookies(c *gin.Context) {
@@ -66,7 +98,7 @@ func main() {
 	router := gin.Default()
 	router.Use(cors.Default())
 	identification.Test()
-	router.POST("/addMoneyToWallet", identification.TestMiddleware, addMoneyToWallet)
+	router.POST("/addMoneyToWallet", identification.Identification, addMoneyToWallet)
 	router.GET("/eatCookies", getCookies)
 	router.Run(":5000")
 }
