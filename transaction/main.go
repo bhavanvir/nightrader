@@ -43,6 +43,18 @@ type WalletData struct {
     Balance float64 `json:"balance"`
 }
 
+type StockPortfolioItem struct {
+    StockID         int    `json:"stock_id"`
+    StockName       string `json:"stock_name"`
+    QuantityOwned   int    `json:"quantity_owned"`
+}
+
+type StockPortfolioResponse struct {
+    Success bool                  `json:"success"`
+    Data    []StockPortfolioItem `json:"data"`
+}
+
+
 // Helper function to establish a database connection
 func openConnection() (*sql.DB, error) {
     postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
@@ -123,6 +135,50 @@ func getWalletBalance(c *gin.Context) {
     c.IndentedJSON(http.StatusOK, response)
 }
 
+func getStockPortfolio(c *gin.Context) {
+    userName, _ := c.Get("user_name")
+
+    if userName == nil {
+        handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+        return
+    }
+
+    db, err := openConnection()
+    if err != nil {
+        handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+        return
+    }
+    defer db.Close()
+
+    rows, err := db.Query(`
+        SELECT s.stock_id, s.stock_name, us.quantity
+        FROM user_stocks us
+        JOIN stocks s ON s.stock_id = us.stock_id
+        WHERE us.user_name = $1`, userName)
+    if err != nil {
+        handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio", err)
+        return
+    }
+    defer rows.Close()
+
+    var portfolio []StockPortfolioItem
+    for rows.Next() {
+        var item StockPortfolioItem
+        if err := rows.Scan(&item.StockID, &item.StockName, &item.QuantityOwned); err != nil {
+            handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
+            return
+        }
+        portfolio = append(portfolio, item)
+    }
+
+    response := StockPortfolioResponse{
+        Success: true,
+        Data:    portfolio,
+    }
+    c.IndentedJSON(http.StatusOK, response)
+}
+
+
 func getCookies(c *gin.Context) {
     cookie := c.GetHeader("Authorization")
 
@@ -140,7 +196,7 @@ func main() {
     identification.Test()
     router.POST("/addMoneyToWallet", identification.Identification, addMoneyToWallet)
     router.GET("/getWalletBalance", identification.Identification, getWalletBalance)
+    router.GET("/getStockPortfolio", identification.Identification, getStockPortfolio) // New endpoint
     router.GET("/eatCookies", getCookies)
     router.Run(":5000")
 }
-
