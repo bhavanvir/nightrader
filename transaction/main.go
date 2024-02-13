@@ -149,7 +149,9 @@ func getStockPortfolio(c *gin.Context) {
         return
     }
     defer db.Close()
-
+    // Retrieves the stock ID, stock name, and quantity owned for all stocks
+    // associated with a particular user. Performs a join operation between the 'user_stocks'
+    // and 'stocks' tables
     rows, err := db.Query(`
         SELECT s.stock_id, s.stock_name, us.quantity
         FROM user_stocks us
@@ -196,7 +198,7 @@ func main() {
     identification.Test()
     router.POST("/addMoneyToWallet", identification.Identification, addMoneyToWallet)
     router.GET("/getWalletBalance", identification.Identification, getWalletBalance)
-    router.GET("/getStockPortfolio", identification.Identification, getStockPortfolio) // New endpoint
+    router.GET("/getStockPortfolio", identification.Identification, getStockPortfolio)
     router.GET("/eatCookies", getCookies)
     router.Run(":5000")
 }
