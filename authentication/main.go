@@ -6,7 +6,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"net/http"
 	"time"
 	"github.com/Poomon001/day-trading-package/identification"
@@ -182,12 +181,9 @@ func postRegister(c *gin.Context) {
 		handleError(c, http.StatusBadRequest, "Username already exists", nil)
 		return
 	}
-
-	// Generate a unique user ID
-	newUUID := uuid.New()
 	
 	// Insert new user to DB
-	_, err = db.Exec("INSERT INTO users (user_id, user_name, name, user_pass) VALUES ($1, $2, $3, $4)", newUUID, newRegister.UserName, newRegister.Name, newRegister.Password)
+	_, err = db.Exec("INSERT INTO users (user_name, name, user_pass) VALUES ($1, $2, $3)", newRegister.UserName, newRegister.Name, newRegister.Password)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to insert new user to the database", err)
 		return
