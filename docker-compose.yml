@@ -31,6 +31,16 @@ services:
       PORT: 5000
       GIN_MODE: release
 
+  engine:
+    container_name: engine
+    build:
+      context: ./engine
+    ports:
+      - "8585:8585"
+    environment:
+      PORT: 8585
+      GIN_MODE: release
+
   frontend:
     container_name: frontend
     build:
