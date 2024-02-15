@@ -30,3 +30,18 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE TRIGGER register
 BEFORE INSERT OR UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION pass_encrypt();
+
+CREATE OR REPLACE FUNCTION login(u_name text, u_pass text) RETURNS boolean AS $$
+    DECLARE
+    is_valid boolean;
+    BEGIN
+    SELECT user_pass = crypt(u_pass, user_pass) INTO STRICT is_valid
+        FROM users WHERE user_name = u_name;
+    RETURN is_valid;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE EXCEPTION 'user % not found', u_name;
+        WHEN TOO_MANY_ROWS THEN
+            RAISE EXCEPTION 'user % not unique', u_name;
+    END
+$$ LANGUAGE plpgsql;

@@ -99,37 +99,57 @@ func postLogin(c *gin.Context) {
 
     fmt.Println("Successfully connected to the database")
 
-	// Check if the username exists in DB
-	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", login.UserName).Scan(&count)
+	// Login the user 
+	var is_valid bool
+	err = db.QueryRow("SELECT login($1, $2)", login.UserName, login.Password).Scan(&is_valid)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
 		return
 	}
-	if count == 0 {
-		handleError(c, http.StatusBadRequest, "Username does not exist", nil)
+	if !is_valid {
+		handleError(c, http.StatusBadRequest, "Password is incorrect", nil)
 		return
 	}
 
-	// Check password for the username
-	var correctPassword bool
-	err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
-		return
-	}
-	if !correctPassword {
-		handleError(c, http.StatusBadRequest, "Incorrect password", nil)
-		return
-	}
+	// NOTE February 14 2024
+	//
+	// Made a function in database that handles login, blocks below commented out for now
+	//
+	// If this creates a problem, simply uncomment the blocks below and comment out the login
+	// block above and it should work again
 
-	// Get the user's name
-	var name string
-	err = db.QueryRow("SELECT name FROM users WHERE user_name = $1", login.UserName).Scan(&name)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
-		return
-	}
+
+	// // Check if the username exists in DB
+	// var count int
+	// err = db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", login.UserName).Scan(&count)
+	// if err != nil {
+	// 	handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
+	// 	return
+	// }
+	// if count == 0 {
+	// 	handleError(c, http.StatusBadRequest, "Username does not exist", nil)
+	// 	return
+	// }
+
+	// // Check password for the username
+	// var correctPassword bool
+	// err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
+	// if err != nil {
+	// 	handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
+	// 	return
+	// }
+	// if !correctPassword {
+	// 	handleError(c, http.StatusBadRequest, "Incorrect password", nil)
+	// 	return
+	// }
+
+	// // Get the user's name
+	// var name string
+	// err = db.QueryRow("SELECT name FROM users WHERE user_name = $1", login.UserName).Scan(&name)
+	// if err != nil {
+	// 	handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
+	// 	return
+	// }
 
 	// Create token
 	expirationTime := time.Now().Add(10 * time.Minute)
