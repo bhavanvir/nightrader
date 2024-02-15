@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
-    user_id TEXT PRIMARY KEY,
-    user_name TEXT,
+    user_name TEXT PRIMARY KEY,
+    name TEXT,
     user_pass VARCHAR(100) NOT NULL,
     wallet NUMERIC(12,2) DEFAULT 0
 );
@@ -9,6 +9,13 @@ CREATE TABLE IF NOT EXISTS stocks (
     stock_id SERIAL UNIQUE PRIMARY KEY,
     stock_name TEXT,
     current_price NUMERIC(12,2) DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS user_stocks (
+    user_name TEXT REFERENCES users(user_name),
+    stock_id INTEGER REFERENCES stocks(stock_id),
+    quantity INTEGER,
+    PRIMARY KEY (user_name, stock_id)
 );
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

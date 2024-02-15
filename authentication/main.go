@@ -2,15 +2,27 @@ package main
 
 import (
 	"fmt"
+	"database/sql"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+	"github.com/Poomon001/day-trading-package/identification"
+	"github.com/Poomon001/day-trading-package/tester"
+	_ "github.com/lib/pq"
 )
 
 // TODO: need env to store secret key
 var secretKey = []byte("secret")
+
+const (
+	host     = "database"
+	port     = 5432
+	user     = "nt_user"
+	password = "db123"
+	dbname   = "nt_db"
+)
 
 type Error struct {
 	Success bool    `json:"success"`
@@ -21,8 +33,8 @@ type Error struct {
 // user_name is a primary key in the DB used to identify user
 type Register struct {
 	UserName string `json:"user_name"`
-	Password string `json:"password"`
 	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type Login struct {
@@ -36,14 +48,9 @@ type Response struct {
 }
 
 type Claims struct {
+	Name     string `json:"name"`
 	UserName string `json:"user_name"`
 	jwt.StandardClaims
-}
-
-var userToPassword = map[string]string{
-	"test1": "testpassword001",
-	"test2": "testpassword002",
-	"test3": "testpassword003",
 }
 
 func handleError(c *gin.Context, statusCode int, message string, err error) {
@@ -55,8 +62,9 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 	c.IndentedJSON(statusCode, errorResponse)
 }
 
-func createToken(username string, expirationTime time.Time) (string, error) {
+func createToken(name string, username string, expirationTime time.Time) (string, error) {
 	claims := &Claims{
+		Name: name,
 		UserName: username,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
@@ -72,7 +80,6 @@ func createSession(c *gin.Context, token string, expirationTime time.Time) {
 }
 
 func postLogin(c *gin.Context) {
-	fmt.Println("Authentication: %s", secretKey)
 	var login Login
 
 	// Verify request body
@@ -81,18 +88,52 @@ func postLogin(c *gin.Context) {
 		return
 	}
 
-	// TODO: Check if the username already exists in real DB instead of userToPassword map
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
-	// Verify username and password
-	expectedPassword, ok := userToPassword[login.UserName]
-	if !ok || expectedPassword != login.Password {
-		handleError(c, http.StatusBadRequest, "Unsuccessful Authentication", nil)
+	db, err := sql.Open("postgres", postgresqlDbInfo)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+    fmt.Println("Successfully connected to the database")
+
+	// Check if the username exists in DB
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", login.UserName).Scan(&count)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
+		return
+	}
+	if count == 0 {
+		handleError(c, http.StatusBadRequest, "Username does not exist", nil)
+		return
+	}
+
+	// Check password for the username
+	var correctPassword bool
+	err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
+		return
+	}
+	if !correctPassword {
+		handleError(c, http.StatusBadRequest, "Incorrect password", nil)
+		return
+	}
+
+	// Get the user's name
+	var name string
+	err = db.QueryRow("SELECT name FROM users WHERE user_name = $1", login.UserName).Scan(&name)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
 		return
 	}
 
 	// Create token
 	expirationTime := time.Now().Add(10 * time.Minute)
-	token, err := createToken(login.UserName, expirationTime)
+	token, err := createToken(name, login.UserName, expirationTime)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to create token", err)
 		return
@@ -111,19 +152,50 @@ func postLogin(c *gin.Context) {
 }
 
 func postRegister(c *gin.Context) {
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+
+	db, err := sql.Open("postgres", postgresqlDbInfo)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+    fmt.Println("Successfully connected to the database")
 
 	var newRegister Register
-	// TODO: Check if the username already exists in DB
-	// yes? return error, otherwise continue
 
 	if err := c.BindJSON(&newRegister); err != nil {
 		handleError(c, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
-	// TODO: Insert new user to DB
-	// TODO: format return response
-	c.IndentedJSON(http.StatusCreated, newRegister)
+	// Check if the username already exists in DB
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", newRegister.UserName).Scan(&count)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
+		return
+	}
+	if count > 0 {
+		handleError(c, http.StatusBadRequest, "Username already exists", nil)
+		return
+	}
+	
+	// Insert new user to DB
+	_, err = db.Exec("INSERT INTO users (user_name, name, user_pass) VALUES ($1, $2, $3)", newRegister.UserName, newRegister.Name, newRegister.Password)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to insert new user to the database", err)
+		return
+	}
+
+	// Format JSON response
+	successResponse := Response{
+		Success: true,
+		Data:	nil,
+	}
+
+	c.IndentedJSON(http.StatusCreated, successResponse)
 }
 
 func getCookies(c *gin.Context) {
@@ -144,8 +216,9 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
-
-	router.POST("/login", postLogin)
+	identification.Test()
+	tester.TestUser() // example how to use function from a package 
+	router.POST("/login", identification.TestMiddleware, postLogin) // example how to use middlware from a package
 	router.POST("/register", postRegister)
 	router.GET("/eatCookies", getCookies)
 	router.Run(":8888")
