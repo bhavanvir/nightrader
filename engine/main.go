@@ -12,7 +12,7 @@ import (
 
 const (
 	host     = "database"
-	port     =   5432
+	port     = 5432
 	user     = "nt_user"
 	password = "db123"
 	dbname   = "nt_db"
@@ -21,6 +21,7 @@ const (
 // Define the structure of the request body for placing a stock order
 type PlaceStockOrderRequest struct {
 	StockID    int     `json:"stock_id" binding:"required"`
+	//IsBuy needs to be a pointer according to https://github.com/gin-gonic/gin/issues/814
 	IsBuy      *bool    `json:"is_buy" binding:"required"`
 	OrderType  string  `json:"order_type" binding:"required"`
 	Quantity   int     `json:"quantity" binding:"required"`
