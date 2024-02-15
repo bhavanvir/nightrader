@@ -194,7 +194,14 @@ func getCookies(c *gin.Context) {
 
 func main() {
     router := gin.Default()
-    router.Use(cors.Default())
+    
+    config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowCredentials = true
+	router.Use(cors.New(config))
+
     identification.Test()
     router.POST("/addMoneyToWallet", identification.Identification, addMoneyToWallet)
     router.GET("/getWalletBalance", identification.Identification, getWalletBalance)
