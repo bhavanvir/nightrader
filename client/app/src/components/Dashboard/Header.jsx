@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
 import LogoIcon from "../../assets/icons/LogoIcon";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import AuthApi from "../../AuthApi";
 
-export default function Header({ user }) {
+export default function Header({ user, showAlert }) {
   // Use the useContext hook inside the functional component
-  const Auth = React.useContext(AuthApi);
+  const Auth = useContext(AuthApi);
 
   // Function to handle logout
   const handleLogout = () => {
