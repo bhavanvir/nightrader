@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 
@@ -6,7 +6,7 @@ import LogoIcon from "../../assets/icons/LogoIcon";
 import AuthApi from "../../AuthApi";
 
 export default function SignInForm() {
-  const Auth = React.useContext(AuthApi);
+  const Auth = useContext(AuthApi);
   const [errorMessage, setErrorMessage] = useState("");
 
   const [formData, setFormData] = useState({
