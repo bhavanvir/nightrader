@@ -74,9 +74,9 @@ func createToken(name string, username string, expirationTime time.Time) (string
 	return token.SignedString(secretKey)
 }
 
-func createSession(c *gin.Context, token string, expirationTime time.Time) {
+func createSession(c *gin.Context, token string, expirationTime time.Duration) {
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("session_token", token, int(expirationTime.Unix()), "/", "http://localhost:3000", false, false)
+	c.SetCookie("session_token", token, int(expirationTime.Seconds()), "/", "http://localhost:3000", false, false)
 }
 
 func postLogin(c *gin.Context) {
@@ -132,7 +132,8 @@ func postLogin(c *gin.Context) {
 	}
 
 	// Create token
-	expirationTime := time.Now().Add(10 * time.Minute)
+	minutes := 10 * time.Minute
+	expirationTime := time.Now().Add(minutes)
 	token, err := createToken(name, login.UserName, expirationTime)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to create token", err)
@@ -140,7 +141,7 @@ func postLogin(c *gin.Context) {
 	}
 
 	// Create a cookie session
-	createSession(c, token, expirationTime)
+	createSession(c, token, minutes)
 
 	// Respond
 	loginResponse := Response{
@@ -216,6 +217,7 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
+	
 	identification.Test()
 	tester.TestUser() // example how to use function from a package 
 	router.POST("/login", identification.TestMiddleware, postLogin) // example how to use middlware from a package

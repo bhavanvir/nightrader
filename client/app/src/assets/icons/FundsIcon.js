@@ -5,7 +5,7 @@ const FundsIcon = (props) => {
     <svg
       color="#22c55e"
       xmlns="http://www.w3.org/2000/svg"
-      class="icon icon-tabler icon-tabler-moneybag"
+      className="icon icon-tabler icon-tabler-moneybag"
       width="24"
       height="24"
       viewBox="0 0 24 24"

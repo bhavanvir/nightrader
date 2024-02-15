@@ -1,53 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 import FundsIcon from "../../assets/icons/FundsIcon";
+import Clock from "./Clock";
 
-export default function Hero({ user }) {
-  const [dateTime, setDateTime] = React.useState("");
+export default function Hero({ user, showAlert }) {
+  const [balance, setBalance] = useState(0);
 
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      let formattedHours = String(hours).padStart(2, "0");
-      let period = "AM";
-      if (formattedHours > 12) {
-        formattedHours = formattedHours - 12;
-        period = "PM";
-      }
-      const formattedMinutes = String(minutes).padStart(2, "0");
-      const days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-      ];
-      const months = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-      const dayOfWeek = days[now.getDay()];
-      const month = months[now.getMonth()];
-      const dayOfMonth = now.getDate();
-      const formattedDateTime = `It is currently ${formattedHours}:${formattedMinutes} ${period} on ${dayOfWeek}, ${month} ${dayOfMonth}`;
-      setDateTime(formattedDateTime);
-    }, 1000);
+  const fetchWalletBalance = async () => {
+    await axios
+      .get("http://localhost:5000/getWalletBalance", {
+        withCredentials: true,
+      })
+      .then(function (response) {
+        setBalance(response.data.data.balance);
+      })
+      .catch(function (error) {
+        showAlert("error", error.response.data.message);
+      });
+  };
 
-    return () => clearInterval(timer);
+  const handleClick = async () => {
+    const funds = document.getElementById("funds-modal-input").value;
+    await axios
+      .post(
+        "http://localhost:5000/addMoneyToWallet",
+        {
+          amount: parseInt(funds),
+        },
+        {
+          withCredentials: true,
+        }
+      )
+      .then(function (response) {
+        showAlert(
+          "success",
+          "Successfully added funds to your wallet! Refresh your page to see the updated balance"
+        );
+      })
+      .catch(function (error) {
+        showAlert("error", error.response.data.message);
+      });
+  };
+
+  useEffect(() => {
+    fetchWalletBalance();
   }, []);
 
   return (
@@ -57,7 +54,7 @@ export default function Hero({ user }) {
           <div className="card-body">
             <h1 className="text-xl font-bold">Welcome back, {user.name}</h1>
             <h2 id="liveDateTime" className="text-lg">
-              {dateTime}
+              <Clock />
             </h2>
           </div>
         </div>
@@ -65,11 +62,47 @@ export default function Hero({ user }) {
           <div className="card bg-base-300 shadow-xl">
             <div className="card-body">
               <h1 className="text-xl font-bold">Account balance</h1>
-              <h2 className="text-lg">$</h2>
-              <button className="btn">
+              <h2 className="text-lg">${balance}</h2>
+              <button
+                className="btn"
+                onClick={() =>
+                  document.getElementById("funds-modal").showModal()
+                }
+              >
                 Add funds
                 <FundsIcon />
               </button>
+
+              <dialog id="funds-modal" className="modal">
+                <div className="modal-box">
+                  <h3 className="font-bold text-lg">
+                    How much would you like to add?
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    <div>
+                      <input
+                        id="funds-modal-input"
+                        type="number"
+                        placeholder="Enter an amount"
+                        className="input input-bordered w-full"
+                        onKeyPress={(event) => {
+                          if (!/[0-9]/.test(event.key)) {
+                            event.preventDefault();
+                          }
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <button className="btn" onClick={handleClick}>
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                  <button>close</button>
+                </form>
+              </dialog>
             </div>
           </div>
         </div>

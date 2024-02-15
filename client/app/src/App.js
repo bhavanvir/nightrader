@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -15,8 +15,8 @@ import Dashboard from "./components/Dashboard/Dashboard";
 import AuthApi from "./AuthApi";
 
 function App() {
-  const [auth, setAuth] = React.useState(false);
-  const [user, setUser] = React.useState({});
+  const [auth, setAuth] = useState(false);
+  const [user, setUser] = useState({});
 
   useEffect(() => {
     const readCookie = () => {
@@ -41,7 +41,7 @@ function App() {
 }
 
 const AllRoutes = ({ user }) => {
-  const Auth = React.useContext(AuthApi);
+  const Auth = useContext(AuthApi);
 
   return (
     <Routes>
