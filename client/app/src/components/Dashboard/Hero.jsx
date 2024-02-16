@@ -9,14 +9,17 @@ export default function Hero({ user, showAlert }) {
 
   const fetchWalletBalance = async () => {
     await axios
-      .get("http://localhost:5000/getWalletBalance", {
+      .get("http://localhost:5433/getWalletBalance", {
         withCredentials: true,
       })
       .then(function (response) {
         setBalance(response.data.data.balance);
       })
       .catch(function (error) {
-        showAlert("error", error.response.data.message);
+        showAlert(
+          "error",
+          "There was an error fetching your wallet balance. Please try again",
+        );
       });
   };
 
@@ -24,28 +27,31 @@ export default function Hero({ user, showAlert }) {
     const funds = document.getElementById("funds-modal-input").value;
     await axios
       .post(
-        "http://localhost:5000/addMoneyToWallet",
+        "http://localhost:5433/addMoneyToWallet",
         {
           amount: parseInt(funds),
         },
         {
           withCredentials: true,
-        }
+        },
       )
       .then(function (response) {
         showAlert(
           "success",
-          "Successfully added funds to your wallet! Refresh your page to see the updated balance"
+          "Successfully added funds to your wallet! Refresh your page to see the updated balance",
         );
       })
       .catch(function (error) {
-        showAlert("error", error.response.data.message);
+        showAlert(
+          "error",
+          "There was an error adding funds to your wallet. Please try again",
+        );
       });
   };
 
   useEffect(() => {
     fetchWalletBalance();
-  }, []);
+  });
 
   return (
     <div className="mt-14 ">
@@ -75,7 +81,7 @@ export default function Hero({ user, showAlert }) {
 
               <dialog id="funds-modal" className="modal">
                 <div className="modal-box">
-                  <h3 className="font-bold text-lg">
+                  <h3 className="text-lg font-bold">
                     How much would you like to add?
                   </h3>
                   <div className="grid grid-cols-2 gap-4 py-4">

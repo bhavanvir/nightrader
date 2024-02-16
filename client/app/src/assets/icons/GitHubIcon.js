@@ -10,7 +10,6 @@ const GitHubIcon = (props) => {
       stroke="currentColor"
       fill="none"
       strokeLinejoin="round"
-      strokeLinejoin="round"
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path

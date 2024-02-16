@@ -7,6 +7,19 @@ const Dashboard = ({ user }) => {
   const [alertType, setAlertType] = useState("");
   const [message, setMessage] = useState("");
 
+  if (!user.user_name) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-xl font-bold">
+            Refresh your page to continue where you're going!
+          </h1>
+          <span className="loading loading-dots loading-lg text-primary" />
+        </div>
+      </div>
+    );
+  }
+
   const showAlertMessage = (type, message) => {
     setAlertType(type);
     setMessage(message);
@@ -24,7 +37,7 @@ const Dashboard = ({ user }) => {
         <div role="alert" className={`alert alert-${alertType}`}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="stroke-current shrink-0 h-6 w-6"
+            className="h-6 w-6 shrink-0 stroke-current"
             fill="none"
             viewBox="0 0 24 24"
           >
