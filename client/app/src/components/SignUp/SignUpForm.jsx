@@ -82,7 +82,7 @@ export default function SignUpForm() {
           },
           {
             withCredentials: true,
-          }
+          },
         )
         .then(function (response) {
           if (response.data.success) {
@@ -102,7 +102,7 @@ export default function SignUpForm() {
         <div role="alert" className="alert alert-success grid">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="stroke-current shrink-0 h-6 w-6"
+            className="h-6 w-6 shrink-0 stroke-current"
             fill="none"
             viewBox="0  0  24  24"
           >
@@ -122,7 +122,7 @@ export default function SignUpForm() {
         <div role="alert" className="alert alert-error">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="stroke-current shrink-0 h-6 w-6"
+            className="h-6 w-6 shrink-0 stroke-current"
             fill="none"
             viewBox="0  0  24  24"
           >
