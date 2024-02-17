@@ -6,7 +6,6 @@ import Clock from "./Clock";
 
 export default function AccountInfo({ user, showAlert }) {
   const [balance, setBalance] = useState(0);
-  const funds = document.getElementById("funds-modal-input");
 
   const fetchWalletBalance = async () => {
     await axios
@@ -19,7 +18,7 @@ export default function AccountInfo({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching your wallet balance. Please try again"
+          "There was an error fetching your wallet balance. Please try again",
         );
       });
   };
@@ -35,7 +34,7 @@ export default function AccountInfo({ user, showAlert }) {
         },
         {
           withCredentials: true,
-        }
+        },
       )
       .then(function (response) {
         showAlert("success", "Successfully added funds to your wallet!");
@@ -44,7 +43,7 @@ export default function AccountInfo({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error adding funds to your wallet. Please try again"
+          "There was an error adding funds to your wallet. Please try again",
         );
       });
   };
@@ -98,7 +97,7 @@ export default function AccountInfo({ user, showAlert }) {
                           } else if (event.key === "-") {
                             // Disable the button if the input is negative
                             document.getElementById(
-                              "funds-modal-input"
+                              "funds-modal-input",
                             ).disabled = true;
                           }
                         }}

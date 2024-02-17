@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 
 const Clock = () => {
-  const [dateTime, setDateTime] = useState("Loading...");
+  const [dateTime, setDateTime] = useState(
+    "Give us a second, we're fetching the time...",
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
