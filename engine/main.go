@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/Poomon001/day-trading-package/identification"
 	_ "github.com/lib/pq"
+	"github.com/google/uuid"
 )
 
 const (
@@ -37,7 +38,7 @@ type PlaceStockOrderResponse struct {
 }
 
 type Order struct {
-	ID         int     `json:"id"`
+	ID         string  `json:"id"`
 	StockID    int     `json:"stock_id"`
 	IsBuy      bool    `json:"is_buy"`
 	OrderType  string  `json:"order_type"`
@@ -87,11 +88,11 @@ func (pq *PriorityQueue) Pop() interface{} {
 }
 
 // generateOrderID generates a unique ID for each order
-func generateOrderID() int {
-	// Implement your logic to generate a unique ID
-	// For simplicity, we'll just return the current timestamp
-	return int(time.Now().UnixNano())
+func generateOrderID() string {
+    id := uuid.New()
+    return id.String()
 }
+
 
 func HandlePlaceStockOrder(c *gin.Context) {
 	userName, exists := c.Get("user_name")
@@ -163,11 +164,11 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		fmt.Printf("Stock ID: %d\n", stockID)
 		fmt.Println("Buy Orders:")
 		for _, order := range book.BuyOrders {
-			fmt.Printf("ID: %d, StockID: %d, Price: %.2f, Quantity: %d, Status: %s\n", order.ID, order.StockID, order.Price, order.Quantity, order.Status)
+			fmt.Printf("ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s\n", order.ID, order.StockID, order.Price, order.Quantity, order.Status)
 		}
 		fmt.Println("Sell Orders:")
 		for _, order := range book.SellOrders {
-			fmt.Printf("ID: %d, StockID: %d, Price: %.2f, Quantity: %d, Status: %s\n", order.ID, order.StockID, order.Price, order.Quantity, order.Status)
+			fmt.Printf("ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s\n", order.ID, order.StockID, order.Price, order.Quantity, order.Status)
 		}
 	}
 
