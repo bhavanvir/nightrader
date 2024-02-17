@@ -1,6 +1,8 @@
 import React, { useState } from "react";
+
 import Header from "./Header";
-import Hero from "./Hero";
+import AccountInfo from "./AccountInfo";
+import StockPortfolio from "./StockPortfolio";
 
 const Dashboard = ({ user }) => {
   const [showAlert, setShowAlert] = useState(false);
@@ -62,7 +64,8 @@ const Dashboard = ({ user }) => {
       )}
       <Header user={user} showAlert={showAlertMessage} />
       <div className="container mx-auto">
-        <Hero user={user} showAlert={showAlertMessage} />
+        <AccountInfo user={user} showAlert={showAlertMessage} />
+        <StockPortfolio user={user} showAlert={showAlertMessage} />
       </div>
     </div>
   );
