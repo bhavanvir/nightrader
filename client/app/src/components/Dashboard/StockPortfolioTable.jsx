@@ -3,9 +3,14 @@ import { useState } from "react";
 import UpArrowIcon from "../../assets/icons/UpArrowIcon";
 import DownArrowIcon from "../../assets/icons/DownArrowIcon";
 
+// Set a default value for stockPortfolio to avoid errors when it's not passed
 export default function StockPortfolioTable({ stockPortfolio }) {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
+
+  if (!stockPortfolio) {
+    stockPortfolio = [];
+  }
 
   const sortedPortfolio = [...stockPortfolio].sort((a, b) => {
     if (sortColumn) {
@@ -30,11 +35,11 @@ export default function StockPortfolioTable({ stockPortfolio }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="table table-zebra">
+      <table className="table-zebra table">
         <thead>
           <tr className="">
             <th
-              className="text-lg max-w-10"
+              className="max-w-10 text-lg"
               onClick={() => handleSort("stock_id")}
             >
               <div className="flex items-center gap-2">
@@ -44,7 +49,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
               </div>
             </th>
             <th
-              className="text-lg max-w-10"
+              className="max-w-10 text-lg"
               onClick={() => handleSort("stock_name")}
             >
               <div className="flex items-center gap-2">
@@ -54,7 +59,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
               </div>
             </th>
             <th
-              className="text-lg max-w-10"
+              className="max-w-10 text-lg"
               onClick={() => handleSort("quantity_owned")}
             >
               <div className="flex items-center gap-2">
