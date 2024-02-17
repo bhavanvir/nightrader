@@ -4,8 +4,9 @@ import axios from "axios";
 import FundsIcon from "../../assets/icons/FundsIcon";
 import Clock from "./Clock";
 
-export default function Hero({ user, showAlert }) {
+export default function AccountInfo({ user, showAlert }) {
   const [balance, setBalance] = useState(0);
+  const funds = document.getElementById("funds-modal-input");
 
   const fetchWalletBalance = async () => {
     await axios
@@ -18,33 +19,32 @@ export default function Hero({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching your wallet balance. Please try again",
+          "There was an error fetching your wallet balance. Please try again"
         );
       });
   };
 
   const handleClick = async () => {
-    const funds = document.getElementById("funds-modal-input").value;
+    const fundsInput = document.getElementById("funds-modal-input").value;
+    const fundsModal = document.getElementById("funds-modal");
     await axios
       .post(
         "http://localhost:5433/addMoneyToWallet",
         {
-          amount: parseInt(funds),
+          amount: parseInt(fundsInput),
         },
         {
           withCredentials: true,
-        },
+        }
       )
       .then(function (response) {
-        showAlert(
-          "success",
-          "Successfully added funds to your wallet! Refresh your page to see the updated balance",
-        );
+        showAlert("success", "Successfully added funds to your wallet!");
+        fundsModal.close();
       })
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error adding funds to your wallet. Please try again",
+          "There was an error adding funds to your wallet. Please try again"
         );
       });
   };
@@ -92,8 +92,20 @@ export default function Hero({ user, showAlert }) {
                         placeholder="Enter an amount"
                         className="input input-bordered w-full"
                         onKeyPress={(event) => {
+                          // Prevent non-numeric characters except for the negative sign
                           if (!/[0-9]/.test(event.key)) {
                             event.preventDefault();
+                          } else if (event.key === "-") {
+                            // Disable the button if the input is negative
+                            document.getElementById(
+                              "funds-modal-input"
+                            ).disabled = true;
+                          }
+                        }}
+                        onChange={(event) => {
+                          // Prevent negative values from being entered
+                          if (event.target.value < 0) {
+                            event.target.value = 0;
                           }
                         }}
                       />

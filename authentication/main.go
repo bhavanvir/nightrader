@@ -132,7 +132,7 @@ func postLogin(c *gin.Context) {
 	}
 
 	// Create token
-	minutes := 10 * time.Minute
+	minutes := 30 * time.Minute
 	expirationTime := time.Now().Add(minutes)
 	token, err := createToken(name, login.UserName, expirationTime)
 	if err != nil {
@@ -199,15 +199,6 @@ func postRegister(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, successResponse)
 }
 
-func getCookies(c *gin.Context) {
-	cookie, err := c.Cookie("session_token")
-	if err != nil {
-		handleError(c, http.StatusBadRequest, "Unauthorized", err)
-		return
-	}
-	c.String(http.StatusOK, "Cookie: "+cookie)
-}
-
 func main() {
 	router := gin.Default()
 
@@ -222,6 +213,5 @@ func main() {
 	tester.TestUser() // example how to use function from a package 
 	router.POST("/login", identification.TestMiddleware, postLogin) // example how to use middlware from a package
 	router.POST("/register", postRegister)
-	router.GET("/eatCookies", getCookies)
 	router.Run(":8888")
 }
