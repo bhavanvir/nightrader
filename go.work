@@ -1,0 +1,8 @@
+go 1.21.6
+
+use (
+ ./authentication
+ ./engine
+ ./setup
+ ./transaction
+)
