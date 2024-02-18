@@ -50,36 +50,60 @@ type Order struct {
 
 // Define the order book
 type OrderBook struct {
-	BuyOrders  PriorityQueue
-	SellOrders PriorityQueue
+	BuyOrders  PriorityQueueMax
+	SellOrders PriorityQueueMin
 	mu         sync.Mutex
 }
 
-// PriorityQueue is a min-heap of orders.
-type PriorityQueue []*Order
+// Both a min-heap and a max-heap are required for different order types
+type PriorityQueueMin []*Order
+type PriorityQueueMax []*Order
 
 // Len is the number of elements in the collection.
-func (pq PriorityQueue) Len() int { return len(pq) }
+func (pq PriorityQueueMin) Len() int { return len(pq) }
+func (pq PriorityQueueMax) Len() int { return len(pq) }
 
 // index i should sort before the element with index j.
-func (pq PriorityQueue) Less(i, j int) bool {
-	// We want Pop to give us the highest, not lowest, priority so we use greater than for price.
+func (pq PriorityQueueMin) Less(i, j int) bool {
+	// We want Pop to give us the lowest, not greatest, priority so we use greater than for price.
 	return pq[i].Price < pq[j].Price
 }
 
+func (pq PriorityQueueMax) Less(i, j int) bool {
+	// We want Pop to give us the greatest, not lowest, priority so we use greater than for price.
+	return pq[i].Price > pq[j].Price
+}
+
 // Swap the elements with indexes i and j.
-func (pq PriorityQueue) Swap(i, j int) {
+func (pq PriorityQueueMin) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+}
+
+func (pq PriorityQueueMax) Swap(i, j int) {
 	pq[i], pq[j] = pq[j], pq[i]
 }
 
 // Push pushes the element x onto the heap.
-func (pq *PriorityQueue) Push(x interface{}) {
+func (pq *PriorityQueueMin) Push(x interface{}) {
+	item := x.(*Order)
+	*pq = append(*pq, item)
+}
+
+func (pq *PriorityQueueMax) Push(x interface{}) {
 	item := x.(*Order)
 	*pq = append(*pq, item)
 }
 
 // Pop removes and returns the minimum element from the heap.
-func (pq *PriorityQueue) Pop() interface{} {
+func (pq *PriorityQueueMin) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	*pq = old[0 : n-1]
+	return item
+}
+
+func (pq *PriorityQueueMax) Pop() interface{} {
 	old := *pq
 	n := len(old)
 	item := old[n-1]
@@ -131,8 +155,8 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	if !ok {
 		// If the order book for this stock does not exist, create a new one
 		book = &OrderBook{
-			BuyOrders:  make(PriorityQueue, 0),
-			SellOrders: make(PriorityQueue, 0),
+			BuyOrders:  make(PriorityQueueMax, 0),
+			SellOrders: make(PriorityQueueMin, 0),
 		}
 		orderBookMap.OrderBooks[order.StockID] = book
 	}
