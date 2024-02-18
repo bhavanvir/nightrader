@@ -38,13 +38,13 @@ type PlaceStockOrderResponse struct {
 }
 
 type Order struct {
-	ID         string  `json:"id"`
+	StockTxID  string  `json:"stock_tx_id"`
 	StockID    int     `json:"stock_id"`
 	IsBuy      bool    `json:"is_buy"`
 	OrderType  string  `json:"order_type"`
 	Quantity   int     `json:"quantity"`
 	Price      float64 `json:"price"`
-	Timestamp  int64   `json:"timestamp"`
+	TimeStamp  string  `json:"time_stamp"`
 	Status     string  `json:"status"`
 }
 
@@ -89,10 +89,8 @@ func (pq *PriorityQueue) Pop() interface{} {
 
 // generateOrderID generates a unique ID for each order
 func generateOrderID() string {
-    id := uuid.New()
-    return id.String()
+	return uuid.New().String()
 }
-
 
 func HandlePlaceStockOrder(c *gin.Context) {
 	userName, exists := c.Get("user_name")
@@ -117,14 +115,14 @@ func HandlePlaceStockOrder(c *gin.Context) {
 
 	// Create a new order
 	order := Order{
-		ID:         generateOrderID(),
+		StockTxID:  generateOrderID(),
 		StockID:    request.StockID,
 		IsBuy:      request.IsBuy != nil && *request.IsBuy,
 		OrderType:  request.OrderType,
 		Quantity:   request.Quantity,
 		Price:      *request.Price,
-		Timestamp:  time.Now().UnixNano(),
-		Status:     "IN_PROGRESS", // Set the initial status to IN_PROGRESS
+		TimeStamp:  time.Now().Format(time.RFC3339Nano),
+		Status:     "IN_PROGRESS",
 	}
 
 	// Add the order to the order book corresponding to the stock ID
@@ -133,8 +131,8 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	if !ok {
 		// If the order book for this stock does not exist, create a new one
 		book = &OrderBook{
-			BuyOrders:  make(PriorityQueue,  0),
-			SellOrders: make(PriorityQueue,  0),
+			BuyOrders:  make(PriorityQueue, 0),
+			SellOrders: make(PriorityQueue, 0),
 		}
 		orderBookMap.OrderBooks[order.StockID] = book
 	}
@@ -164,11 +162,11 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		fmt.Printf("Stock ID: %d\n", stockID)
 		fmt.Println("Buy Orders:")
 		for _, order := range book.BuyOrders {
-			fmt.Printf("ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s\n", order.ID, order.StockID, order.Price, order.Quantity, order.Status)
+			fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", order.StockTxID, order.StockID, order.Price, order.Quantity, order.Status, order.TimeStamp)
 		}
 		fmt.Println("Sell Orders:")
 		for _, order := range book.SellOrders {
-			fmt.Printf("ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s\n", order.ID, order.StockID, order.Price, order.Quantity, order.Status)
+			fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", order.StockTxID, order.StockID, order.Price, order.Quantity, order.Status, order.TimeStamp)
 		}
 	}
 
@@ -179,7 +177,6 @@ func HandlePlaceStockOrder(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, response)
 }
-
 
 // updateUserStockQuantity updates the user's stock quantity in the database
 func updateUserStockQuantity(userName string, stockID int, quantity int) error {
@@ -230,7 +227,7 @@ type OrderBookMap struct {
 // Initialize the order book map
 var orderBookMap = OrderBookMap{
 	OrderBooks: make(map[int]*OrderBook),
-}
+} 
 
 func main() {
 	router := gin.Default()
