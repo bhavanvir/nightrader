@@ -5,6 +5,7 @@ package main
 import (
 	"container/heap"
 	"database/sql"
+	"github.com/gin-contrib/cors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -18,7 +19,6 @@ import (
 
 const (
 	host     = "database"
-	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -36,6 +36,17 @@ type PlaceStockOrderRequest struct {
 
 // Define the structure of the response body for placing a stock order
 type PlaceStockOrderResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+}
+
+// Define the structure of the request body for cancelling a stock transaction
+type CancelStockTransactionRequest struct {
+	StockTxID string `json:"stock_tx_id" binding:"required"`
+}
+
+// Define the structure of the response body for cancelling a stock transaction
+type CancelStockTransactionResponse struct {
 	Success bool        `json:"success"`
 	Data    interface{} `json:"data"`
 }
@@ -62,6 +73,24 @@ type OrderBook struct {
 type PriorityQueue struct {
 	Order []*Order
 	LessFunc func(i, j float64) bool
+}
+
+// handleError is a helper function to send error responses
+func handleError(c *gin.Context, statusCode int, message string, err error) {
+	errorResponse := map[string]interface{}{
+		"success": false,
+		"data":    nil,
+		"message": message,
+	}
+	if err != nil {
+		errorResponse["message"] = fmt.Sprintf("%s: %v", message, err)
+	}
+	c.JSON(statusCode, errorResponse)
+}
+
+func openConnection() (*sql.DB, error) {
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	return sql.Open("postgres", postgresqlDbInfo)
 }
 
 /** standard heap interface **/
@@ -197,7 +226,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 func updateUserStockQuantity(userName string, stockID int, quantity int, isBuy bool) error {
 	var query string
 
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+	db, err := openConnection()
 	if err != nil {
 		return err
 	}
@@ -228,19 +257,82 @@ func updateUserStockQuantity(userName string, stockID int, quantity int, isBuy b
 	return nil
 }
 
-// handleError is a helper function to send error responses
-func handleError(c *gin.Context, statusCode int, message string, err error) {
-	errorResponse := map[string]interface{}{
-		"success": false,
-		"data":    nil,
-		"message": message,
+func TraverseOrderBook(StockTxID string, book *OrderBook, bookType string) (response CancelStockTransactionResponse) {
+	response = CancelStockTransactionResponse{
+		Success: false,
+		Data:    nil,
 	}
-	if err != nil {
-		errorResponse["message"] = fmt.Sprintf("%s: %v", message, err)
-	}
-	c.JSON(statusCode, errorResponse)
+
+    var bookOrders *PriorityQueue
+    if bookType == "buy" {
+        bookOrders = &book.BuyOrders
+    } else {
+        bookOrders = &book.SellOrders
+    }
+
+    // Find the index of the order to remove
+    indexToRemove := -1
+    for i, order := range bookOrders.Order {
+        if order.StockTxID == StockTxID && order.Status == "IN_PROGRESS" && order.OrderType == "LIMIT"{
+            indexToRemove = i
+            break
+        }
+    }
+
+    // If the order was found, remove it from the heap
+    if indexToRemove != -1 {
+        heap.Remove(bookOrders, indexToRemove)
+        response.Success = true
+    }
+
+	return response
 }
 
+func HandleCancelStockTransaction(c *gin.Context) {
+    userName, exists := c.Get("user_name")
+    if !exists || userName == nil {
+        handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
+        return
+    }
+
+    var request CancelStockTransactionRequest
+    if err := c.ShouldBindJSON(&request); err != nil {
+        handleError(c, http.StatusBadRequest, "Invalid request body", err)
+        return
+    }
+
+    StockTxID := request.StockTxID
+
+    orderBookMap.mu.Lock()
+    defer orderBookMap.mu.Unlock()
+    // Find which order book the order is in
+    for _, book := range orderBookMap.OrderBooks {
+        book.mu.Lock()
+		defer book.mu.Unlock()
+
+        foundBuy := TraverseOrderBook(StockTxID, book, "buy")
+        foundSell := TraverseOrderBook(StockTxID, book, "sell")
+
+		// Inside TraverseOrderBook, after removing the item
+		fmt.Println("\n --- Current Sell Queue --- \n")
+		book.SellOrders.Printn()
+		fmt.Println("\n ------ \n")
+		fmt.Println("\n --- Current Buy Queue --- \n")
+		book.BuyOrders.Printn()
+		fmt.Println("\n ------ \n")
+
+		if foundBuy.Success || foundSell.Success {
+			response := CancelStockTransactionResponse{
+				Success: true,
+				Data:    nil,
+			}
+			c.IndentedJSON(http.StatusOK, response)
+			return
+		}
+    }
+
+    handleError(c, http.StatusBadRequest, "Order not found", nil)
+}
 // Define the structure of the order book map
 type OrderBookMap struct {
 	OrderBooks map[int]*OrderBook // Map of stock ID to order book
@@ -255,7 +347,15 @@ var orderBookMap = OrderBookMap{
 func main() {
 	router := gin.Default()
 
-	router.POST("/placeStockOrder", identification.Identification, HandlePlaceStockOrder)
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowCredentials = true
+	router.Use(cors.New(config))
 
+	identification.Test()
+	router.POST("/placeStockOrder", identification.Identification, HandlePlaceStockOrder)
+	router.POST("/cancelStockTransaction", identification.Identification, HandleCancelStockTransaction)
 	router.Run(":8585")
 }
