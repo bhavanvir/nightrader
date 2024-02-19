@@ -1,5 +1,7 @@
 package main
 
+// TODO: seperate into module: queue, buy, sell, matching
+
 import (
 	"container/heap"
 	"database/sql"
@@ -16,6 +18,7 @@ import (
 
 const (
 	host     = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -55,61 +58,53 @@ type OrderBook struct {
 	mu         sync.Mutex
 }
 
-// Both a min-heap and a max-heap are required for different order types
-type PriorityQueueMin []*Order
-type PriorityQueueMax []*Order
-
-// Len is the number of elements in the collection.
-func (pq PriorityQueueMin) Len() int { return len(pq) }
-func (pq PriorityQueueMax) Len() int { return len(pq) }
-
-// index i should sort before the element with index j.
-func (pq PriorityQueueMin) Less(i, j int) bool {
-	// We want Pop to give us the lowest, not greatest, priority so we use greater than for price.
-	return pq[i].Price < pq[j].Price
+// PriorityQueue
+type PriorityQueue struct {
+	Order []*Order
+	LessFunc func(i, j float64) bool
 }
 
-func (pq PriorityQueueMax) Less(i, j int) bool {
-	// We want Pop to give us the greatest, not lowest, priority so we use greater than for price.
-	return pq[i].Price > pq[j].Price
-}
+/** standard heap interface **/
+func (pq PriorityQueue) Len() int { return len(pq.Order) }
+func (pq PriorityQueue) Swap(i, j int) { pq.Order[i], pq.Order[j] = pq.Order[j], pq.Order[i] }
+func (pq PriorityQueue) Less(i, j int) bool { return pq.LessFunc(pq.Order[i].Price, pq.Order[j].Price) }
+func highPriorityLess(i, j float64) bool { return i > j }
+func lowPriorityLess(i, j float64) bool { return i < j }
 
-// Swap the elements with indexes i and j.
-func (pq PriorityQueueMin) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-}
-
-func (pq PriorityQueueMax) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-}
-
-// Push pushes the element x onto the heap.
-func (pq *PriorityQueueMin) Push(x interface{}) {
+func (pq *PriorityQueue) Push(x interface{}) {
 	item := x.(*Order)
-	*pq = append(*pq, item)
+	pq.Order = append(pq.Order, item)
 }
 
-func (pq *PriorityQueueMax) Push(x interface{}) {
-	item := x.(*Order)
-	*pq = append(*pq, item)
-}
-
-// Pop removes and returns the minimum element from the heap.
-func (pq *PriorityQueueMin) Pop() interface{} {
-	old := *pq
+func (pq *PriorityQueue) Pop() interface{} {
+	old := pq.Order
 	n := len(old)
+	if n == 0 {
+		return nil
+	}
 	item := old[n-1]
-	*pq = old[0 : n-1]
+	pq.Order = old[0 : n-1]
 	return item
 }
+/** standard heap interface END **/
 
-func (pq *PriorityQueueMax) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	*pq = old[0 : n-1]
-	return item
+// print the queue
+func (pq *PriorityQueue) Printn() {
+	temp := PriorityQueue{Order: make([]*Order, len(pq.Order)), LessFunc: pq.LessFunc}
+	copy(temp.Order, pq.Order)
+	for temp.Len() > 0 {
+		item := heap.Pop(&temp).(*Order)
+		fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.Price, item.Quantity, item.Status, item.TimeStamp)
+	}
 }
+
+// update modifies the priority and value in the queue
+// func (pq *PriorityQueue) update(order *Order, quantity int, timestamp string, status string) {
+// 	order.Quantity = quantity
+// 	order.TimeStamp = timestamp
+// 	order.Status = status
+// 	heap.Fix(pq, order.StockTxID)
+// }
 
 // generateOrderID generates a unique ID for each order
 func generateOrderID() string {
@@ -149,14 +144,16 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		Status:     "IN_PROGRESS",
 	}
 
+	fmt.Printf("Order: %+v\n", order)
+
 	// Add the order to the order book corresponding to the stock ID
 	orderBookMap.mu.Lock()
 	book, ok := orderBookMap.OrderBooks[order.StockID]
 	if !ok {
 		// If the order book for this stock does not exist, create a new one
 		book = &OrderBook{
-			BuyOrders:  make(PriorityQueueMax, 0),
-			SellOrders: make(PriorityQueueMin, 0),
+			BuyOrders:  PriorityQueue{Order: make([]*Order, 0), LessFunc: highPriorityLess},
+			SellOrders: PriorityQueue{Order: make([]*Order, 0), LessFunc: lowPriorityLess},
 		}
 		orderBookMap.OrderBooks[order.StockID] = book
 	}
@@ -172,7 +169,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	book.mu.Unlock()
 
 	// Update the user's stock quantity in the database
-	err := updateUserStockQuantity(userName.(string), order.StockID, order.Quantity)
+	err := updateUserStockQuantity(userName.(string), order.StockID, order.Quantity, order.IsBuy)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to update user stock quantity", err)
 		return
@@ -181,18 +178,12 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	// Print the order book after adding the order
 	orderBookMap.mu.Lock()
 	defer orderBookMap.mu.Unlock()
-	fmt.Println("Order Books:")
-	for stockID, book := range orderBookMap.OrderBooks {
-		fmt.Printf("Stock ID: %d\n", stockID)
-		fmt.Println("Buy Orders:")
-		for _, order := range book.BuyOrders {
-			fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", order.StockTxID, order.StockID, order.Price, order.Quantity, order.Status, order.TimeStamp)
-		}
-		fmt.Println("Sell Orders:")
-		for _, order := range book.SellOrders {
-			fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", order.StockTxID, order.StockID, order.Price, order.Quantity, order.Status, order.TimeStamp)
-		}
-	}
+	fmt.Println("\n === Current Sell Queue === \n")
+	book.SellOrders.Printn()
+	fmt.Println("\n ====== \n")
+	fmt.Println("\n === Current Buy Queue === \n")
+	book.BuyOrders.Printn()
+	fmt.Println("\n ====== \n")
 
 	response := PlaceStockOrderResponse{
 		Success: true,
@@ -203,7 +194,9 @@ func HandlePlaceStockOrder(c *gin.Context) {
 }
 
 // updateUserStockQuantity updates the user's stock quantity in the database
-func updateUserStockQuantity(userName string, stockID int, quantity int) error {
+func updateUserStockQuantity(userName string, stockID int, quantity int, isBuy bool) error {
+	var query string
+
 	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
 	if err != nil {
 		return err
@@ -216,7 +209,13 @@ func updateUserStockQuantity(userName string, stockID int, quantity int) error {
 	}
 	defer tx.Rollback()
 
-	_, err = tx.Exec("UPDATE user_stocks SET quantity = quantity - $1 WHERE user_name = $2 AND stock_id = $3", quantity, userName, stockID)
+	if isBuy {
+		query = "UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3"
+	} else {
+		query = "UPDATE user_stocks SET quantity = quantity - $1 WHERE user_name = $2 AND stock_id = $3"
+	}
+
+	_, err = tx.Exec(query, quantity, userName, stockID)
 	if err != nil {
 		return err
 	}
