@@ -18,6 +18,7 @@ var secretKey = []byte("secret")
 
 const (
 	host     = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -143,6 +144,7 @@ func postLogin(c *gin.Context) {
 	// Create a cookie session
 	createSession(c, token, minutes)
 
+	// TODO: correct response
 	// Respond
 	loginResponse := Response{
 		Success: true,
