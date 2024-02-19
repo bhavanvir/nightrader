@@ -53,8 +53,8 @@ type Order struct {
 
 // Define the order book
 type OrderBook struct {
-	BuyOrders  PriorityQueueMax
-	SellOrders PriorityQueueMin
+	BuyOrders  PriorityQueue
+	SellOrders PriorityQueue
 	mu         sync.Mutex
 }
 
