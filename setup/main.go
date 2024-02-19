@@ -53,14 +53,14 @@ func createStock(c *gin.Context) {
     var json Stock
 
     if err := c.BindJSON(&json); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        handleError(c, http.StatusBadRequest, "Invalid request body", err)
         return
     }
 
     // Save stock to database
     stockID, err := saveStockToDatabase(json)
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save stock to database"})
+        handleError(c, http.StatusInternalServerError, "Failed to save stock to database", err)
         return
     }
 
