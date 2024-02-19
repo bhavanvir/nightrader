@@ -17,6 +17,7 @@ type Stock struct {
 
 const (
     host     = "database"
+    // host     = "localhost" // for local testing
     port     = 5432
     user     = "nt_user"
     password = "db123"
@@ -115,6 +116,9 @@ func addStockToUser(c *gin.Context) {
     }
     defer db.Close()
 
+    fmt.Println("userName:", userName)
+    fmt.Println("ID:", req.StockID)
+    fmt.Println("quantity:", req.Quantity)
     // Insert stock into user_stocks table
     _, err = db.Exec("INSERT INTO user_stocks (user_name, stock_id, quantity) VALUES ($1, $2, $3)", userName, req.StockID, req.Quantity)
     if err != nil {
