@@ -18,7 +18,8 @@ import (
 )
 
 const (
-	host     = "localhost"
+	// use localhost for local testing
+	host     = "database"
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
