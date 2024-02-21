@@ -18,7 +18,7 @@ export default function AccountInfo({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching your wallet balance. Please try again",
+          "There was an error fetching your wallet balance. Please try again"
         );
       });
   };
@@ -34,23 +34,25 @@ export default function AccountInfo({ user, showAlert }) {
         },
         {
           withCredentials: true,
-        },
+        }
       )
       .then(function (response) {
         showAlert("success", "Successfully added funds to your wallet!");
         fundsModal.close();
+        fetchWalletBalance();
       })
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error adding funds to your wallet. Please try again",
+          "There was an error adding funds to your wallet. Please try again"
         );
       });
   };
 
+  // eslint-disable-next-line
   useEffect(() => {
     fetchWalletBalance();
-  });
+  }, []);
 
   return (
     <div className="mt-14 ">
@@ -97,7 +99,7 @@ export default function AccountInfo({ user, showAlert }) {
                           } else if (event.key === "-") {
                             // Disable the button if the input is negative
                             document.getElementById(
-                              "funds-modal-input",
+                              "funds-modal-input"
                             ).disabled = true;
                           }
                         }}

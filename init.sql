@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS stocks (
     stock_id SERIAL UNIQUE PRIMARY KEY,
-    stock_name TEXT,
+    stock_name TEXT UNIQUE,
     current_price NUMERIC(12,2) DEFAULT 0
 );
 
