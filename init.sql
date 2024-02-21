@@ -18,12 +18,22 @@ CREATE TABLE IF NOT EXISTS user_stocks (
     PRIMARY KEY (user_name, stock_id)
 );
 
-CREATE TABLE IF NOT EXISTS transactions (
-    tx_id SERIAL UNIQUE PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS wallet_transactions (
+    wallet_tx_id TEXT UNIQUE PRIMARY KEY,
+    user_name TEXT REFERENCES users(user_name),
+    is_debit BOOLEAN,
+    amount NUMERIC(12,2),
+    time_stamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS stock_transactions (
+    stock_tx_id TEXT UNIQUE PRIMARY KEY,
     user_name TEXT REFERENCES users(user_name),
     stock_id INTEGER REFERENCES stocks(stock_id),
-    is_debit BOOLEAN,
+    wallet_tx_id TEXT UNIQUE REFERENCES wallet_transactions(wallet_tx_id),
+    order_status BOOLEAN,
     is_buy BOOLEAN,
+    order_type TEXT,
     stock_price NUMERIC(12,2),
     quantity INTEGER,
     time_stamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP

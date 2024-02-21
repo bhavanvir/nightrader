@@ -18,11 +18,14 @@ import (
 )
 
 const (
+	// Use localhost for local testing
 	host     = "database"
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
 	dbname   = "nt_db"
+
+	namespaceUUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 )
 
 // Define the structure of the request body for placing a stock order
@@ -54,6 +57,7 @@ type CancelStockTransactionResponse struct {
 type Order struct {
 	StockTxID  string  `json:"stock_tx_id"`
 	StockID    int     `json:"stock_id"`
+	WalletTxID string  `json:"wallet_tx_id"`
 	IsBuy      bool    `json:"is_buy"`
 	OrderType  string  `json:"order_type"`
 	Quantity   int     `json:"quantity"`
@@ -64,8 +68,8 @@ type Order struct {
 
 // Define the order book
 type OrderBook struct {
-	BuyOrders  PriorityQueueMax
-	SellOrders PriorityQueueMin
+	BuyOrders  PriorityQueue
+	SellOrders PriorityQueue
 	mu         sync.Mutex
 }
 
@@ -91,11 +95,6 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 func openConnection() (*sql.DB, error) {
 	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	return sql.Open("postgres", postgresqlDbInfo)
-}
-
-func (pq PriorityQueueMax) Less(i, j int) bool {
-	// We want Pop to give us the greatest, not lowest, priority so we use greater than for price.
-	return pq[i].Price > pq[j].Price
 }
 
 /** standard heap interface **/
@@ -128,7 +127,7 @@ func (pq *PriorityQueue) Printn() {
 	copy(temp.Order, pq.Order)
 	for temp.Len() > 0 {
 		item := heap.Pop(&temp).(*Order)
-		fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.Price, item.Quantity, item.Status, item.TimeStamp)
+		fmt.Printf("Stock Tx ID: %s, StockID: %d, WalletTxID: %s, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, item.Price, item.Quantity, item.Status, item.TimeStamp)
 	}
 }
 
@@ -143,6 +142,11 @@ func (pq *PriorityQueue) Printn() {
 // generateOrderID generates a unique ID for each order
 func generateOrderID() string {
 	return uuid.New().String()
+}
+	
+// Generate a unique wallet ID for the user
+func generateWalletID(userName string) string {
+	return uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(userName)).String()
 }
 
 func HandlePlaceStockOrder(c *gin.Context) {
@@ -170,6 +174,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	order := Order{
 		StockTxID:  generateOrderID(),
 		StockID:    request.StockID,
+		WalletTxID: generateWalletID(userName.(string)),
 		IsBuy:      request.IsBuy != nil && *request.IsBuy,
 		OrderType:  request.OrderType,
 		Quantity:   request.Quantity,
@@ -338,6 +343,7 @@ func HandleCancelStockTransaction(c *gin.Context) {
 
     handleError(c, http.StatusBadRequest, "Order not found", nil)
 }
+
 // Define the structure of the order book map
 type OrderBookMap struct {
 	OrderBooks map[int]*OrderBook // Map of stock ID to order book
