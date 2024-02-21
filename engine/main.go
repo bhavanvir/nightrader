@@ -64,8 +64,8 @@ type Order struct {
 
 // Define the order book
 type OrderBook struct {
-	BuyOrders  PriorityQueue
-	SellOrders PriorityQueue
+	BuyOrders  PriorityQueueMax
+	SellOrders PriorityQueueMin
 	mu         sync.Mutex
 }
 
@@ -91,6 +91,11 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 func openConnection() (*sql.DB, error) {
 	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	return sql.Open("postgres", postgresqlDbInfo)
+}
+
+func (pq PriorityQueueMax) Less(i, j int) bool {
+	// We want Pop to give us the greatest, not lowest, priority so we use greater than for price.
+	return pq[i].Price > pq[j].Price
 }
 
 /** standard heap interface **/
