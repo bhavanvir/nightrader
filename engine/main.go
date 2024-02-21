@@ -1,8 +1,11 @@
 package main
 
+// TODO: seperate into module: queue, buy, sell, matching
+
 import (
 	"container/heap"
 	"database/sql"
+	"github.com/gin-contrib/cors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -37,6 +40,17 @@ type PlaceStockOrderResponse struct {
 	Data    interface{} `json:"data"`
 }
 
+// Define the structure of the request body for cancelling a stock transaction
+type CancelStockTransactionRequest struct {
+	StockTxID string `json:"stock_tx_id" binding:"required"`
+}
+
+// Define the structure of the response body for cancelling a stock transaction
+type CancelStockTransactionResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data"`
+}
+
 type Order struct {
 	StockTxID  string  `json:"stock_tx_id"`
 	StockID    int     `json:"stock_id"`
@@ -55,18 +69,28 @@ type OrderBook struct {
 	mu         sync.Mutex
 }
 
-// Both a min-heap and a max-heap are required for different order types
-type PriorityQueueMin []*Order
-type PriorityQueueMax []*Order
+// PriorityQueue
+type PriorityQueue struct {
+	Order []*Order
+	LessFunc func(i, j float64) bool
+}
 
-// Len is the number of elements in the collection.
-func (pq PriorityQueueMin) Len() int { return len(pq) }
-func (pq PriorityQueueMax) Len() int { return len(pq) }
+// handleError is a helper function to send error responses
+func handleError(c *gin.Context, statusCode int, message string, err error) {
+	errorResponse := map[string]interface{}{
+		"success": false,
+		"data":    nil,
+		"message": message,
+	}
+	if err != nil {
+		errorResponse["message"] = fmt.Sprintf("%s: %v", message, err)
+	}
+	c.JSON(statusCode, errorResponse)
+}
 
-// index i should sort before the element with index j.
-func (pq PriorityQueueMin) Less(i, j int) bool {
-	// We want Pop to give us the lowest, not greatest, priority so we use greater than for price.
-	return pq[i].Price < pq[j].Price
+func openConnection() (*sql.DB, error) {
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	return sql.Open("postgres", postgresqlDbInfo)
 }
 
 func (pq PriorityQueueMax) Less(i, j int) bool {
@@ -74,42 +98,47 @@ func (pq PriorityQueueMax) Less(i, j int) bool {
 	return pq[i].Price > pq[j].Price
 }
 
-// Swap the elements with indexes i and j.
-func (pq PriorityQueueMin) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-}
+/** standard heap interface **/
+func (pq PriorityQueue) Len() int { return len(pq.Order) }
+func (pq PriorityQueue) Swap(i, j int) { pq.Order[i], pq.Order[j] = pq.Order[j], pq.Order[i] }
+func (pq PriorityQueue) Less(i, j int) bool { return pq.LessFunc(pq.Order[i].Price, pq.Order[j].Price) }
+func highPriorityLess(i, j float64) bool { return i > j }
+func lowPriorityLess(i, j float64) bool { return i < j }
 
-func (pq PriorityQueueMax) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-}
-
-// Push pushes the element x onto the heap.
-func (pq *PriorityQueueMin) Push(x interface{}) {
+func (pq *PriorityQueue) Push(x interface{}) {
 	item := x.(*Order)
-	*pq = append(*pq, item)
+	pq.Order = append(pq.Order, item)
 }
 
-func (pq *PriorityQueueMax) Push(x interface{}) {
-	item := x.(*Order)
-	*pq = append(*pq, item)
-}
-
-// Pop removes and returns the minimum element from the heap.
-func (pq *PriorityQueueMin) Pop() interface{} {
-	old := *pq
+func (pq *PriorityQueue) Pop() interface{} {
+	old := pq.Order
 	n := len(old)
+	if n == 0 {
+		return nil
+	}
 	item := old[n-1]
-	*pq = old[0 : n-1]
+	pq.Order = old[0 : n-1]
 	return item
 }
+/** standard heap interface END **/
 
-func (pq *PriorityQueueMax) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	*pq = old[0 : n-1]
-	return item
+// print the queue
+func (pq *PriorityQueue) Printn() {
+	temp := PriorityQueue{Order: make([]*Order, len(pq.Order)), LessFunc: pq.LessFunc}
+	copy(temp.Order, pq.Order)
+	for temp.Len() > 0 {
+		item := heap.Pop(&temp).(*Order)
+		fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.Price, item.Quantity, item.Status, item.TimeStamp)
+	}
 }
+
+// update modifies the priority and value in the queue
+// func (pq *PriorityQueue) update(order *Order, quantity int, timestamp string, status string) {
+// 	order.Quantity = quantity
+// 	order.TimeStamp = timestamp
+// 	order.Status = status
+// 	heap.Fix(pq, order.StockTxID)
+// }
 
 // generateOrderID generates a unique ID for each order
 func generateOrderID() string {
@@ -149,14 +178,16 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		Status:     "IN_PROGRESS",
 	}
 
+	fmt.Printf("Order: %+v\n", order)
+
 	// Add the order to the order book corresponding to the stock ID
 	orderBookMap.mu.Lock()
 	book, ok := orderBookMap.OrderBooks[order.StockID]
 	if !ok {
 		// If the order book for this stock does not exist, create a new one
 		book = &OrderBook{
-			BuyOrders:  make(PriorityQueueMax, 0),
-			SellOrders: make(PriorityQueueMin, 0),
+			BuyOrders:  PriorityQueue{Order: make([]*Order, 0), LessFunc: highPriorityLess},
+			SellOrders: PriorityQueue{Order: make([]*Order, 0), LessFunc: lowPriorityLess},
 		}
 		orderBookMap.OrderBooks[order.StockID] = book
 	}
@@ -172,7 +203,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	book.mu.Unlock()
 
 	// Update the user's stock quantity in the database
-	err := updateUserStockQuantity(userName.(string), order.StockID, order.Quantity)
+	err := updateUserStockQuantity(userName.(string), order.StockID, order.Quantity, order.IsBuy)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to update user stock quantity", err)
 		return
@@ -181,18 +212,12 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	// Print the order book after adding the order
 	orderBookMap.mu.Lock()
 	defer orderBookMap.mu.Unlock()
-	fmt.Println("Order Books:")
-	for stockID, book := range orderBookMap.OrderBooks {
-		fmt.Printf("Stock ID: %d\n", stockID)
-		fmt.Println("Buy Orders:")
-		for _, order := range book.BuyOrders {
-			fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", order.StockTxID, order.StockID, order.Price, order.Quantity, order.Status, order.TimeStamp)
-		}
-		fmt.Println("Sell Orders:")
-		for _, order := range book.SellOrders {
-			fmt.Printf("Stock Tx ID: %s, StockID: %d, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", order.StockTxID, order.StockID, order.Price, order.Quantity, order.Status, order.TimeStamp)
-		}
-	}
+	fmt.Println("\n === Current Sell Queue === \n")
+	book.SellOrders.Printn()
+	fmt.Println("\n ====== \n")
+	fmt.Println("\n === Current Buy Queue === \n")
+	book.BuyOrders.Printn()
+	fmt.Println("\n ====== \n")
 
 	response := PlaceStockOrderResponse{
 		Success: true,
@@ -203,8 +228,10 @@ func HandlePlaceStockOrder(c *gin.Context) {
 }
 
 // updateUserStockQuantity updates the user's stock quantity in the database
-func updateUserStockQuantity(userName string, stockID int, quantity int) error {
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+func updateUserStockQuantity(userName string, stockID int, quantity int, isBuy bool) error {
+	var query string
+
+	db, err := openConnection()
 	if err != nil {
 		return err
 	}
@@ -216,7 +243,13 @@ func updateUserStockQuantity(userName string, stockID int, quantity int) error {
 	}
 	defer tx.Rollback()
 
-	_, err = tx.Exec("UPDATE user_stocks SET quantity = quantity - $1 WHERE user_name = $2 AND stock_id = $3", quantity, userName, stockID)
+	if isBuy {
+		query = "UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3"
+	} else {
+		query = "UPDATE user_stocks SET quantity = quantity - $1 WHERE user_name = $2 AND stock_id = $3"
+	}
+
+	_, err = tx.Exec(query, quantity, userName, stockID)
 	if err != nil {
 		return err
 	}
@@ -229,19 +262,82 @@ func updateUserStockQuantity(userName string, stockID int, quantity int) error {
 	return nil
 }
 
-// handleError is a helper function to send error responses
-func handleError(c *gin.Context, statusCode int, message string, err error) {
-	errorResponse := map[string]interface{}{
-		"success": false,
-		"data":    nil,
-		"message": message,
+func TraverseOrderBook(StockTxID string, book *OrderBook, bookType string) (response CancelStockTransactionResponse) {
+	response = CancelStockTransactionResponse{
+		Success: false,
+		Data:    nil,
 	}
-	if err != nil {
-		errorResponse["message"] = fmt.Sprintf("%s: %v", message, err)
-	}
-	c.JSON(statusCode, errorResponse)
+
+    var bookOrders *PriorityQueue
+    if bookType == "buy" {
+        bookOrders = &book.BuyOrders
+    } else {
+        bookOrders = &book.SellOrders
+    }
+
+    // Find the index of the order to remove
+    indexToRemove := -1
+    for i, order := range bookOrders.Order {
+        if order.StockTxID == StockTxID && order.Status == "IN_PROGRESS" && order.OrderType == "LIMIT"{
+            indexToRemove = i
+            break
+        }
+    }
+
+    // If the order was found, remove it from the heap
+    if indexToRemove != -1 {
+        heap.Remove(bookOrders, indexToRemove)
+        response.Success = true
+    }
+
+	return response
 }
 
+func HandleCancelStockTransaction(c *gin.Context) {
+    userName, exists := c.Get("user_name")
+    if !exists || userName == nil {
+        handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
+        return
+    }
+
+    var request CancelStockTransactionRequest
+    if err := c.ShouldBindJSON(&request); err != nil {
+        handleError(c, http.StatusBadRequest, "Invalid request body", err)
+        return
+    }
+
+    StockTxID := request.StockTxID
+
+    orderBookMap.mu.Lock()
+    defer orderBookMap.mu.Unlock()
+    // Find which order book the order is in
+    for _, book := range orderBookMap.OrderBooks {
+        book.mu.Lock()
+		defer book.mu.Unlock()
+
+        foundBuy := TraverseOrderBook(StockTxID, book, "buy")
+        foundSell := TraverseOrderBook(StockTxID, book, "sell")
+
+		// Inside TraverseOrderBook, after removing the item
+		fmt.Println("\n --- Current Sell Queue --- \n")
+		book.SellOrders.Printn()
+		fmt.Println("\n ------ \n")
+		fmt.Println("\n --- Current Buy Queue --- \n")
+		book.BuyOrders.Printn()
+		fmt.Println("\n ------ \n")
+
+		if foundBuy.Success || foundSell.Success {
+			response := CancelStockTransactionResponse{
+				Success: true,
+				Data:    nil,
+			}
+			c.IndentedJSON(http.StatusOK, response)
+			return
+		}
+    }
+
+    handleError(c, http.StatusBadRequest, "Order not found", nil)
+}
 // Define the structure of the order book map
 type OrderBookMap struct {
 	OrderBooks map[int]*OrderBook // Map of stock ID to order book
@@ -256,7 +352,15 @@ var orderBookMap = OrderBookMap{
 func main() {
 	router := gin.Default()
 
-	router.POST("/placeStockOrder", identification.Identification, HandlePlaceStockOrder)
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowCredentials = true
+	router.Use(cors.New(config))
 
+	identification.Test()
+	router.POST("/placeStockOrder", identification.Identification, HandlePlaceStockOrder)
+	router.POST("/cancelStockTransaction", identification.Identification, HandleCancelStockTransaction)
 	router.Run(":8585")
 }
