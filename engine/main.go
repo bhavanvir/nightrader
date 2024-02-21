@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	// use localhost for local testing
+	// Use localhost for local testing
 	host     = "database"
 	port     = 5432
 	user     = "nt_user"
@@ -54,12 +54,6 @@ type CancelStockTransactionResponse struct {
 	Data    interface{} `json:"data"`
 }
 
-// Define the structure of the response body for getting stock transactions
-type GetStockTransactionsResponse struct {
-	Success bool     `json:"success"`
-	Data    []Order `json:"data"`
-}
-
 type Order struct {
 	StockTxID  string  `json:"stock_tx_id"`
 	StockID    int     `json:"stock_id"`
@@ -74,8 +68,8 @@ type Order struct {
 
 // Define the order book
 type OrderBook struct {
-	BuyOrders  PriorityQueueMax
-	SellOrders PriorityQueueMin
+	BuyOrders  PriorityQueue
+	SellOrders PriorityQueue
 	mu         sync.Mutex
 }
 
@@ -101,11 +95,6 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 func openConnection() (*sql.DB, error) {
 	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	return sql.Open("postgres", postgresqlDbInfo)
-}
-
-func (pq PriorityQueueMax) Less(i, j int) bool {
-	// We want Pop to give us the greatest, not lowest, priority so we use greater than for price.
-	return pq[i].Price > pq[j].Price
 }
 
 /** standard heap interface **/
