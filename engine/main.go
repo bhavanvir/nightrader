@@ -350,7 +350,7 @@ func openConnection() (*sql.DB, error) {
 	return sql.Open("postgres", postgresqlDbInfo)
 }
 
-// Store completed transactions in the database
+// Store completed stock transactions in the database
 func setStockTransaction(c *gin.Context, tx Order) {
 	userName, _ := c.Get("user_name")
 
@@ -366,9 +366,11 @@ func setStockTransaction(c *gin.Context, tx Order) {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("INSERT INTO transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, is_buy, is_debit, ) ")
+	_, err = db.Exec(`
+		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity)
+	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, tx.StockTxID, userName, tx.StockID, tx.WalletTxID, tx.Status, tx.IsBuy, tx.OrderType, tx.Price, tx.Quantity)
 	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to update wallet", err)
+		handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
 		return
 	}
 }
