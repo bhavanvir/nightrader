@@ -353,6 +353,7 @@ func setStockTransaction(c *gin.Context, tx Order) {
 		return
 	}
 
+	// Connect to database
 	db, err := openConnection()
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
@@ -360,6 +361,17 @@ func setStockTransaction(c *gin.Context, tx Order) {
 	}
 	defer db.Close()
 
+	// TODO: How to determine is_debit? Default is true for now.
+	// Insert transaction to wallet transactions
+	_, err = db.Exec(`
+		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount)
+		VALUES ($1, $2, $3, $4)`, tx.WalletTxID, userName, true, tx.Quantity)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
+		return
+	}
+
+	// Insert transaction to stock transactions
 	_, err = db.Exec(`
 		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity)
 	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, tx.StockTxID, userName, tx.StockID, tx.WalletTxID, tx.Status, tx.IsBuy, tx.OrderType, tx.Price, tx.Quantity)
