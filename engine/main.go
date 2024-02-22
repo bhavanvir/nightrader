@@ -2,6 +2,8 @@ package main
 // TODO: seperate into module: queue, buy, sell, matching
 // Clarification: getWalletTransactions and getStockTransactions - is_debit, wallet_tx_id, (duplicate) stock_tx_id
 
+// TODO: seperate into module: queue, buy, sell, matching
+
 import (
 	"container/heap"
 	"database/sql"
@@ -239,7 +241,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 func updateUserStockQuantity(userName string, stockID int, quantity int, isBuy bool) error {
 	var query string
 
-	db, err := openConnection()
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
 	if err != nil {
 		return err
 	}
