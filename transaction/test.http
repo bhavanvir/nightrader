@@ -4,7 +4,7 @@ post {{hostname}}/addMoneyToWallet
 Content-Type: application/json
 
 {
-    "amount": 1000
+    "amount": 5000
 }
 
 ###

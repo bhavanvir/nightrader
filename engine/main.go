@@ -188,7 +188,15 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		Status:     "IN_PROGRESS",
 	}
 
-	fmt.Printf("Order: %+v\n", order)
+	if order.IsBuy {
+		if err := deductMoneyFromWallet(userName.(string), order.WalletTxID, order.Quantity, order.Price); err == nil {
+			// Handle the error here
+			handleError(c, http.StatusInternalServerError, "Failed to deduct money", err)
+			return
+		}
+	} else {
+		fmt.Println("Sell Order")
+	}
 
 	// Add the order to the order book corresponding to the stock ID
 	orderBookMap.mu.Lock()
@@ -235,7 +243,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, response)
-}
+} // HandlePlaceStockOrder
 
 // updateUserStockQuantity updates the user's stock quantity in the database
 func updateUserStockQuantity(userName string, stockID int, quantity int, isBuy bool) error {
@@ -358,7 +366,15 @@ type OrderBookMap struct {
 // Initialize the order book map
 var orderBookMap = OrderBookMap{
 	OrderBooks: make(map[int]*OrderBook),
-} 
+}
+
+/** BUY Order **/
+func deductMoneyFromWallet(userName string, walletTxID string, quantity int, price float64) error {
+	fmt.Println("Deducting money from wallet")
+	return nil
+}
+
+/** END BUY Order **/
 
 func main() {
 	router := gin.Default()
