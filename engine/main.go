@@ -344,6 +344,35 @@ func HandleCancelStockTransaction(c *gin.Context) {
     handleError(c, http.StatusBadRequest, "Order not found", nil)
 }
 
+// Helper function to establish a database connection
+func openConnection() (*sql.DB, error) {
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	return sql.Open("postgres", postgresqlDbInfo)
+}
+
+// Store completed transactions in the database
+func setStockTransaction(c *gin.Context, tx Order) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	_, err = db.Exec("INSERT INTO transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, is_buy, is_debit, ) ")
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to update wallet", err)
+		return
+	}
+}
+
 // Define the structure of the order book map
 type OrderBookMap struct {
 	OrderBooks map[int]*OrderBook // Map of stock ID to order book
