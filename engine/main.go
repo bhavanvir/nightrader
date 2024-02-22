@@ -344,6 +344,33 @@ func HandleCancelStockTransaction(c *gin.Context) {
     handleError(c, http.StatusBadRequest, "Order not found", nil)
 }
 
+// Store completed wallet transactions in the database
+func setWalletTransaction(c *gin.Context, tx Order) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	// Insert transaction to wallet transactions
+	_, err = db.Exec(`
+		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount)
+		VALUES ($1, $2, $3, $4)`, tx.WalletTxID, userName, true, tx.Quantity)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
+		return
+	}
+}
+
 // Store completed stock transactions in the database
 func setStockTransaction(c *gin.Context, tx Order) {
 	userName, _ := c.Get("user_name")
@@ -360,16 +387,6 @@ func setStockTransaction(c *gin.Context, tx Order) {
 		return
 	}
 	defer db.Close()
-
-	// TODO: How to determine is_debit? Default is true for now.
-	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
-		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount)
-		VALUES ($1, $2, $3, $4)`, tx.WalletTxID, userName, true, tx.Quantity)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
-		return
-	}
 
 	// Insert transaction to stock transactions
 	_, err = db.Exec(`
