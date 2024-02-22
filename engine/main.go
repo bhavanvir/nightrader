@@ -344,12 +344,6 @@ func HandleCancelStockTransaction(c *gin.Context) {
     handleError(c, http.StatusBadRequest, "Order not found", nil)
 }
 
-// Helper function to establish a database connection
-func openConnection() (*sql.DB, error) {
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	return sql.Open("postgres", postgresqlDbInfo)
-}
-
 // Store completed stock transactions in the database
 func setStockTransaction(c *gin.Context, tx Order) {
 	userName, _ := c.Get("user_name")
