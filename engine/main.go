@@ -1,6 +1,6 @@
 package main
-
 // TODO: seperate into module: queue, buy, sell, matching
+// Clarification: getWalletTransactions and getStockTransactions - is_debit, wallet_tx_id, (duplicate) stock_tx_id
 
 import (
 	"container/heap"
@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	// Use localhost for local testing
-	host     = "database"
+	// host     = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -58,6 +58,7 @@ type Order struct {
 	StockTxID  string  `json:"stock_tx_id"`
 	StockID    int     `json:"stock_id"`
 	WalletTxID string  `json:"wallet_tx_id"`
+	ParentTxID *string  `json:"parent_tx_id"`
 	IsBuy      bool    `json:"is_buy"`
 	OrderType  string  `json:"order_type"`
 	Quantity   int     `json:"quantity"`
@@ -146,7 +147,8 @@ func generateOrderID() string {
 	
 // Generate a unique wallet ID for the user
 func generateWalletID(userName string) string {
-	return uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(userName)).String()
+	// return uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(userName)).String()
+	return uuid.New().String()
 }
 
 func HandlePlaceStockOrder(c *gin.Context) {
@@ -175,6 +177,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		StockTxID:  generateOrderID(),
 		StockID:    request.StockID,
 		WalletTxID: generateWalletID(userName.(string)),
+		ParentTxID: nil,
 		IsBuy:      request.IsBuy != nil && *request.IsBuy,
 		OrderType:  request.OrderType,
 		Quantity:   request.Quantity,
