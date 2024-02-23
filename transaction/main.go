@@ -253,6 +253,48 @@ func getWalletTransactions(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
+func getStockTransactions(c *gin.Context) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity time_stamp
+        FROM stock_transactions
+        WHERE user_name = $1`, userName)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query stock transactions", err)
+		return
+	}
+	defer rows.Close()
+
+	var stock_transactions []StockTransactionItem
+	for rows.Next() {
+		var item StockTransactionItem
+		if err := rows.Scan(&item.StockTxID, &item.StockID, &item.WalletTxID, &item.OrderStatus, &item.IsBuy, &item.OrderType, &item.StockPrice, &item.Quantity, &item.TimeStamp); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
+			return
+		}
+		stock_transactions = append(stock_transactions, item)
+	}
+
+	response := StockTransactionResponse{
+		Success: true,
+		Data:    stock_transactions,
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
 func getCookies(c *gin.Context) {
 	cookie := c.GetHeader("Authorization")
 
@@ -278,6 +320,8 @@ func main() {
 	router.POST("/addMoneyToWallet", identification.Identification, addMoneyToWallet)
 	router.GET("/getWalletBalance", identification.Identification, getWalletBalance)
 	router.GET("/getStockPortfolio", identification.Identification, getStockPortfolio)
+	router.GET("/getWalletTransactions", identification.Identification, getWalletTransactions)
+	router.GET("/getStockTransactions", identification.Identification, getStockTransactions)
 	router.GET("/eatCookies", getCookies)
 	router.Run(":5433")
 }
