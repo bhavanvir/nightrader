@@ -58,7 +58,7 @@ type StockPortfolioResponse struct {
 type WalletTransactionItem struct {
 	WalletTxID     string  `json:"wallet_tx_id"`
 	StockTxID      string  `json:"stock_tx_id"`
-	IsDebit        boolean `json:"is_debit"`
+	IsDebit        bool    `json:"is_debit"`
 	Amount         int     `json:"amount"`
 	TimeStamp      string  `json:"time_stamp"`
 }
@@ -73,7 +73,7 @@ type StockTransactionItem struct {
 	StockID      int     `json:"stock_id"`
 	WalletTxID   string  `json:"wallet_tx_id"`
 	OrderStatus  string  `json:"order_status"`
-	IsBuy        boolean `json:"is_buy"`
+	IsBuy        bool    `json:"is_buy"`
 	OrderType    string  `json:"order_type"`
 	StockPrice   float64 `json:"stock_price"`
 	Quantity     int     `json:"quantity"`
