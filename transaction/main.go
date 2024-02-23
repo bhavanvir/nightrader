@@ -210,6 +210,49 @@ func getStockPortfolio(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
+func getWalletTransactions(c *gin.Context) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+        SELECT wt.wallet_tx_id, st.stock_tx_id, wt.is_debit, wt.amount, wt.time_stamp
+        FROM wallet_transactions wt
+        JOIN stock_transactions st ON st.wallet_tx_id = wt.wallet_tx_id
+        WHERE wt.user_name = $1`, userName)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query wallet transactions", err)
+		return
+	}
+	defer rows.Close()
+
+	var wallet_transactions []WalletTransactionItem
+	for rows.Next() {
+		var item WalletTransactionItem
+		if err := rows.Scan(&item.WalletTxID, &item.StockTxID, &item.IsDebit, &item.Amount, &item.TimeStamp); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
+			return
+		}
+		wallet_transactions = append(wallet_transactions, item)
+	}
+
+	response := WalletTransactionResponse{
+		Success: true,
+		Data:    wallet_transactions,
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
 func getCookies(c *gin.Context) {
 	cookie := c.GetHeader("Authorization")
 
