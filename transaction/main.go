@@ -45,8 +45,8 @@ type WalletData struct {
 }
 
 type StockResponse struct {
-	Success bool       `json:"success"`
-	Data    WalletData `json:"data"`
+	Success bool        `json:"success"`
+	Data    []StockData `json:"data"`
 }
 
 type StockData struct {
@@ -176,7 +176,7 @@ func getWalletBalance(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-func getWalletBalance(c *gin.Context) {
+func getStockPrices(c *gin.Context) {
 	userName, _ := c.Get("user_name")
 
 	if userName == nil {
@@ -191,18 +191,28 @@ func getWalletBalance(c *gin.Context) {
 	}
 	defer db.Close()
 
-	var balance float64
-	err = db.QueryRow("SELECT wallet FROM users WHERE user_name = $1", userName).Scan(&balance)
+	rows, err := db.Query(`
+        SELECT stock_id, stock_name, current_price
+        FROM stocks`)
 	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query wallet balance", err)
+		handleError(c, http.StatusInternalServerError, "Failed to query stock prices", err)
 		return
 	}
+	defer rows.Close()
 
-	response := WalletBalanceResponse{
+	var stocks []StockData
+	for rows.Next() {
+		var item StockData
+		if err := rows.Scan(&item.StockID, &item.StockName, &item.CurrentPrice); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
+			return
+		}
+		stocks = append(stocks, item)
+	}
+
+	response := StockResponse{
 		Success: true,
-		Data: WalletData{
-			Balance: balance,
-		},
+		Data: stocks,
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
