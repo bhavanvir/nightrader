@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS stock_transactions (
     stock_id INTEGER REFERENCES stocks(stock_id),
     wallet_tx_id TEXT UNIQUE REFERENCES wallet_transactions(wallet_tx_id),
     order_status TEXT,
+    parent_tx_id TEXT UNIQUE,
     is_buy BOOLEAN,
     order_type TEXT,
     stock_price NUMERIC(12,2),
@@ -43,7 +44,10 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE OR REPLACE FUNCTION pass_encrypt() RETURNS TRIGGER AS $$
     BEGIN
-    NEW.user_pass = crypt(NEW.user_pass, gen_salt('md5'));
+    -- Check if user_pass is being updated or newly inserted
+    IF TG_OP = 'INSERT' OR NEW.user_pass IS DISTINCT FROM OLD.user_pass THEN
+        NEW.user_pass = crypt(NEW.user_pass, gen_salt('md5'));
+    END IF;
     RETURN NEW;
     END;
 $$ LANGUAGE plpgsql;

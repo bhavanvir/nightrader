@@ -4,11 +4,11 @@ post {{hostname}}/placeStockOrder
 # Sell Limit Order
 Content-Type: application/json
 
-{   "stock_id":1,
+{   "stock_id":3,
     "is_buy":false,
     "order_type":"LIMIT",
-    "quantity":1,
-    "price": 60
+    "quantity":1800,
+    "price": 1000
 }
 
 ###
@@ -17,9 +17,9 @@ post {{hostname}}/placeStockOrder
 # Buy Limit Order
 Content-Type: application/json
 
-{   "stock_id":1,
+{   "stock_id":3,
     "is_buy":true,
     "order_type":"LIMIT",
-    "quantity":10,
-    "price": 60
+    "quantity":1348,
+    "price": 20000
 }
