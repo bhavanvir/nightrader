@@ -5,7 +5,6 @@ package main
 // TODO: seperate into module: queue, buy, sell, matching
 
 import (
-	"errors"
 	"container/heap"
 	"database/sql"
 	"github.com/gin-contrib/cors"
@@ -173,9 +172,9 @@ func generateWalletID(userName string) string {
 
 func validateOrderType(request *PlaceStockOrderRequest) error {
     if request.OrderType == "MARKET" && request.Price != nil {
-        return errors.New("Price must be null for market orders")
+		return fmt.Errorf("Price must be null for market orders")
     } else if request.OrderType == "LIMIT" && request.Price == nil {
-        return errors.New("Price must not be null for limit orders")
+		return fmt.Errorf("Price must not be null for limit orders")
     }
     return nil
 } // validateOrderType
@@ -232,15 +231,19 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			return
 		}
 
-		if err := InsertWalletTransaction(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to insert wallet transaction", err)
-			return
-		}
+		// TODO: Fix db bug
+		// if err := setWalletTransaction(userName, order); err != nil {
+		// 	handleError(c, http.StatusInternalServerError,  "Buy Order setWalletTx Error: " + err.Error(), err)
+		// 	return
+		// }
 
-		if err := InsertStockTransaction(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
-			return
-		}
+		// TODO: Fix db bug
+		// if err := setStockTransaction(userName, order); err != nil {
+		// 	handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: " + err.Error(), err)
+		// 	return
+		// }
+
+		fmt.Println("\n === Test === \n")
 
 		book, bookerr := initializePriorityQueue(order)
 		if bookerr != nil {
@@ -257,10 +260,11 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			return
 		}
 
-		if err := InsertStockTransaction(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
-			return
-		}
+		// TODO: Fix db bug
+		// if err := setStockTransaction(userName, order); err != nil {
+		// 	handleError(c, http.StatusInternalServerError, "Sell Order setStockTx Error: " + err.Error(), err)
+		// 	return
+		// }
 
 		book, bookerr := initializePriorityQueue(order)
 		if bookerr != nil {
@@ -400,60 +404,6 @@ func HandleCancelStockTransaction(c *gin.Context) {
     handleError(c, http.StatusBadRequest, "Order not found", nil)
 }
 
-// Store completed wallet transactions in the database
-func setWalletTransaction(c *gin.Context, tx Order) {
-	userName, _ := c.Get("user_name")
-
-	if userName == nil {
-		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
-		return
-	}
-
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
-	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
-		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount)
-		VALUES ($1, $2, $3, $4)`, tx.WalletTxID, userName, true, tx.Quantity)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
-		return
-	}
-}
-
-// Store completed stock transactions in the database
-func setStockTransaction(c *gin.Context, tx Order) {
-	userName, _ := c.Get("user_name")
-
-	if userName == nil {
-		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
-		return
-	}
-
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
-	// Insert transaction to stock transactions
-	_, err = db.Exec(`
-		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity)
-	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, tx.StockTxID, userName, tx.StockID, tx.WalletTxID, tx.Status, tx.IsBuy, tx.OrderType, tx.Price, tx.Quantity)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
-		return
-	}
-}
-
 // Define the structure of the order book map
 type OrderBookMap struct {
 	OrderBooks map[int]*OrderBook // Map of stock ID to order book
@@ -573,13 +523,43 @@ func deductStockFromProfolio(userName string, order Order) error {
 	return nil
 }
 
-func InsertWalletTransaction(userName string, order Order) error {
-	fmt.Println("Inserting wallet transaction")
+// Store completed wallet transactions in the database
+func setWalletTransaction(userName string, tx Order) error {
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to insert stock transaction: %w", err)
+	}
+	defer db.Close()
+
+	// Insert transaction to wallet transactions
+	_, err = db.Exec(`
+		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
+		VALUES ($1, $2, $3, $4, $5)`, tx.WalletTxID, userName, true, tx.Quantity, tx.TimeStamp)
+	if err != nil {
+		return fmt.Errorf("Failed to commit transaction: %w", err)
+	}
 	return nil
 }
 
-func InsertStockTransaction(userName string, order Order) error {
-	fmt.Println("Inserting stock transaction")
+
+// Store completed stock transactions in the database
+func setStockTransaction(userName string, tx Order) error {
+	fmt.Println("Setting stock transaction")
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to insert stock transaction: %w", err)
+	}
+	defer db.Close()
+
+	// Insert transaction to stock transactions
+	_, err = db.Exec(`
+		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status,  parent_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
+	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, tx.WalletTxID, tx.Status, tx.ParentTxID,tx.IsBuy, tx.OrderType, tx.Price, tx.Quantity, tx.TimeStamp)
+	if err != nil {
+		return fmt.Errorf("Failed to commit transaction: %w", err) 
+	}
 	return nil
 }
 
