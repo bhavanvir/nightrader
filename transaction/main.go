@@ -44,6 +44,17 @@ type WalletData struct {
 	Balance float64 `json:"balance"`
 }
 
+type StockResponse struct {
+	Success bool       `json:"success"`
+	Data    WalletData `json:"data"`
+}
+
+type StockData struct {
+	StockID int          `json:"stock_id"`
+	StockName string     `json:"stock_name"`
+	CurrentPrice float64 `json:"current_price"`
+}
+
 type StockPortfolioItem struct {
 	StockID       int    `json:"stock_id"`
 	StockName     string `json:"stock_name"`
@@ -130,6 +141,37 @@ func addMoneyToWallet(c *gin.Context) {
 	response := PostResponse{
 		Success: true,
 		Data:    nil,
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
+func getWalletBalance(c *gin.Context) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	var balance float64
+	err = db.QueryRow("SELECT wallet FROM users WHERE user_name = $1", userName).Scan(&balance)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query wallet balance", err)
+		return
+	}
+
+	response := WalletBalanceResponse{
+		Success: true,
+		Data: WalletData{
+			Balance: balance,
+		},
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
