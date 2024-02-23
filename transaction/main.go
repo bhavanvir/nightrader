@@ -374,6 +374,7 @@ func main() {
 	router.GET("/getStockPortfolio", identification.Identification, getStockPortfolio)
 	router.GET("/getWalletTransactions", identification.Identification, getWalletTransactions)
 	router.GET("/getStockTransactions", identification.Identification, getStockTransactions)
+	router.GET("/getStockPrices", identification.Identification, getStockPrices)
 	router.GET("/eatCookies", getCookies)
 	router.Run(":5433")
 }
