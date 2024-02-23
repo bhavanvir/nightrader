@@ -4,7 +4,7 @@ post {{hostname}}/createStock
 Content-Type: application/json
 
 {
-    "stock_name": "Apple"
+    "stock_name": "AMD"
 }
 
 ###
@@ -13,6 +13,6 @@ post {{hostname}}/addStockToUser
 Content-Type: application/json
 
 {
-    "stock_id":"3",
-    "quantity":500
+    "stock_id":"2",
+    "quantity":1500
 }
