@@ -59,7 +59,7 @@ type WalletTransactionItem struct {
 	WalletTxID     string  `json:"wallet_tx_id"`
 	StockTxID      string  `json:"stock_tx_id"`
 	IsDebit        bool    `json:"is_debit"`
-	Amount         int     `json:"amount"`
+	Amount         float64 `json:"amount"`
 	TimeStamp      string  `json:"time_stamp"`
 }
 
@@ -269,7 +269,7 @@ func getStockTransactions(c *gin.Context) {
 	defer db.Close()
 
 	rows, err := db.Query(`
-        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity time_stamp
+        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity, time_stamp
         FROM stock_transactions
         WHERE user_name = $1`, userName)
 	if err != nil {
