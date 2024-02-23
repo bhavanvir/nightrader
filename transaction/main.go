@@ -54,6 +54,36 @@ type StockPortfolioResponse struct {
 	Data    []StockPortfolioItem `json:"data"`
 }
 
+type WalletTransactionItem struct {
+	WalletTxID     string  `json:"wallet_tx_id"`
+	StockTxID      string  `json:"stock_tx_id"`
+	IsDebit        boolean `json:"is_debit"`
+	Amount         int     `json:"amount"`
+	TimeStamp      string  `json:"time_stamp"`
+}
+
+type WalletTransactionResponse struct {
+	Success bool                    `json:"success"`
+	Data    []WalletTransactionItem `json:"data"`
+}
+
+type StockTransactionItem struct {
+	StockTxID    string  `json:"stock_tx_id"`
+	StockID      int     `json:"stock_id"`
+	WalletTxID   string  `json:"wallet_tx_id"`
+	OrderStatus  string  `json:"order_status"`
+	IsBuy        boolean `json:"is_buy"`
+	OrderType    string  `json:"order_type"`
+	StockPrice   float64 `json:"stock_price"`
+	Quantity     int     `json:"quantity"`
+	TimeStamp    string  `json:"time_stamp"`
+}
+
+type StockTransactionResponse struct {
+	Success bool                    `json:"success"`
+	Data    []StockTransactionItem  `json:"data"`
+}
+
 // Helper function to establish a database connection
 func openConnection() (*sql.DB, error) {
 	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
