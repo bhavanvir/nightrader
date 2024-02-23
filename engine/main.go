@@ -5,6 +5,7 @@ package main
 // TODO: seperate into module: queue, buy, sell, matching
 
 import (
+	"errors"
 	"container/heap"
 	"database/sql"
 	"github.com/gin-contrib/cors"
@@ -103,7 +104,12 @@ func openConnection() (*sql.DB, error) {
 /** standard heap interface **/
 func (pq PriorityQueue) Len() int { return len(pq.Order) }
 func (pq PriorityQueue) Swap(i, j int) { pq.Order[i], pq.Order[j] = pq.Order[j], pq.Order[i] }
-func (pq PriorityQueue) Less(i, j int) bool { return pq.LessFunc(pq.Order[i].Price, pq.Order[j].Price) }
+func (pq PriorityQueue) Less(i, j int) bool { 
+	if pq.Order[i].Price == pq.Order[j].Price {
+        return i < j
+    }
+	return pq.LessFunc(pq.Order[i].Price, pq.Order[j].Price) 
+}
 func highPriorityLess(i, j float64) bool { return i > j }
 func lowPriorityLess(i, j float64) bool { return i < j }
 
@@ -125,6 +131,18 @@ func (pq *PriorityQueue) Pop() interface{} {
 /** standard heap interface END **/
 
 // print the queue
+func printq(book *OrderBook) {
+	// Print the order book after adding the order
+	orderBookMap.mu.Lock()
+	defer orderBookMap.mu.Unlock()
+	fmt.Println("\n === Current Sell Queue === \n")
+	book.SellOrders.Printn()
+	fmt.Println("\n ====== \n")
+	fmt.Println("\n === Current Buy Queue === \n")
+	book.BuyOrders.Printn()
+	fmt.Println("\n ====== \n")
+}
+
 func (pq *PriorityQueue) Printn() {
 	temp := PriorityQueue{Order: make([]*Order, len(pq.Order)), LessFunc: pq.LessFunc}
 	copy(temp.Order, pq.Order)
@@ -153,32 +171,20 @@ func generateWalletID(userName string) string {
 	return uuid.New().String()
 }
 
-func HandlePlaceStockOrder(c *gin.Context) {
-	userName, exists := c.Get("user_name")
-	if !exists || userName == nil {
-		handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
-		return
-	}
+func validateOrderType(request *PlaceStockOrderRequest) error {
+    if request.OrderType == "MARKET" && request.Price != nil {
+        return errors.New("Price must be null for market orders")
+    } else if request.OrderType == "LIMIT" && request.Price == nil {
+        return errors.New("Price must not be null for limit orders")
+    }
+    return nil
+} // validateOrderType
 
-	var request PlaceStockOrderRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
-		handleError(c, http.StatusBadRequest, "Invalid request body", err)
-		return
-	}
-
-	if request.OrderType == "MARKET" && request.Price != nil {
-		handleError(c, http.StatusBadRequest, "Price must be null for market orders", nil)
-		return
-	} else if request.OrderType == "LIMIT" && request.Price == nil {
-		handleError(c, http.StatusBadRequest, "Price must not be null for limit orders", nil)
-		return
-	}
-
-	// Create a new order
+func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error) {
 	order := Order{
 		StockTxID:  generateOrderID(),
 		StockID:    request.StockID,
-		WalletTxID: generateWalletID(userName.(string)),
+		WalletTxID: generateWalletID(userName),
 		ParentTxID: nil,
 		IsBuy:      request.IsBuy != nil && *request.IsBuy,
 		OrderType:  request.OrderType,
@@ -187,55 +193,88 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		TimeStamp:  time.Now().Format(time.RFC3339Nano),
 		Status:     "IN_PROGRESS",
 	}
+	return order, nil
+} // createOrder
+
+func HandlePlaceStockOrder(c *gin.Context) {
+	user_name, exists := c.Get("user_name")
+	if !exists || user_name == nil {
+		handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+
+	userName, ok := user_name.(string)
+	if !ok {
+		handleError(c, http.StatusBadRequest, "Invalid user name type", nil)
+		return
+	}
+
+	var request PlaceStockOrderRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		handleError(c, http.StatusBadRequest, err.Error(), err)
+		return
+	}
+
+	if err := validateOrderType(&request); err != nil {
+        handleError(c, http.StatusBadRequest, err.Error(), nil)
+        return
+    }
+
+	order, e := createOrder(&request, userName)
+	if e != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to create order", e)
+		return
+	}
 
 	if order.IsBuy {
-		if err := deductMoneyFromWallet(userName.(string), order.WalletTxID, order.Quantity, order.Price); err == nil {
-			// Handle the error here
-			handleError(c, http.StatusInternalServerError, "Failed to deduct money", err)
+		if err := deductMoneyFromWallet(userName, order); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
 			return
 		}
-	} else {
-		fmt.Println("Sell Order")
-	}
 
-	// Add the order to the order book corresponding to the stock ID
-	orderBookMap.mu.Lock()
-	book, ok := orderBookMap.OrderBooks[order.StockID]
-	if !ok {
-		// If the order book for this stock does not exist, create a new one
-		book = &OrderBook{
-			BuyOrders:  PriorityQueue{Order: make([]*Order, 0), LessFunc: highPriorityLess},
-			SellOrders: PriorityQueue{Order: make([]*Order, 0), LessFunc: lowPriorityLess},
+		if err := InsertWalletTransaction(userName, order); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to insert wallet transaction", err)
+			return
 		}
-		orderBookMap.OrderBooks[order.StockID] = book
-	}
-	orderBookMap.mu.Unlock()
 
-	// Add the order to the appropriate queue in the order book
-	book.mu.Lock()
-	if order.IsBuy {
-		heap.Push(&book.BuyOrders, &order)
+		if err := InsertStockTransaction(userName, order); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to insert stock transaction", err)
+			return
+		}
+
+		book, bookerr := initializePriorityQueue(order)
+		if bookerr != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
+			return
+		}
+
+		trade := processBuyOrder(book, order)
+
+		fmt.Println("====")
+		fmt.Println(trade)
+		fmt.Println("====")
+		printq(book)
 	} else {
-		heap.Push(&book.SellOrders, &order)
+		book, bookerr := initializePriorityQueue(order)
+		if bookerr != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
+			return
+		}
+
+		trade := processSellOrder(book, order)
+
+		fmt.Println("====")
+		fmt.Println(trade)
+		fmt.Println("====")
+		printq(book)
 	}
-	book.mu.Unlock()
 
 	// Update the user's stock quantity in the database
-	err := updateUserStockQuantity(userName.(string), order.StockID, order.Quantity, order.IsBuy)
+	err := updateUserStockQuantity(userName, order.StockID, order.Quantity, order.IsBuy)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to update user stock quantity", err)
 		return
 	}
-
-	// Print the order book after adding the order
-	orderBookMap.mu.Lock()
-	defer orderBookMap.mu.Unlock()
-	fmt.Println("\n === Current Sell Queue === \n")
-	book.SellOrders.Printn()
-	fmt.Println("\n ====== \n")
-	fmt.Println("\n === Current Buy Queue === \n")
-	book.BuyOrders.Printn()
-	fmt.Println("\n ====== \n")
 
 	response := PlaceStockOrderResponse{
 		Success: true,
@@ -368,13 +407,157 @@ var orderBookMap = OrderBookMap{
 	OrderBooks: make(map[int]*OrderBook),
 }
 
-/** BUY Order **/
-func deductMoneyFromWallet(userName string, walletTxID string, quantity int, price float64) error {
+/** === BUY Order === **/
+func deductMoneyFromWallet(userName string, order Order) error {
 	fmt.Println("Deducting money from wallet")
 	return nil
 }
 
-/** END BUY Order **/
+
+func InsertWalletTransaction(userName string, order Order) error {
+	fmt.Println("Inserting wallet transaction")
+	return nil
+}
+
+func InsertStockTransaction(userName string, order Order) error {
+	fmt.Println("Inserting stock transaction")
+	return nil
+}
+
+func processBuyOrder(book *OrderBook, order Order) (trade *Order) {	
+	// If the buy order is a market order, match it with the lowest sell order
+	if order.OrderType == "MARKET" {
+		// trade = matchMarketBuyOrder(book, order)
+	} else {
+		trade = matchLimitBuyOrder(book, order)
+	}
+	return trade
+}
+
+func matchLimitBuyOrder(book *OrderBook, order Order) (trade *Order) {
+	book.mu.Lock()
+	defer book.mu.Unlock()
+
+	// If the buy order is a limit order, match it with the lowest sell order that is less than or equal to the buy order price
+	for order.Quantity > 0 && book.SellOrders.Len() > 0 {
+		fmt.Println("Try matching limit buy order:")
+		// Get the lowest sell order
+		lowestSellOrder := heap.Pop(&book.SellOrders).(*Order)
+
+		// If the lowest sell order price is less than or equal to the buy order price, execute the trade
+		if lowestSellOrder.Price <= order.Price {
+			trade = executeLimitTrade(book, &order, lowestSellOrder)
+			if trade != nil {
+				return trade
+			}
+			fmt.Println("Trade executed")
+			fmt.Println("Buy Order: ", order)
+			fmt.Println("Sell Order: ", lowestSellOrder)
+			return lowestSellOrder
+		} else {
+			// If the lowest sell order price is greater than the buy order price, put it back in the sell queue
+			fmt.Println("No match found, putting back in the buy queue")
+			heap.Push(&book.SellOrders, lowestSellOrder)
+			break
+		}
+	}
+	
+
+	// If no match is found or partial fulfill, add the buy order to the buy queue
+	heap.Push(&book.BuyOrders, &order)
+	return nil
+}
+
+
+/** === END BUY Order === **/
+
+
+/** === SELL Order === **/
+func processSellOrder(book *OrderBook, order Order) (trade *Order) {
+	// If the sell order is a market order, match it with the highest buy order
+	if order.OrderType == "MARKET" {
+		// trade = matchMarketSellOrder(book, order)
+	} else {
+		trade = matchLimitSellOrder(book, order)
+	}
+	return trade
+}
+
+func matchLimitSellOrder(book *OrderBook, order Order) (trade *Order) {
+	book.mu.Lock()
+	defer book.mu.Unlock()
+	for book.BuyOrders.Len() > 0 {}
+
+	// If the sell order is a limit order, match it with the highest buy order that is greater than or equal to the sell order price
+	for order.Quantity > 0 && book.BuyOrders.Len() > 0 {
+		fmt.Println("Try matching limit sell order:")
+		// Get the highest buy order
+		highestBuyOrder := heap.Pop(&book.BuyOrders).(*Order)
+
+		// If the highest buy order price is greater than or equal to the sell order price, execute the trade
+		if highestBuyOrder.Price >= order.Price {
+			trade = executeLimitTrade(book, highestBuyOrder, &order)
+			if trade != nil {
+				return trade
+			}
+			fmt.Println("Trade executed")
+			fmt.Println("Buy Order: ", highestBuyOrder)
+			fmt.Println("Sell Order: ", order)
+			return highestBuyOrder
+		} else {
+			// If the highest buy order price is less than the sell order price, put it back in the buy queue
+			fmt.Println("No match found, putting back in the buy queue")
+			heap.Push(&book.BuyOrders, highestBuyOrder)
+			break
+		}
+	}
+
+	// If no match is found, add the sell order to the sell queue
+	heap.Push(&book.SellOrders, &order)
+
+	return nil
+}
+/** === END SELL Order === **/
+
+/** === BUY/SELL Order === **/
+
+func executeLimitTrade(book *OrderBook, buyOrder *Order, sellOrder *Order) (trade *Order) {
+	tradeQuantity := min(buyOrder.Quantity, sellOrder.Quantity)
+	if buyOrder.Quantity > sellOrder.Quantity {
+		// execute partial trade for buy order and complete trade for sell order
+		buyOrder.Quantity -= tradeQuantity
+		heap.Push(&book.BuyOrders, buyOrder)
+
+	} else if buyOrder.Quantity < sellOrder.Quantity  {
+		// execute partial trade for sell order and complete trade for buy order
+		sellOrder.Quantity -= tradeQuantity
+		heap.Push(&book.SellOrders, sellOrder)
+	} else {
+		// execute complete trade for both buy and sell orders
+		buyOrder.Quantity = 0
+		sellOrder.Quantity = 0
+	}
+
+	return trade
+}
+
+func initializePriorityQueue(order Order) (*OrderBook, error) {
+	// Add the order to the order book corresponding to the stock ID
+	orderBookMap.mu.Lock()
+	defer orderBookMap.mu.Unlock()
+	book, ok := orderBookMap.OrderBooks[order.StockID]
+	if !ok {
+		// If the order book for this stock does not exist, create a new one
+		book = &OrderBook{
+			BuyOrders:  PriorityQueue{Order: make([]*Order, 0), LessFunc: highPriorityLess},
+			SellOrders: PriorityQueue{Order: make([]*Order, 0), LessFunc: lowPriorityLess},
+		}
+		orderBookMap.OrderBooks[order.StockID] = book
+	}
+	return book, nil
+}
+
+/** === END BUY/SELL Order === **/
 
 func main() {
 	router := gin.Default()
