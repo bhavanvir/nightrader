@@ -114,7 +114,6 @@ func postLogin(c *gin.Context) {
 
 	// Check password for the username
 	var correctPassword bool
-	fmt.Println(login.Password)
 	
 	err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
 	if err != nil {
