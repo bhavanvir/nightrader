@@ -120,7 +120,12 @@ func addStockToUser(c *gin.Context) {
     fmt.Println("ID:", req.StockID)
     fmt.Println("quantity:", req.Quantity)
     // Insert stock into user_stocks table
-    _, err = db.Exec("INSERT INTO user_stocks (user_name, stock_id, quantity) VALUES ($1, $2, $3)", userName, req.StockID, req.Quantity)
+    _, err = db.Exec(`
+		INSERT INTO user_stocks (user_name, stock_id, quantity)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (user_name, stock_id)
+		DO UPDATE SET quantity = user_stocks.quantity + EXCLUDED.quantity;
+	`, userName, req.StockID, req.Quantity)
     if err != nil {
         handleError(c, http.StatusInternalServerError, "Failed to add stock to user", err)
         return
