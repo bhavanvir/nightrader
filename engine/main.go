@@ -166,7 +166,6 @@ func generateOrderID() string {
 	
 // Generate a unique wallet ID for the user
 func generateWalletID(userName string) string {
-	// return uuid.NewSHA1(uuid.Must(uuid.NewRandom()), []byte(userName)).String()
 	return uuid.New().String()
 }
 
