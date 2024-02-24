@@ -573,7 +573,7 @@ func updateWallet(userName string, order Order) error {
 	defer db.Close()
 
 	// Calculate total to be added or deducted
-	total := order.Price * order.Quantity
+	total := order.Price * float64(order.Quantity)
 	if order.IsBuy {
 		total := total * (-1) // Reduce funds if buying
 	}
