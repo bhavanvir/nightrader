@@ -559,7 +559,7 @@ func deductStockFromPortfolio(userName string, order Order) error {
 		total := total * (-1) // Reduce stocks if selling
 	}
 
-	// Update the user's wallet
+	// Update the user's stocks
 	_, err = db.Exec(`
 		UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
 	if err != nil {
