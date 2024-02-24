@@ -228,6 +228,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	defer book.mu.Unlock()
 
 	if order.IsBuy {
+		// TODO: Fix Bug Needed
 		if err := deductMoneyFromWallet(userName, order); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
 			return
@@ -247,6 +248,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 
 		printq(book)
 	} else {
+		// TODO: Fix Bug Needed
 		if err := deductStockFromPortfolio(userName, order); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to deduct stock from user's portfolio", err)
 			return
@@ -512,7 +514,7 @@ func deductMoneyFromWallet(userName string, order Order) error {
 	defer db.Close()
 
 	// Calculate total to be added or deducted
-	total := order.Price * float64(order.Quantity)
+	total := *order.Price * float64(order.Quantity)
 	if order.IsBuy {
 		total = total * (-1) // Reduce funds if buying
 	}
@@ -529,6 +531,7 @@ func deductMoneyFromWallet(userName string, order Order) error {
 // TODO: implimnet addMoneyToWallet
 func addMoneyToWallet(userName string, order Order) error {
 	fmt.Println("Adding money to wallet")
+	return nil
 }
 
 // TODO: Revert to original implimentation
@@ -577,6 +580,7 @@ func deductStockFromPortfolio(userName string, order Order) error {
 // TODO: implimnet addStockToPortfolio
 func addStockToPortfolio(userName string, order Order) error {
 	fmt.Println("Adding stock to portfolio")
+	return nil
 }
 
 // Store completed wallet transactions in the database
