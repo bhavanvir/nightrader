@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	host     = "database"
-	// host = "localhost" // for local testing
+	// host     = "database"
+	host = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -44,6 +44,17 @@ type WalletData struct {
 	Balance float64 `json:"balance"`
 }
 
+type StockResponse struct {
+	Success bool        `json:"success"`
+	Data    []StockData `json:"data"`
+}
+
+type StockData struct {
+	StockID int          `json:"stock_id"`
+	StockName string     `json:"stock_name"`
+	CurrentPrice float64 `json:"current_price"`
+}
+
 type StockPortfolioItem struct {
 	StockID       int    `json:"stock_id"`
 	StockName     string `json:"stock_name"`
@@ -53,6 +64,36 @@ type StockPortfolioItem struct {
 type StockPortfolioResponse struct {
 	Success bool                 `json:"success"`
 	Data    []StockPortfolioItem `json:"data"`
+}
+
+type WalletTransactionItem struct {
+	WalletTxID     string  `json:"wallet_tx_id"`
+	StockTxID      string  `json:"stock_tx_id"`
+	IsDebit        bool    `json:"is_debit"`
+	Amount         float64 `json:"amount"`
+	TimeStamp      string  `json:"time_stamp"`
+}
+
+type WalletTransactionResponse struct {
+	Success bool                    `json:"success"`
+	Data    []WalletTransactionItem `json:"data"`
+}
+
+type StockTransactionItem struct {
+	StockTxID    string  `json:"stock_tx_id"`
+	StockID      int     `json:"stock_id"`
+	WalletTxID   string  `json:"wallet_tx_id"`
+	OrderStatus  string  `json:"order_status"`
+	IsBuy        bool    `json:"is_buy"`
+	OrderType    string  `json:"order_type"`
+	StockPrice   float64 `json:"stock_price"`
+	Quantity     int     `json:"quantity"`
+	TimeStamp    string  `json:"time_stamp"`
+}
+
+type StockTransactionResponse struct {
+	Success bool                    `json:"success"`
+	Data    []StockTransactionItem  `json:"data"`
 }
 
 // Helper function to establish a database connection
@@ -135,6 +176,47 @@ func getWalletBalance(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
+func getStockPrices(c *gin.Context) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+        SELECT stock_id, stock_name, current_price
+        FROM stocks`)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query stock prices", err)
+		return
+	}
+	defer rows.Close()
+
+	var stocks []StockData
+	for rows.Next() {
+		var item StockData
+		if err := rows.Scan(&item.StockID, &item.StockName, &item.CurrentPrice); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
+			return
+		}
+		stocks = append(stocks, item)
+	}
+
+	response := StockResponse{
+		Success: true,
+		Data: stocks,
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
 func getStockPortfolio(c *gin.Context) {
 	userName, _ := c.Get("user_name")
 
@@ -180,6 +262,91 @@ func getStockPortfolio(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
+func getWalletTransactions(c *gin.Context) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+        SELECT wt.wallet_tx_id, st.stock_tx_id, wt.is_debit, wt.amount, wt.time_stamp
+        FROM wallet_transactions wt
+        JOIN stock_transactions st ON st.wallet_tx_id = wt.wallet_tx_id
+        WHERE wt.user_name = $1`, userName)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query wallet transactions", err)
+		return
+	}
+	defer rows.Close()
+
+	var wallet_transactions []WalletTransactionItem
+	for rows.Next() {
+		var item WalletTransactionItem
+		if err := rows.Scan(&item.WalletTxID, &item.StockTxID, &item.IsDebit, &item.Amount, &item.TimeStamp); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
+			return
+		}
+		wallet_transactions = append(wallet_transactions, item)
+	}
+
+	response := WalletTransactionResponse{
+		Success: true,
+		Data:    wallet_transactions,
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
+func getStockTransactions(c *gin.Context) {
+	userName, _ := c.Get("user_name")
+
+	if userName == nil {
+		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
+		return
+	}
+
+	db, err := openConnection()
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity, time_stamp
+        FROM stock_transactions
+        WHERE user_name = $1`, userName)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to query stock transactions", err)
+		return
+	}
+	defer rows.Close()
+
+	var stock_transactions []StockTransactionItem
+	for rows.Next() {
+		var item StockTransactionItem
+		if err := rows.Scan(&item.StockTxID, &item.StockID, &item.WalletTxID, &item.OrderStatus, &item.IsBuy, &item.OrderType, &item.StockPrice, &item.Quantity, &item.TimeStamp); err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
+			return
+		}
+		stock_transactions = append(stock_transactions, item)
+	}
+
+	response := StockTransactionResponse{
+		Success: true,
+		Data:    stock_transactions,
+	}
+	c.IndentedJSON(http.StatusOK, response)
+}
+
 func getCookies(c *gin.Context) {
 	cookie := c.GetHeader("Authorization")
 
@@ -205,6 +372,9 @@ func main() {
 	router.POST("/addMoneyToWallet", identification.Identification, addMoneyToWallet)
 	router.GET("/getWalletBalance", identification.Identification, getWalletBalance)
 	router.GET("/getStockPortfolio", identification.Identification, getStockPortfolio)
+	router.GET("/getWalletTransactions", identification.Identification, getWalletTransactions)
+	router.GET("/getStockTransactions", identification.Identification, getStockTransactions)
+	router.GET("/getStockPrices", identification.Identification, getStockPrices)
 	router.GET("/eatCookies", getCookies)
 	router.Run(":5433")
 }

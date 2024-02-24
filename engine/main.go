@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	host     = "database"
-	// host     = "localhost" // for local testing
+	// host     = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -231,19 +231,15 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			return
 		}
 
-		// TODO: Fix db bug
-		// if err := setWalletTransaction(userName, order); err != nil {
-		// 	handleError(c, http.StatusInternalServerError,  "Buy Order setWalletTx Error: " + err.Error(), err)
-		// 	return
-		// }
+		if err := setWalletTransaction(userName, order); err != nil {
+			handleError(c, http.StatusInternalServerError,  "Buy Order setWalletTx Error: " + err.Error(), err)
+			return
+		}
 
-		// TODO: Fix db bug
-		// if err := setStockTransaction(userName, order); err != nil {
-		// 	handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: " + err.Error(), err)
-		// 	return
-		// }
-
-		fmt.Println("\n === Test === \n")
+		if err := setStockTransaction(userName, order); err != nil {
+			handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: " + err.Error(), err)
+			return
+		}
 
 		book, bookerr := initializePriorityQueue(order)
 		if bookerr != nil {
@@ -260,11 +256,10 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			return
 		}
 
-		// TODO: Fix db bug
-		// if err := setStockTransaction(userName, order); err != nil {
-		// 	handleError(c, http.StatusInternalServerError, "Sell Order setStockTx Error: " + err.Error(), err)
-		// 	return
-		// }
+		if err := setStockTransaction(userName, order); err != nil {
+			handleError(c, http.StatusInternalServerError, "Sell Order setStockTx Error: " + err.Error(), err)
+			return
+		}
 
 		book, bookerr := initializePriorityQueue(order)
 		if bookerr != nil {
@@ -535,7 +530,7 @@ func setWalletTransaction(userName string, tx Order) error {
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
 		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
-		VALUES ($1, $2, $3, $4, $5)`, tx.WalletTxID, userName, true, tx.Quantity, tx.TimeStamp)
+		VALUES ($1, $2, $3, $4, $5)`, tx.WalletTxID, userName, true, tx.Price, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
