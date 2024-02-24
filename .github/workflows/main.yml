@@ -26,10 +26,7 @@ jobs:
         run: |
           docker-compose up --build -d \
           authentication \
-          database \
-          transaction \
-          engine \
-          setup
+          database
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
