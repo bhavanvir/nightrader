@@ -17,8 +17,8 @@ import (
 var secretKey = []byte("secret")
 
 const (
-	// host     = "database"
-	host     = "localhost" // for local testing
+	host     = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -114,6 +114,7 @@ func postLogin(c *gin.Context) {
 
 	// Check password for the username
 	var correctPassword bool
+	
 	err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)

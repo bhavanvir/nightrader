@@ -44,7 +44,10 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE OR REPLACE FUNCTION pass_encrypt() RETURNS TRIGGER AS $$
     BEGIN
-    NEW.user_pass = crypt(NEW.user_pass, gen_salt('md5'));
+    -- Check if user_pass is being updated or newly inserted
+    IF TG_OP = 'INSERT' OR NEW.user_pass IS DISTINCT FROM OLD.user_pass THEN
+        NEW.user_pass = crypt(NEW.user_pass, gen_salt('md5'));
+    END IF;
     RETURN NEW;
     END;
 $$ LANGUAGE plpgsql;
