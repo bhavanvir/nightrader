@@ -1,23 +1,23 @@
 package main
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
+	"github.com/Poomon001/day-trading-package/identification"
+	"github.com/Poomon001/day-trading-package/tester"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	"net/http"
 	"time"
-	"github.com/Poomon001/day-trading-package/identification"
-	"github.com/Poomon001/day-trading-package/tester"
-	_ "github.com/lib/pq"
 )
 
 // TODO: need env to store secret key
 var secretKey = []byte("secret")
 
 const (
-	host     = "database"
+	host = "database"
 	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
@@ -44,8 +44,8 @@ type Login struct {
 }
 
 type Response struct {
-	Success bool    `json:"success"`
-	Data    *string `json:"data"`
+	Success bool                   `json:"success"`
+	Data    map[string]interface{} `json:"data"`
 }
 
 type Claims struct {
@@ -65,7 +65,7 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 
 func createToken(name string, username string, expirationTime time.Time) (string, error) {
 	claims := &Claims{
-		Name: name,
+		Name:     name,
 		UserName: username,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
@@ -98,7 +98,7 @@ func postLogin(c *gin.Context) {
 	}
 	defer db.Close()
 
-    fmt.Println("Successfully connected to the database")
+	fmt.Println("Successfully connected to the database")
 
 	// Check if the username exists in DB
 	var count int
@@ -114,7 +114,7 @@ func postLogin(c *gin.Context) {
 
 	// Check password for the username
 	var correctPassword bool
-	
+
 	err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
@@ -145,11 +145,10 @@ func postLogin(c *gin.Context) {
 	// Create a cookie session
 	createSession(c, token, minutes)
 
-	// TODO: correct response
 	// Respond
 	loginResponse := Response{
 		Success: true,
-		Data:    &token,
+		Data:    map[string]interface{}{"token": token},
 	}
 
 	c.IndentedJSON(http.StatusOK, loginResponse)
@@ -165,7 +164,7 @@ func postRegister(c *gin.Context) {
 	}
 	defer db.Close()
 
-    fmt.Println("Successfully connected to the database")
+	fmt.Println("Successfully connected to the database")
 
 	var newRegister Register
 
@@ -185,7 +184,7 @@ func postRegister(c *gin.Context) {
 		handleError(c, http.StatusBadRequest, "Username already exists", nil)
 		return
 	}
-	
+
 	// Insert new user to DB
 	_, err = db.Exec("INSERT INTO users (user_name, name, user_pass) VALUES ($1, $2, $3)", newRegister.UserName, newRegister.Name, newRegister.Password)
 	if err != nil {
@@ -196,7 +195,7 @@ func postRegister(c *gin.Context) {
 	// Format JSON response
 	successResponse := Response{
 		Success: true,
-		Data:	nil,
+		Data:    nil,
 	}
 
 	c.IndentedJSON(http.StatusCreated, successResponse)
@@ -211,9 +210,9 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
-	
+
 	identification.Test()
-	tester.TestUser() // example how to use function from a package 
+	tester.TestUser()                                               // example how to use function from a package
 	router.POST("/login", identification.TestMiddleware, postLogin) // example how to use middlware from a package
 	router.POST("/register", postRegister)
 	router.Run(":8888")
