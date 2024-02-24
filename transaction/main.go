@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	host     = "database"
+	host = "database"
 	// host = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
@@ -50,8 +50,8 @@ type StockResponse struct {
 }
 
 type StockData struct {
-	StockID int          `json:"stock_id"`
-	StockName string     `json:"stock_name"`
+	StockID      int     `json:"stock_id"`
+	StockName    string  `json:"stock_name"`
 	CurrentPrice float64 `json:"current_price"`
 }
 
@@ -67,11 +67,11 @@ type StockPortfolioResponse struct {
 }
 
 type WalletTransactionItem struct {
-	WalletTxID     string  `json:"wallet_tx_id"`
-	StockTxID      string  `json:"stock_tx_id"`
-	IsDebit        bool    `json:"is_debit"`
-	Amount         float64 `json:"amount"`
-	TimeStamp      string  `json:"time_stamp"`
+	WalletTxID string  `json:"wallet_tx_id"`
+	StockTxID  string  `json:"stock_tx_id"`
+	IsDebit    bool    `json:"is_debit"`
+	Amount     float64 `json:"amount"`
+	TimeStamp  string  `json:"time_stamp"`
 }
 
 type WalletTransactionResponse struct {
@@ -80,20 +80,20 @@ type WalletTransactionResponse struct {
 }
 
 type StockTransactionItem struct {
-	StockTxID    string  `json:"stock_tx_id"`
-	StockID      int     `json:"stock_id"`
-	WalletTxID   string  `json:"wallet_tx_id"`
-	OrderStatus  string  `json:"order_status"`
-	IsBuy        bool    `json:"is_buy"`
-	OrderType    string  `json:"order_type"`
-	StockPrice   float64 `json:"stock_price"`
-	Quantity     int     `json:"quantity"`
-	TimeStamp    string  `json:"time_stamp"`
+	StockTxID   string  `json:"stock_tx_id"`
+	StockID     int     `json:"stock_id"`
+	WalletTxID  string  `json:"wallet_tx_id"`
+	OrderStatus string  `json:"order_status"`
+	IsBuy       bool    `json:"is_buy"`
+	OrderType   string  `json:"order_type"`
+	StockPrice  float64 `json:"stock_price"`
+	Quantity    int     `json:"quantity"`
+	TimeStamp   string  `json:"time_stamp"`
 }
 
 type StockTransactionResponse struct {
-	Success bool                    `json:"success"`
-	Data    []StockTransactionItem  `json:"data"`
+	Success bool                   `json:"success"`
+	Data    []StockTransactionItem `json:"data"`
 }
 
 // Helper function to establish a database connection
@@ -122,6 +122,11 @@ func addMoneyToWallet(c *gin.Context) {
 	var addMoney AddMoney
 	if err := c.ShouldBindJSON(&addMoney); err != nil {
 		handleError(c, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
+
+	if addMoney.Amount <= 0 {
+		handleError(c, http.StatusBadRequest, "Invalid amount", nil)
 		return
 	}
 
@@ -212,7 +217,7 @@ func getStockPrices(c *gin.Context) {
 
 	response := StockResponse{
 		Success: true,
-		Data: stocks,
+		Data:    stocks,
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
@@ -347,17 +352,6 @@ func getStockTransactions(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 }
 
-func getCookies(c *gin.Context) {
-	cookie := c.GetHeader("Authorization")
-
-	if cookie == "" {
-		handleError(c, http.StatusBadRequest, "Authorization token missing", nil)
-		return
-	}
-
-	c.String(http.StatusOK, "Authorization token: "+cookie)
-}
-
 func main() {
 	router := gin.Default()
 
@@ -375,6 +369,5 @@ func main() {
 	router.GET("/getWalletTransactions", identification.Identification, getWalletTransactions)
 	router.GET("/getStockTransactions", identification.Identification, getStockTransactions)
 	router.GET("/getStockPrices", identification.Identification, getStockPrices)
-	router.GET("/eatCookies", getCookies)
 	router.Run(":5433")
 }
