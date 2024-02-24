@@ -575,7 +575,7 @@ func updateWallet(userName string, order Order) error {
 	// Calculate total to be added or deducted
 	total := order.Price * float64(order.Quantity)
 	if order.IsBuy {
-		total := total * (-1) // Reduce funds if buying
+		total = total * (-1) // Reduce funds if buying
 	}
 
 	// Update the user's wallet
@@ -600,7 +600,7 @@ func updateStockPortfolio(userName string, order Order) error {
 	// Calculate total to be added or deducted
 	total := order.Quantity
 	if !order.IsBuy {
-		total := total * (-1) // Reduce stocks if selling
+		total = total * (-1) // Reduce stocks if selling
 	}
 
 	// Update the user's stocks
