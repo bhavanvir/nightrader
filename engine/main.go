@@ -225,69 +225,111 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		return
 	}
 
-	if order.IsBuy {
-		if err := deductMoneyFromWallet(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
-			return
-		}
+	// Feb 24/24 - Removed unnecessary branching; now single path
+	// ----------------------------------------------------------
 
-		// TODO: Fix db bug
-		if err := setWalletTransaction(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError,  "Buy Order setWalletTx Error: " + err.Error(), err)
-			return
-		}
-
-		// TODO: Fix db bug
-		if err := setStockTransaction(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: " + err.Error(), err)
-			return
-		}
-
-		fmt.Println("\n === Test === \n")
-
-		book, bookerr := initializePriorityQueue(order)
-		if bookerr != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
-			return
-		}
-
-		processOrder(book, order)
-
-		printq(book)
-	} else {
-		if err := deductStockFromProfolio(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to deduct stock from user's portfolio", err)
-			return
-		}
-
-		if err := setWalletTransaction(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError,  "Sell Order setWalletTx Error: " + err.Error(), err)
-			return
-		}
-
-		// TODO: Fix db bug
-		if err := setStockTransaction(userName, order); err != nil {
-			handleError(c, http.StatusInternalServerError, "Sell Order setStockTx Error: " + err.Error(), err)
-			return
-		}
-
-		book, bookerr := initializePriorityQueue(order)
-		if bookerr != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
-			return
-		}
-
-		processOrder(book, order)
-
-		printq(book)
-	}
-
-	// Update the user's stock quantity in the database
-	err := updateUserStockQuantity(userName, order.StockID, order.Quantity, order.IsBuy)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to update user stock quantity", err)
+	if err := updateWallet(userName, order); err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
 		return
 	}
+
+	if err := updateStockPortfolio(userName, order); err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to deduct stock from user's portfolio", err)
+		return
+	}
+
+	// TODO: Fix db bug FIXED Feb 22/24
+	if err := setWalletTransaction(userName, order); err != nil {
+		handleError(c, http.StatusInternalServerError,  "Buy Order setWalletTx Error: " + err.Error(), err)
+		return
+	}
+
+	// TODO: Fix db bug FIXED Feb 22/24
+	if err := setStockTransaction(userName, order); err != nil {
+		handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: " + err.Error(), err)
+		return
+	}
+
+	//fmt.Println("\n === Test === \n")
+
+	book, bookerr := initializePriorityQueue(order)
+	if bookerr != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
+		return
+	}
+
+	processOrder(book, order)
+
+	printq(book)
+
+	// Feb 24/24 - Condensed this part into a single branch that handles both buy and sell orders
+	// -------------------------------------------------------------------------------------------
+
+	// if order.IsBuy {
+	// 	if err := updateWallet(userName, order); err != nil {
+	// 		handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
+	// 		return
+	// 	}
+
+	// 	// TODO: Fix db bug FIXED Feb 22/24
+	// 	if err := setWalletTransaction(userName, order); err != nil {
+	// 		handleError(c, http.StatusInternalServerError,  "Buy Order setWalletTx Error: " + err.Error(), err)
+	// 		return
+	// 	}
+
+	// 	// TODO: Fix db bug FIXED Feb 22/24
+	// 	if err := setStockTransaction(userName, order); err != nil {
+	// 		handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: " + err.Error(), err)
+	// 		return
+	// 	}
+
+	// 	fmt.Println("\n === Test === \n")
+
+	// 	book, bookerr := initializePriorityQueue(order)
+	// 	if bookerr != nil {
+	// 		handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
+	// 		return
+	// 	}
+
+	// 	processOrder(book, order)
+
+	// 	printq(book)
+	// } else {
+	// 	if err := updateStockPortfolio(userName, order); err != nil {
+	// 		handleError(c, http.StatusInternalServerError, "Failed to deduct stock from user's portfolio", err)
+	// 		return
+	// 	}
+
+	// 	if err := setWalletTransaction(userName, order); err != nil {
+	// 		handleError(c, http.StatusInternalServerError,  "Sell Order setWalletTx Error: " + err.Error(), err)
+	// 		return
+	// 	}
+
+	// 	// TODO: Fix db bug - FIXED Feb 22/24
+	// 	if err := setStockTransaction(userName, order); err != nil {
+	// 		handleError(c, http.StatusInternalServerError, "Sell Order setStockTx Error: " + err.Error(), err)
+	// 		return
+	// 	}
+
+	// 	book, bookerr := initializePriorityQueue(order)
+	// 	if bookerr != nil {
+	// 		handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
+	// 		return
+	// 	}
+
+	// 	processOrder(book, order)
+
+	// 	printq(book)
+	// }
+
+	// Feb 24/24 - Replaced with func updateStockPortfolio()
+	// ------------------------------------------------------
+	// Update the user's stock quantity in the database
+	// err := updateUserStockQuantity(userName, order.StockID, order.Quantity, order.IsBuy)
+	// if err != nil {
+	// 	handleError(c, http.StatusInternalServerError, "Failed to update user stock quantity", err)
+	// 	return
+	// }
 
 	response := PlaceStockOrderResponse{
 		Success: true,
@@ -297,6 +339,8 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, response)
 } // HandlePlaceStockOrder
 
+// FEB 24/24 - DEPRICATED: REPLACED WITH updateStockPortfolio()
+// ------------------------------------------------------------ 
 // updateUserStockQuantity updates the user's stock quantity in the database
 func updateUserStockQuantity(userName string, stockID int, quantity int, isBuy bool) error {
 	var query string
@@ -518,13 +562,69 @@ func executeSellLimitTrade(book *OrderBook, buyOrder *Order, order *Order){
 
 
 /** === BUY/SELL Order === **/
-func deductMoneyFromWallet(userName string, order Order) error {
+func updateWallet(userName string, order Order) error {
 	fmt.Println("Deducting money from wallet")
+
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to database: %w", err)
+	}
+	defer db.Close()
+
+	// Calculate total to be added or deducted
+	total := order.Price * float64(order.Quantity)
+	if order.IsBuy {
+		total = total * (-1) // Reduce funds if buying
+	}
+
+	// Update the user's wallet
+	_, err = db.Exec(`
+		UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
+	if err != nil {
+		return fmt.Errorf("Failed to update wallet: %w", err)
+	}
 	return nil
 }
 
-func deductStockFromProfolio(userName string, order Order) error {
+func updateStockPortfolio(userName string, order Order) error {
 	fmt.Println("Deducting stock from portfolio")
+
+		// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to database: %w", err)
+	}
+	defer db.Close()
+
+	// Calculate total to be added or deducted
+	total := order.Quantity
+	if !order.IsBuy {
+		total = total * (-1) // Reduce stocks if selling
+	}
+
+	rows, err := db.Query(`
+		SELECT stock_id FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
+	if err != nil {
+		return fmt.Errorf("Failed to query user stocks: %w", err)
+	}
+	defer rows.Close()
+
+	// User already owns this stock
+	if rows.Next() {
+		// Update the user's stocks
+		_, err = db.Exec(`
+			UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
+		if err != nil {
+			return fmt.Errorf("Failed to update user stocks: %w", err)
+		}
+	} else { // Create new user_stock
+		_, err = db.Exec(`
+			INSERT INTO user_stocks VALUES ($1, $2, $3)`, userName, order.StockID, total)
+		if err != nil {
+			return fmt.Errorf("Failed to update user stocks: %w", err)
+		}
+	}
 	return nil
 }
 
