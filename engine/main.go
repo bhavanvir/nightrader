@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	// host     = "database"
-	host     = "localhost" // for local testing
+	host     = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -165,7 +165,7 @@ func generateOrderID() string {
 }
 	
 // Generate a unique wallet ID for the user
-func generateWalletID(userName string) string {
+func generateWalletID() string {
 	return uuid.New().String()
 }
 
@@ -182,7 +182,7 @@ func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error
 	order := Order{
 		StockTxID:  generateOrderID(),
 		StockID:    request.StockID,
-		WalletTxID: generateWalletID(userName),
+		WalletTxID: generateWalletID(),
 		ParentTxID: nil,
 		IsBuy:      request.IsBuy != nil && *request.IsBuy,
 		OrderType:  request.OrderType,
