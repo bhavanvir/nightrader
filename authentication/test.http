@@ -4,8 +4,8 @@ post {{hostname}}/login
 Content-Type: application/json
 
 {
-    "user_name": "test2",
-    "password": "test002"
+    "user_name": "test1",
+    "password": "test001"
 }
 
 ###
@@ -14,7 +14,7 @@ post {{hostname}}/register
 Content-Type: application/json
 
 {
-    "user_name": "test2",
-    "password": "test002",
-    "name": "tester02"
+    "user_name": "test1",
+    "password": "test001",
+    "name": "tester01"
 }
