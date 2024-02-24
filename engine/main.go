@@ -604,10 +604,9 @@ func updateStockPortfolio(userName string, order Order) error {
 	}
 
 	rows, err := db.Query(`
-		SELECT stock_id FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName. order.StockID)
+		SELECT stock_id FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
 	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio", err)
-		return
+		return fmt.Errorf("Failed to query user stocks: %w", err)
 	}
 	defer rows.Close()
 
