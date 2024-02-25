@@ -587,6 +587,12 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 	return nil
 }
 
+// TODO: implimnet addStockToPortfolio
+func addStockToPortfolio(userName string, order Order) error {
+	fmt.Println("Adding stock to portfolio")
+	return nil
+}
+
 // Store completed wallet transactions in the database
 func setWalletTransaction(userName string, tx Order) error {
 	// Connect to database
