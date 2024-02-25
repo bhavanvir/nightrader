@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -229,7 +229,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 
 	if order.IsBuy {
 		// TODO: Fix Bug Needed
-		if err := deductMoneyFromWallet(userName, order); err != nil {
+		if err := updateMoneyWallet(userName, order, false); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
 			return
 		}
@@ -249,7 +249,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		printq(book)
 	} else {
 		// TODO: Fix Bug Needed
-		if err := deductStockFromPortfolio(userName, order); err != nil {
+		if err := updateStockPortfolio(userName, order, false); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to deduct stock from user's portfolio", err)
 			return
 		}
@@ -263,6 +263,12 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		processOrder(book, order)
 
 		printq(book)
+	}
+
+	// Update the stock price
+	if err := updateMarketStockPrice(book, order); err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to update stock price", err)
+		return
 	}
 
 	response := PlaceStockOrderResponse{
@@ -503,7 +509,7 @@ func executeSellTrade(book *OrderBook, buyOrder *Order, order *Order){
 /** === BUY/SELL Order === **/
 // TODO: Revert to original implimentation
 //       it is not always reduce money if it is buy order e.g refund
-func deductMoneyFromWallet(userName string, order Order) error {
+func updateMoneyWallet(userName string, order Order, isAdded bool) error {
 	fmt.Println("Deducting money from wallet")
 
 	// Connect to database
@@ -513,9 +519,19 @@ func deductMoneyFromWallet(userName string, order Order) error {
 	}
 	defer db.Close()
 
+	var price float64
+	if order.OrderType == "MARKET" {
+		price, err = getMarketStockPrice(order.StockID)
+		if err != nil {
+			return fmt.Errorf("Failed to get market stock price: %w", err)
+		}
+	} else {
+		price = *order.Price
+	}
+
 	// Calculate total to be added or deducted
-	total := *order.Price * float64(order.Quantity)
-	if order.IsBuy {
+	total := price * float64(order.Quantity)
+	if !isAdded {
 		total = total * (-1) // Reduce funds if buying
 	}
 
@@ -528,15 +544,9 @@ func deductMoneyFromWallet(userName string, order Order) error {
 	return nil
 }
 
-// TODO: implimnet addMoneyToWallet
-func addMoneyToWallet(userName string, order Order) error {
-	fmt.Println("Adding money to wallet")
-	return nil
-}
-
 // TODO: Revert to original implimentation
 //       it is not always duduct stock if it is buy order e.g refund
-func deductStockFromPortfolio(userName string, order Order) error {
+func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 	fmt.Println("Deducting stock from portfolio")
 
 	// Connect to database
@@ -548,7 +558,7 @@ func deductStockFromPortfolio(userName string, order Order) error {
 
 	// Calculate total to be added or deducted
 	total := order.Quantity
-	if !order.IsBuy {
+	if !isAdded {
 		total = total * (-1) // Reduce stocks if selling
 	}
 
@@ -577,12 +587,6 @@ func deductStockFromPortfolio(userName string, order Order) error {
 	return nil
 }
 
-// TODO: implimnet addStockToPortfolio
-func addStockToPortfolio(userName string, order Order) error {
-	fmt.Println("Adding stock to portfolio")
-	return nil
-}
-
 // Store completed wallet transactions in the database
 func setWalletTransaction(userName string, tx Order) error {
 	// Connect to database
@@ -592,10 +596,20 @@ func setWalletTransaction(userName string, tx Order) error {
 	}
 	defer db.Close()
 
+	var price float64
+	if tx.OrderType == "MARKET" {
+		price, err = getMarketStockPrice(tx.StockID)
+		if err != nil {
+			return fmt.Errorf("Failed to get market stock price: %w", err)
+		}
+	} else {
+		price = *tx.Price
+	}
+
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
 		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
-		VALUES ($1, $2, $3, $4, $5)`, tx.WalletTxID, userName, true, *tx.Price, tx.TimeStamp)
+		VALUES ($1, $2, $3, $4, $5)`, tx.WalletTxID, userName, true, price, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
@@ -612,10 +626,20 @@ func setStockTransaction(userName string, tx Order) error {
 	}
 	defer db.Close()
 
+	var price float64
+	if tx.OrderType == "MARKET" {
+		price, err = getMarketStockPrice(tx.StockID)
+		if err != nil {
+			return fmt.Errorf("Failed to get market stock price: %w", err)
+		}
+	} else {
+		price = *tx.Price
+	}
+
 	// Insert transaction to stock transactions
 	_, err = db.Exec(`
 		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status,  parent_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
-	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, tx.WalletTxID, tx.Status, tx.ParentTxID,tx.IsBuy, tx.OrderType, *tx.Price, tx.Quantity, tx.TimeStamp)
+	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, tx.WalletTxID, tx.Status, tx.ParentTxID,tx.IsBuy, tx.OrderType, price, tx.Quantity, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
@@ -653,7 +677,53 @@ func processOrder(book *OrderBook, order Order) {
 			matchLimitSellOrder(book, order)
 		}
 	}
+}
 
+// Stock market price is determined by the lowest sell order price
+func updateMarketStockPrice(book *OrderBook, order Order) error {
+	fmt.Println("Updating stock price")
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to database: %w", err)
+	}
+	defer db.Close()
+
+	var updatedPrice float64
+
+	// Check if there are Sell orders
+	if book.SellOrders.Len() > 0 {
+		lowestSellOrder := book.SellOrders.Order[0]
+		updatedPrice = *lowestSellOrder.Price
+	} else {
+		updatedPrice = 0
+	}
+
+	// Update the stock price
+	_, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", updatedPrice, order.StockID)
+	if err != nil {
+		return fmt.Errorf("Failed to update stock price: %w", err)
+	}
+	return nil
+}
+
+// getMarketStockPrice retrieves the current market stock price from the database.
+func getMarketStockPrice(stockID int) (float64, error) {
+	// Connect to the database
+	db, err := openConnection()
+	if err != nil {
+		return 0, fmt.Errorf("Failed to connect to database: %w", err)
+	}
+	defer db.Close()
+
+	// Query the database to get the current price for the specified stock ID
+	var currentPrice float64
+	err = db.QueryRow("SELECT current_price FROM stocks WHERE stock_id = $1", stockID).Scan(&currentPrice)
+	if err != nil {
+		return 0, fmt.Errorf("Failed to get market stock price: %w", err)
+	}
+
+	return currentPrice, nil
 }
 
 /** === END BUY/SELL Order === **/
