@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS stock_transactions (
     stock_tx_id TEXT UNIQUE PRIMARY KEY,
     user_name TEXT REFERENCES users(user_name),
     stock_id INTEGER REFERENCES stocks(stock_id),
-    wallet_tx_id TEXT UNIQUE,
+    wallet_tx_id TEXT,
     order_status TEXT,
     parent_tx_id TEXT,
     is_buy BOOLEAN,
