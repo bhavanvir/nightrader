@@ -1,5 +1,4 @@
 @hostname = http://localhost:8888
-
 post {{hostname}}/login
 Content-Type: application/json
 
