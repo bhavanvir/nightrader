@@ -642,10 +642,23 @@ func setStockTransaction(userName string, tx Order) error {
 		price = *tx.Price
 	}
 
+	// Check if a wallet transaction has been made for this order yet
+	rows, err := db.Query(`
+		SELECT wallet_tx_id FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, tx.WalletTxID)
+	if err != nil {
+		return fmt.Errorf("Error querying wallet transactions: %w", err)
+	}
+	defer rows.Close()
+
+	wallet_tx_id := ""
+	if rows.Next() {
+		wallet_tx_id = tx.WalletTxID
+	}
+
 	// Insert transaction to stock transactions
 	_, err = db.Exec(`
 		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status,  parent_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
-	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, tx.WalletTxID, tx.Status, tx.ParentTxID,tx.IsBuy, tx.OrderType, price, tx.Quantity, tx.TimeStamp)
+	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID,tx.IsBuy, tx.OrderType, price, tx.Quantity, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
