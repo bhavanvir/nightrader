@@ -20,7 +20,7 @@ function App() {
 
   useEffect(() => {
     const readCookie = () => {
-      const sessionToken = Cookies.get("session_token");
+      const sessionToken = Cookies.get("token");
       if (sessionToken) {
         const decodedUser = jwtDecode(sessionToken);
         setUser(decodedUser);
