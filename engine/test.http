@@ -7,8 +7,8 @@ Content-Type: application/json
 {   "stock_id":3,
     "is_buy":false,
     "order_type":"LIMIT",
-    "quantity":1800,
-    "price": 1000
+    "quantity":100,
+    "price": 50
 }
 
 ###
@@ -20,6 +20,32 @@ Content-Type: application/json
 {   "stock_id":3,
     "is_buy":true,
     "order_type":"LIMIT",
-    "quantity":1348,
-    "price": 20000
+    "quantity":1000,
+    "price": 100
+}
+
+### 
+
+post {{hostname}}/placeStockOrder
+# Sell market Order
+Content-Type: application/json
+
+{   "stock_id":3,
+    "is_buy":false,
+    "order_type":"MARKET",
+    "quantity":10,
+    "price": null
+}
+
+###
+
+post {{hostname}}/placeStockOrder
+# Buy Market Order
+Content-Type: application/json
+
+{   "stock_id":3,
+    "is_buy":true,
+    "order_type":"MARKET",
+    "quantity":50,
+    "price": null
 }
