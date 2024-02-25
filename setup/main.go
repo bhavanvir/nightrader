@@ -146,32 +146,32 @@ func addStockToUser(c *gin.Context) {
 }
 
 func wipeDatabaseTables(c *gin.Context) {
-	// Connect to the PostgreSQL database
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
+    // Connect to the PostgreSQL database
+    db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+    if err != nil {
+        handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+        return
+    }
+    defer db.Close()
 
-	// Define a list of tables to truncate
-	tables := []string{"stock_transactions", "stocks", "user_stocks", "users", "wallet_transactions"}
+    // Define a list of tables to truncate
+    tables := []string{"stock_transactions", "stocks", "user_stocks", "users", "wallet_transactions"}
 
-	// Delete all rows from each table
-	for _, table := range tables {
-		_, err = db.Exec(fmt.Sprintf("DELETE FROM %s", table))
-		if err != nil {
-			handleError(c, http.StatusInternalServerError, "Failed to delete table rows", err)
-			return
-		}
-	}
+    // Truncate each table
+    for _, table := range tables {
+        _, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
+        if err != nil {
+            handleError(c, http.StatusInternalServerError, "Failed to truncate table", err)
+            return
+        }
+    }
 
-	// If everything succeeded, return success response
-	response := PostResponse{
-		Success: true,
-		Data:    nil,
-	}
-	c.IndentedJSON(http.StatusOK, response)
+    // If everything succeeded, return success response
+    response := PostResponse{
+        Success: true,
+        Data:    nil,
+    }
+    c.IndentedJSON(http.StatusOK, response)
 }
 
 func main() {
