@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS stock_transactions (
     parent_tx_id TEXT UNIQUE,
     is_buy BOOLEAN,
     order_type TEXT,
-    stock_price NUMERIC(12,2),
+    stock_price NUMERIC(12,2) NOT NULL,
     quantity INTEGER,
     time_stamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
