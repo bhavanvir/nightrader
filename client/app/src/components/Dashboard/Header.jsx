@@ -11,7 +11,7 @@ export default function Header({ user, showAlert }) {
   // Function to handle logout
   const handleLogout = () => {
     Auth.setAuth(false);
-    Cookies.remove("session_token");
+    Cookies.remove("token");
   };
 
   // Function to generate the Gravatar URL
