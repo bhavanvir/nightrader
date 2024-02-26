@@ -231,18 +231,18 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			handleError(c, http.StatusBadRequest, "Insufficient funds", err)
 			return
 		}
-
-		if err := updateMoneyWallet(userName, order, false); err != nil {
+		
+		if err := updateMoneyWallet(userName, order, order.Price, order.Quantity, false); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
 			return
 		}
 
-		if err := setWalletTransaction(userName, order); err != nil {
+		if err := setWalletTransaction(userName, order, order.Price, order.Quantity, false); err != nil {
 			handleError(c, http.StatusInternalServerError,  "Buy Order setWalletTx Error: " + err.Error(), err)
 			return
 		}
 
-		if err := setStockTransaction(userName, order); err != nil {
+		if err := setStockTransaction(userName, order, order.Price, order.Quantity); err != nil {
 			handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: " + err.Error(), err)
 			return
 		}
@@ -256,12 +256,12 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			return
 		}
 
-		if err := updateStockPortfolio(userName, order, false); err != nil {
+		if err := updateStockPortfolio(userName, order, order.Quantity, false); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to deduct stock from user's portfolio", err)
 			return
 		}
 
-		if err := setStockTransaction(userName, order); err != nil {
+		if err := setStockTransaction(userName, order, order.Price, order.Quantity); err != nil {
 			handleError(c, http.StatusInternalServerError, "Sell Order setStockTx Error: " + err.Error(), err)
 			return
 		}
@@ -291,6 +291,8 @@ func TraverseOrderBook(StockTxID string, book *OrderBook, bookType string) (resp
 		Data:    nil,
 	}
 
+	fmt.Println("Traversing order book:")
+
 	var bookOrders *PriorityQueue
 	if bookType == "buy" {
 		bookOrders = &book.BuyOrders
@@ -300,21 +302,86 @@ func TraverseOrderBook(StockTxID string, book *OrderBook, bookType string) (resp
 
 	// Find the index of the order to remove
 	indexToRemove := -1
+	removeOrder := Order{}
 	for i, order := range bookOrders.Order {
-		if order.StockTxID == StockTxID && order.Status == "IN_PROGRESS" && order.OrderType == "LIMIT" {
+		if order.StockTxID == StockTxID && order.Status != "COMPLETED" && order.OrderType == "LIMIT" {
 			indexToRemove = i
+			removeOrder = *order
 			break
 		}
 	}
 
 	// If the order was found, remove it from the heap
 	if indexToRemove != -1 {
-		heap.Remove(bookOrders, indexToRemove)
+		executeRemoveOrder(removeOrder, bookOrders, indexToRemove)
 		response.Success = true
 	}
 
 	return response
 }
+
+func executeRemoveOrder(order Order, bookOrders *PriorityQueue, indexToRemove int) {
+	fmt.Println("Removing order: ", order.StockTxID)
+	heap.Remove(bookOrders, indexToRemove)
+
+	if order.IsBuy {
+		postprocessingRemoveBuyOrder(order)
+	}else {
+		postprocessingRemoveSellOrder(order)
+	}
+}
+
+func postprocessingRemoveBuyOrder(order Order) {
+	if order.Status == "IN_PROGRESS" {
+		fmt.Println("Remove IN_PROGRESS buy order")
+		// refund all dedeucted money back to wallet
+		if err := updateMoneyWallet(order.UserName, order, order.Price, order.Quantity, true); err != nil {
+			fmt.Println("Error updating wallet: ", err)
+		}
+
+		// remove transaction from wallet_transactions
+		if err := deleteWalletTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting wallet transaction: ", err)
+		}
+
+		// remove transaction from stock_transactions
+		if err := deleteStockTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting stock transaction: ", err)
+		}
+	} else {
+		fmt.Println("Remove PARTIALLY_FULFILLED buy order")
+		if err := updateMoneyWallet(order.UserName, order, order.Price, order.Quantity, true); err != nil {
+			fmt.Println("Error updating wallet: ", err)
+		}
+
+		// remove transaction from stock_transactions
+		if err := deleteWalletTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting wallet transaction: ", err)
+		}
+	}
+}
+
+func postprocessingRemoveSellOrder(order Order) {
+	fmt.Println("status: ", order.Status)	
+	if order.Status == "IN_PROGRESS" {
+		fmt.Println("Remove IN_PROGRESS sell order")
+		// refund all dedeucted stock back to portfolio
+		if err := updateStockPortfolio(order.UserName, order, order.Quantity, true); err != nil {
+			fmt.Println("Error updating stock portfolio: ", err)
+		}
+
+		// remove transaction from stock_transactions
+		if err := deleteStockTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting stock transaction: ", err)
+		}
+	} else {
+		fmt.Println("Remove PARTIALLY_FULFILLED sell order")
+		if err := updateStockPortfolio(order.UserName, order, order.Quantity, true); err != nil {
+			fmt.Println("Error updating stock portfolio: ", err)
+		}
+	}
+}
+
 
 func HandleCancelStockTransaction(c *gin.Context) {
 	userName, exists := c.Get("user_name")
@@ -374,6 +441,7 @@ var orderBookMap = OrderBookMap{
 }
 
 /** === BUY Order === **/
+// Assumption: match when price is equal
 func matchLimitBuyOrder(book *OrderBook, order Order) {
 	// Add the buy order to the buy queue
 	heap.Push(&book.BuyOrders, &order)
@@ -384,7 +452,7 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 		lowestSellOrder := heap.Pop(&book.SellOrders).(*Order)
 
 		// If the lowest sell order price is less than or equal to the buy order price, execute the trade
-		if *lowestSellOrder.Price <= *highestBuyOrder.Price {
+		if *lowestSellOrder.Price == *highestBuyOrder.Price {
 			executeBuyTrade(book, highestBuyOrder , lowestSellOrder)
 			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n", 
 			highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
@@ -426,34 +494,44 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 
 func executeBuyTrade(book *OrderBook, order *Order, sellOrder *Order){
 	tradeQuantity := min(order.Quantity, sellOrder.Quantity)
+	tradingPrice := sellOrder.Price
+
 	if order.Quantity > sellOrder.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
 		order.Quantity -= tradeQuantity
 		sellOrder.Quantity = 0
+		partialFulfillBuyOrder(book, order, tradeQuantity)
+		completeSellOrder(book, sellOrder, tradeQuantity, tradingPrice)
 	} else if order.Quantity < sellOrder.Quantity {
 		// execute partial trade for sell order and complete trade for buy order
 		sellOrder.Quantity -= tradeQuantity
 		order.Quantity = 0
 		heap.Push(&book.SellOrders, sellOrder)
+		completeBuyOrder(book, order, tradeQuantity)
+		partialFulfillSellOrder(book, sellOrder, tradeQuantity)
 	} else {
 		// execute complete trade for both buy and sell orders
 		order.Quantity = 0
 		sellOrder.Quantity = 0
-			}
+		completeBuyOrder(book, order, tradeQuantity)
+		completeSellOrder(book, sellOrder, tradeQuantity, tradingPrice)
+	}
 }
 
-func completeBuyOrder(book *OrderBook, order *Order) {
-	if err:= updateStockPortfolio(order.UserName, *order, true); err != nil {
+func completeBuyOrder(book *OrderBook, buyOrder *Order, tradeQuantity int) {
+	fmt.Println("Buy User: ", buyOrder.UserName)
+	if err:= updateStockPortfolio(buyOrder.UserName, *buyOrder, tradeQuantity, true); err != nil {
 		fmt.Println("Error updating stock portfolio: ", err)
 	}
 
-	if err := setStatus(*order, "COMPLETED"); err != nil {
+	if err := setStatus(buyOrder, "COMPLETED"); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 }
 /** === END BUY Order === **/
 
 /** === SELL Order === **/
+// Assumption: match when price is equal
 func matchLimitSellOrder(book *OrderBook, order Order) {
 	// Add the Sell order to the sell queue
 	heap.Push(&book.SellOrders, &order)
@@ -462,7 +540,7 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 	for lowestSellOrder.Quantity > 0 && book.BuyOrders.Len() > 0 {
 		highestBuyOrder := heap.Pop(&book.BuyOrders).(*Order)
 
-		if *highestBuyOrder.Price >= *lowestSellOrder.Price {
+		if *highestBuyOrder.Price == *lowestSellOrder.Price {
 			executeSellTrade(book, highestBuyOrder, lowestSellOrder)
 			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n", 
 			highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
@@ -504,44 +582,114 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 
 func executeSellTrade(book *OrderBook, buyOrder *Order, order *Order){
 	tradeQuantity := min(buyOrder.Quantity, order.Quantity)
+	tradingPrice := buyOrder.Price
+
 	if buyOrder.Quantity > order.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
 		buyOrder.Quantity -= tradeQuantity
 		order.Quantity = 0
 		heap.Push(&book.BuyOrders, buyOrder)
+		completeSellOrder(book, order, tradeQuantity, tradingPrice)
+		partialFulfillBuyOrder(book, buyOrder, tradeQuantity)
 	} else if buyOrder.Quantity < order.Quantity {
 		// execute partial trade for sell order and complete trade for buy order
 		order.Quantity -= tradeQuantity
 		buyOrder.Quantity = 0
+		completeBuyOrder(book, buyOrder, tradeQuantity)
+		partialFulfillSellOrder(book, order, tradeQuantity)
 	} else {
 		// execute complete trade for both buy and sell orders
 		buyOrder.Quantity = 0
 		order.Quantity = 0
-		fmt.Println("\n ++++++++ \n")
-		fmt.Println("Buy User: ", buyOrder.UserName)
-		fmt.Println("Sell User: ", order.UserName)	
-		completeBuyOrder(book, buyOrder)
-		completeSellOrder(book, order)
+		completeBuyOrder(book, buyOrder, tradeQuantity)
+		completeSellOrder(book, order, tradeQuantity, tradingPrice)
 	}
 }
 
-func completeSellOrder(book *OrderBook, order *Order) {
-	if err:= updateMoneyWallet(order.UserName, *order, true); err != nil {
+func partialFulfillSellOrder(book *OrderBook, order *Order, tradeQuantity int) {
+	fmt.Println("Sell User: ", order.UserName)
+	if err:= updateMoneyWallet(order.UserName, *order, order.Price, tradeQuantity, true); err != nil {
 		fmt.Println("Error updating wallet: ", err)
 	}
 
-	if err := setStatus(*order, "COMPLETED"); err != nil {
+	if err := setStatus(order, "PARTIALLY_FULFILLED"); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
-	if err := setWalletTransaction(order.UserName, *order); err != nil {
+	completedOrder := Order{
+		StockTxID:  generateOrderID(),
+		StockID:    order.StockID,
+		WalletTxID: generateWalletID(),
+		ParentTxID: &order.StockTxID,
+		IsBuy:      order.IsBuy,
+		OrderType:  order.OrderType,
+		Quantity:   tradeQuantity,
+		Price:      order.Price,
+		TimeStamp:  time.Now().Format(time.RFC3339Nano),
+		Status:     "COMPLETED",
+		UserName:   order.UserName,
+	}
+
+	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
+		fmt.Println("Error setting stock transaction: ", err)
+	}
+
+	if err := setWalletTransaction(order.UserName, completedOrder, order.Price, tradeQuantity, true); err != nil {
+		fmt.Println("Error setting wallet transaction: ", err)
+	}
+}
+
+func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity int) {
+	fmt.Println("Buy User: ", order.UserName)
+	if err:= updateStockPortfolio(order.UserName, *order, tradeQuantity, true); err != nil {
+		fmt.Println("Error updating stock portfolio: ", err)
+	}
+
+	if err := setStatus(order, "PARTIALLY_FULFILLED"); err != nil {
+		fmt.Println("Error setting status: ", err)
+	}
+
+	completedOrder := Order{
+		StockTxID:  generateOrderID(),
+		StockID:    order.StockID,
+		WalletTxID: generateWalletID(),
+		ParentTxID: &order.StockTxID,
+		IsBuy:      order.IsBuy,
+		OrderType:  order.OrderType,
+		Quantity:   tradeQuantity,
+		Price:      order.Price,
+		TimeStamp:  time.Now().Format(time.RFC3339Nano),
+		Status:     "COMPLETED",
+		UserName:   order.UserName,
+	}
+
+	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
+		fmt.Println("Error setting stock transaction: ", err)
+	}
+
+	if err := setWalletTransaction(order.UserName, completedOrder, order.Price, tradeQuantity, false); err != nil {
+		fmt.Println("Error setting wallet transaction: ", err)
+	}
+}
+
+func completeSellOrder(book *OrderBook, order *Order, tradeQuantity int, tradingPrice *float64) {
+	fmt.Println("Sell User: ", order.UserName)
+	if err:= updateMoneyWallet(order.UserName, *order, tradingPrice, tradeQuantity, true); err != nil {
+		fmt.Println("Error updating wallet: ", err)
+	}
+
+	if err := setStatus(order, "COMPLETED"); err != nil {
+		fmt.Println("Error setting status: ", err)
+	}
+
+	if err := setWalletTransaction(order.UserName, *order, tradingPrice, tradeQuantity, true); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
 }
 /** === END SELL Order === **/
 
 /** === BUY/SELL Order === **/
-func updateMoneyWallet(userName string, order Order, isAdded bool) error {
+func updateMoneyWallet(userName string, order Order, price *float64, quantity int, isAdded bool) error {
 	fmt.Println("Deducting money from wallet")
 
 	// Connect to database
@@ -551,27 +699,39 @@ func updateMoneyWallet(userName string, order Order, isAdded bool) error {
 	}
 	defer db.Close()
 
-	var price float64
+	var newPrice float64
 	if order.OrderType == "MARKET" {
-		price, err = getMarketStockPrice(order.StockID)
+		newPrice, err = getMarketStockPrice(order.StockID)
 		if err != nil {
 			return fmt.Errorf("Failed to get market stock price: %w", err)
 		}
 	} else {
-		price = *order.Price
+		newPrice = *price
 	}
 
-	if err := setStatus(*order, "COMPLETED"); err != nil {
-		fmt.Println("Error setting status: ", err)
+	// Calculate total to be added or deducted
+	total := newPrice * float64(quantity)
+	if !isAdded {
+		total = total * (-1) // Reduce funds if buying
 	}
 
-	if err := setWalletTransaction(order.UserName, *order); err != nil {
-		fmt.Println("Error setting wallet transaction: ", err)
+	// Dont remove: Total = 0 when there is no Sell orders in Queue
+	if total == 0 {
+		fmt.Println("Total: ", total)
+		return fmt.Errorf("No Sell stock orders in the queue - Market Price is 0")
 	}
+
+	// Update the user's wallet
+	_, err = db.Exec(`
+		UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
+	if err != nil {
+		return fmt.Errorf("Failed to update wallet: %w", err)
+	}
+	return nil
 }
 /** === END SELL Order === **/
 
-func updateStockPortfolio(userName string, order Order, isAdded bool) error {
+func updateStockPortfolio(userName string, order Order, quantity int, isAdded bool) error {
 	fmt.Println("Deducting stock from portfolio")
 
 	// Connect to database
@@ -582,7 +742,7 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 	defer db.Close()
 
 	// Calculate total to be added or deducted
-	total := order.Quantity
+	total := quantity
 	if !isAdded {
 		total = total * (-1) // Reduce stocks if selling
 	}
@@ -602,11 +762,6 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 		if err != nil {
 			return fmt.Errorf("Failed to update user stocks: %w", err)
 		}
-		_, err = db.Exec(`
-			UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
-		if err != nil {
-			return fmt.Errorf("Failed to update wallet: %w", err)
-		}
     } else {
         // For wallet transactions, update the wallet regardless of the order type
         _, err = db.Exec(`
@@ -619,54 +774,8 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
     return nil
 }
 
-// Update the user's stock portfolio with the transaction quantity
-// The isWalletTransaction parameter specifies whether the transaction is related to wallet or stock
-func updateStockPortfolio(userName string, order Order, isAdded bool) error {
-    fmt.Println("Updating stock portfolio")
-
-    // Connect to the database
-    db, err := openConnection()
-    if err != nil {
-        return fmt.Errorf("Failed to connect to database: %w", err)
-    }
-    defer db.Close()
-
-    // If it's a buy order, the quantity is added to the user's portfolio
-    // If it's a sell order, the quantity is deducted from the user's portfolio
-    var quantity int
-    if !isAdded {
-        quantity = -order.Quantity
-    } else {
-        quantity = order.Quantity
-    }
-	// For wallet transactions, only update the stock portfolio if it's a sell order
-	if !order.IsBuy {
-		_, err = db.Exec(`
-			INSERT INTO user_stocks (user_name, stock_id, quantity)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (user_name, stock_id) DO UPDATE
-			SET quantity = user_stocks.quantity + EXCLUDED.quantity`, userName, order.StockID, quantity)
-		if err != nil {
-			return fmt.Errorf("Failed to update stock portfolio: %w", err)
-		}
-    } else {
-        // For stock transactions, update the stock portfolio regardless of the order type
-        _, err = db.Exec(`
-            INSERT INTO user_stocks (user_name, stock_id, quantity)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (user_name, stock_id) DO UPDATE
-            SET quantity = user_stocks.quantity + EXCLUDED.quantity`, userName, order.StockID, quantity)
-        if err != nil {
-            return fmt.Errorf("Failed to update stock portfolio: %w", err)
-        }
-    }
-
-    return nil
-}
-
-
 // Store completed wallet transactions in the database
-func setWalletTransaction(userName string, tx Order) error {
+func setWalletTransaction(userName string, tx Order, price *float64, quantity int, isAdded bool) error {
 	// Connect to database
 	db, err := openConnection()
 	if err != nil {
@@ -674,27 +783,34 @@ func setWalletTransaction(userName string, tx Order) error {
 	}
 	defer db.Close()
 
-	var price float64
+	var newPrice float64
 	if tx.OrderType == "MARKET" {
-		price, err = getMarketStockPrice(tx.StockID)
+		newPrice, err = getMarketStockPrice(tx.StockID)
 		if err != nil {
 			return fmt.Errorf("Failed to get market stock price: %w", err)
 		}
 	} else {
-		price = *tx.Price
+		newPrice = *price
 	}
+
+	// isDebit = True if money is deducted from wallet. 
+	// isDebit = False if money is added to wallet
+	var isDebit bool
+	isDebit = !isAdded
+
+	amount := newPrice * float64(quantity)
 
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
 		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
-		VALUES ($1, $2, $3, $4, $5)`, tx.WalletTxID, userName, true, price, tx.TimeStamp)
+		VALUES ($1, $2, $3, $4, $5)`, tx.WalletTxID, userName, isDebit, amount, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
 	return nil
 }
 
-func deleteWalletTransaction(userName string, wallet_tx_id string) error {
+func deleteWalletTransaction(userName string, order Order) error {
 	// Connect to database
 	db, err := openConnection()
 	if err != nil {
@@ -704,7 +820,7 @@ func deleteWalletTransaction(userName string, wallet_tx_id string) error {
 
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
-		DELETE FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, wallet_tx_id)
+		DELETE FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, order.WalletTxID)
 	if err != nil {
 		return fmt.Errorf("Failed to delete wallet transaction: %w", err)
 	}
@@ -712,7 +828,7 @@ func deleteWalletTransaction(userName string, wallet_tx_id string) error {
 }
 
 // Store completed stock transactions in the database
-func setStockTransaction(userName string, tx Order) error {
+func setStockTransaction(userName string, tx Order, price *float64, quantity int) error {
 	fmt.Println("Setting stock transaction")
 	// Connect to database
 	db, err := openConnection()
@@ -721,14 +837,15 @@ func setStockTransaction(userName string, tx Order) error {
 	}
 	defer db.Close()
 
-	var price float64
+	var newPrice float64
 	if tx.OrderType == "MARKET" {
-		price, err = getMarketStockPrice(tx.StockID)
+		newPrice, err = getMarketStockPrice(tx.StockID)
 		if err != nil {
 			return fmt.Errorf("Failed to get market stock price: %w", err)
 		}
 	} else {
-		price = *tx.Price
+		newPrice = *price
+	
 	}
 
 	// Check if a wallet transaction has been made for this order yet
@@ -746,8 +863,8 @@ func setStockTransaction(userName string, tx Order) error {
 
 	// Insert transaction to stock transactions
 	_, err = db.Exec(`
-		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status,  parent_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
-	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID,tx.IsBuy, tx.OrderType, price, tx.Quantity, tx.TimeStamp)
+		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, parent_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
+	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, newPrice, quantity, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
@@ -775,13 +892,17 @@ func deleteStockTransaction(userName string, order Order) error {
 	return nil
 }
 
-func setStatus(order Order, status string) error {
+func setStatus(order *Order, status string) error {
 	// Connect to database
 	db, err := openConnection()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
 	defer db.Close()
+
+	if status == "PARTIALLY_FULFILLED" {
+		order.Status = status
+	}
 
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
@@ -938,12 +1059,7 @@ func checkAndRemoveExpiredOrders() {
             order := book.BuyOrders.Order[i]
             if isOrderExpired(order) {
                 // Remove the expired order from the priority queue
-                heap.Remove(&book.BuyOrders, i)
-
-                // Update user's wallet when an order is removed
-                if err := updateMoneyWallet(order.UserName, *order, true); err != nil {
-                    // Handle error
-                }
+                executeRemoveOrder(*order, &book.BuyOrders, i)
             } else {
                 i++
             }
@@ -954,12 +1070,7 @@ func checkAndRemoveExpiredOrders() {
             order := book.SellOrders.Order[i]
             if isOrderExpired(order) {
                 // Remove the expired order from the priority queue
-                heap.Remove(&book.SellOrders, i)
-
-                // Update user's stock portfolio when an order is removed
-                if err := updateStockPortfolio(order.UserName, *order, true); err != nil {
-                    // Handle error
-                }
+				executeRemoveOrder(*order, &book.SellOrders, i)
             } else {
                 i++
             }
