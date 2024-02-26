@@ -146,7 +146,9 @@ func addStockToUser(c *gin.Context) {
 }
 
 func wipeDatabaseTables(c *gin.Context) {
-    // Connect to the PostgreSQL database
+	// This function is needed when running the postman collection tests, as not doing so 
+	// will cause certain tests to fail
+
     db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
     if err != nil {
         handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
@@ -157,7 +159,7 @@ func wipeDatabaseTables(c *gin.Context) {
     // Define a list of tables to truncate
     tables := []string{"stock_transactions", "stocks", "user_stocks", "users", "wallet_transactions"}
 
-    // Truncate each table
+    // Truncate each table. This will delete all rows in the table
     for _, table := range tables {
         _, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
         if err != nil {
@@ -166,7 +168,15 @@ func wipeDatabaseTables(c *gin.Context) {
         }
     }
 
-    // If everything succeeded, return success response
+	// Reset the stock_id sequence to start at  1 after truncating the stocks table. This is necessary because
+	// when we test the endpoint in the postman collection, the stock_id will be auto incremented by 1, causing
+	// the test to fail
+    _, err = db.Exec("ALTER SEQUENCE stocks_stock_id_seq RESTART WITH  1")
+    if err != nil {
+        handleError(c, http.StatusInternalServerError, "Failed to reset stock_id sequence", err)
+        return
+    }
+
     response := PostResponse{
         Success: true,
         Data:    nil,
@@ -183,5 +193,6 @@ func main() {
 
 	// For testring purposes: all database tables are wiped before running postman-collection tests
 	router.DELETE("/wipeDatabaseTables", wipeDatabaseTables)
+
 	router.Run(":8080")
 }
