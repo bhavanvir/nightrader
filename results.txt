@@ -1,0 +1,3573 @@
+newman
+
+Example Collection
+
+→ Pretest
+  DELETE http://localhost:8080/wipeDatabaseTables [200 OK, 164B, 102ms]
+
+→ Test Case 1
+  POST http://localhost:8888/register [201 Created, 169B, 30ms]
+  √  Status code is 201
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 2
+  POST http://localhost:8888/register [400 Bad Request, 234B, 16ms]
+  √  Status code is 400
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Username already exists: <nil>'
+  │ }
+  └
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 3
+  POST http://localhost:8888/login [400 Bad Request, 228B, 18ms]
+  √  Status code is 400
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Incorrect password: <nil>'
+  │ }
+  └
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 4
+  POST http://localhost:8888/login [200 OK, 586B, 20ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: {
+  │     token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuY
+  │ W1lIjoiVmFuZ3VhcmQgTHRkLiIsInVzZXJfbmFtZSI6IlZhbmd1YXJ
+  │ kRVRGIiwiZXhwIjoxNzA4OTg5NDM5fQ.JPt7wWIgvhUmX90U1cq3xS
+  │ cnuzdYTVe5wa0osMqdzII'
+  │   }
+  │ }
+  └
+  √  Success is true
+  √  Data contains token
+  √  Store token in environment variable
+
+→ Test Case 5
+  POST http://localhost:8080/createStock [200 OK, 161B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   data: { stock_id: 1 },
+  │   success: true
+  │ }
+  └
+  √  Data contains stock id
+
+→ Test Case 6
+  POST http://localhost:8080/addStockToUser [200 OK, 164B, 17ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 7
+  POST http://localhost:8080/createStock [200 OK, 161B, 16ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   data: { stock_id: 2 },
+  │   success: true
+  │ }
+  └
+  √  Data contains stock id
+
+→ Test Case 8
+  POST http://localhost:8080/addStockToUser [200 OK, 164B, 22ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 9
+  GET http://localhost:5433/getStockPortfolio [200 OK, 402B, 24ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 550
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 369
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 10
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+  2. Status code is 200
+  3. Success is true
+
+→ Test Case 11
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+  5. Status code is 200
+  6. Success is true
+
+→ Test Case 12
+  GET http://localhost:5433/getStockPortfolio [200 OK, 402B, 24ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 550
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 369
+  │     }
+  │   ]
+  │ }
+  └
+  7. Data contains emptystock portfolio
+
+→ Test Case 13
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 17ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  8. Data contains stock transactions
+
+→ Test Case 14
+  POST http://localhost:8888/register [201 Created, 169B, 18ms]
+  √  Status code is 201
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 15
+  POST http://localhost:8888/login [200 OK, 594B, 20ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: {
+  │     token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuY
+  │ W1lIjoiVGhlIEZpbmFuY2UgR3VydSIsInVzZXJfbmFtZSI6IkZpbmF
+  │ uY2VHdXJ1IiwiZXhwIjoxNzA4OTg5NDQwfQ.hvssbQutjlXjAW3qZS
+  │ HIQg17fmSDgGSo-P9oc16mk60'
+  │   }
+  │ }
+  └
+  √  Success is true
+  √  Data contains token
+  √  Store token in environment variable
+
+→ Test Case 16
+  GET http://localhost:5433/getStockPrices [200 OK, 396B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 0
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 17
+  POST http://localhost:5433/addMoneyToWallet [200 OK, 164B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Data is null
+
+→ Test Case 18
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 19
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 10. Status code is 200
+ 11. Success is true
+ 12. Data is null
+
+→ Test Case 20
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 13. Data contains stock transactions
+
+→ Test Case 21
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 14. Data contains stock transactions
+
+→ Test Case 22
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+ 15. Data contains stock portfolio
+
+→ Test Case 23
+  GET http://localhost:5433/getStockPortfolio [200 OK, 402B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 550
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 369
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 24
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 16. Data contains stock transactions
+
+→ Test Case 25
+  GET http://localhost:5433/getWalletBalance [200 OK, 188B, 15ms]
+  √  Status code is 200
+  √  Success is true
+ 17. Data contains stock portfolio
+
+→ Test Case 26
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 12ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 18. Data contains stock transactions
+
+→ Test Case 27
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 20. Status code is 200
+ 21. Success is true
+ 22. Data is null
+
+→ Test Case 28
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 23. Data contains stock transactions
+
+→ Test Case 29
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 18ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 24. Data contains stock transactions
+
+→ Test Case 30
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+ 25. Data contains stock portfolio
+
+→ Test Case 31
+  GET http://localhost:5433/getStockPortfolio [200 OK, 402B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 550
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 369
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 32
+  POST http://localhost:8585/cancelStockTransaction [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 27. Status code is 200
+ 28. Success is true
+ 29. Data is null
+
+→ Test Case 33
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 30. Data contains stock transactions
+
+→ Test Case 34
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 31. Data contains stock transactions
+
+→ Test Case 35
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+ 32. Data contains stock portfolio
+
+→ Test Case 36
+  GET http://localhost:5433/getStockPortfolio [200 OK, 164B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  √  Data is null
+
+→ Test Case 37
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 34⠄ SyntaxError in test-script
+
+→ Test Case 38
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 18ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 35. Data contains stock transactions
+
+→ Test Case 39
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 36. Data contains wallet transactions
+
+→ Test Case 40
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 19ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+ 37. Data contains stock portfolio
+
+→ Test Case 41
+  GET http://localhost:5433/getStockPortfolio [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 38. Data contains stock portfolio
+
+→ Test Case 42
+  GET http://localhost:5433/getStockPrices [200 OK, 396B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 0
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock prices
+
+→ Test Case 43
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 40⠄ SyntaxError in test-script
+
+→ Test Case 44
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 14ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 41. Data contains stock transactions
+
+→ Test Case 45
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 42. Data contains wallet transactions
+
+→ Test Case 46
+  GET http://localhost:5433/getWalletBalance [200 OK, 188B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 0 }
+  │ }
+  └
+ 43. Data contains wallet balance
+
+→ Test Case 47
+  GET http://localhost:5433/getStockPrices [200 OK, 396B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 0
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock prices
+
+→ Test Case 48
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 14ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 44. Data contains stock transactions
+
+→ Test Case 49
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 45. Data contains wallet transactions
+
+→ Test Case 50
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+ 46. Data contains wallet balance
+
+→ Test Case 51
+  GET http://localhost:5433/getStockTransactions [200 OK, 164B, 17ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+ 47. Data contains stock transactions
+
+→ Test Case 52
+  GET http://localhost:5433/getStockPortfolio [200 OK, 402B, 18ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 550
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 369
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 53
+  GET http://localhost:5433/getStockPortfolio [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 54
+  GET http://localhost:5433/getWalletTransactions [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 55
+  GET http://localhost:5433/getStockTransactions [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 56
+  POST http://localhost:5433/addMoneyToWallet [400 Bad Request, 224B, 3ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Invalid amount: <nil>'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 57
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 49. Status code is 400
+ 50. Success is false
+ 51. Data contains error message
+
+→ Test Case 58
+  POST http://localhost:8585/cancelStockTransaction [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 53. Status code is 400
+ 54. Success is false
+ 55. Data contains error message
+
+→ Test Case 59
+  POST http://localhost:5433/addMoneyToWallet [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 60
+  POST http://localhost:8585/placeStockOrder [errored]
+     connect ECONNREFUSED 127.0.0.1:8585
+ 57. Status code is 400
+ 58. Success is false
+ 59. Data contains error message
+
+[90m┌─────────────────────────[39m[90m┬───────────────────[39m[90m┬──────────────────┐[39m
+[90m│[39m                         [90m│[39m          executed [90m│[39m           failed [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m              iterations [90m│[39m                 1 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m                requests [90m│[39m                61 [90m│[39m               10 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m            test-scripts [90m│[39m                60 [90m│[39m                2 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m      prerequest-scripts [90m│[39m                54 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m              assertions [90m│[39m               172 [90m│[39m               47 [90m│[39m
+[90m├─────────────────────────┴───────────────────┴──────────────────┤[39m
+[90m│[39m total run duration: 6s                                         [90m│[39m
+[90m├────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m total data received: 5.09kB (approx)                           [90m│[39m
+[90m├────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m average response time: 17ms [min: 2ms, max: 102ms, s.d.: 14ms] [90m│[39m
+[90m└────────────────────────────────────────────────────────────────┘[39m
+
+[31m   # [39m[31m failure        [39m[31m detail                                                   [39m
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 01.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 10"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 02.  AssertionError  Status code is 200                                       
+                      expected PostmanResponse{ …(5) } to have property 'code' 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 10"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 03.  JSONError       Success is true                                          
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 10"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 04.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 11"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 05.  AssertionError  Status code is 200                                       
+                      expected PostmanResponse{ …(5) } to have property 'code' 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 11"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 06.  JSONError       Success is true                                          
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 11"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 07.  AssertionError  Data contains emptystock portfolio                       
+                      expected { success: true, …(1) } to be an array          
+                      at assertion:2 in test-script                            
+                      inside "Test Case 12"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 08.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 13"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 09.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 19"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 10.  AssertionError  Status code is 200                                       
+                      expected PostmanResponse{ …(5) } to have property 'code' 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 19"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 11.  JSONError       Success is true                                          
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 19"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 12.  JSONError       Data is null                                             
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:2 in test-script                            
+                      inside "Test Case 19"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 13.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 20"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 14.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 21"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 15.  AssertionError  Data contains stock portfolio                            
+                      expected 10000 to equal 8650                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 22"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 16.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 24"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 17.  AssertionError  Data contains stock portfolio                            
+                      expected +0 to equal 1350                                
+                      at assertion:2 in test-script                            
+                      inside "Test Case 25"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 18.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 26"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 19.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 27"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 20.  AssertionError  Status code is 200                                       
+                      expected PostmanResponse{ …(5) } to have property 'code' 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 27"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 21.  JSONError       Success is true                                          
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 27"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 22.  JSONError       Data is null                                             
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:2 in test-script                            
+                      inside "Test Case 27"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 23.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 28"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 24.  TypeError       Data contains stock transactions                         
+                      Cannot read properties of null (reading '1')             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 29"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 25.  AssertionError  Data contains stock portfolio                            
+                      expected 10000 to equal 6250                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 30"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 26.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 32"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 27.  AssertionError  Status code is 200                                       
+                      expected PostmanResponse{ …(5) } to have property 'code' 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 32"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 28.  JSONError       Success is true                                          
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 32"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 29.  JSONError       Data is null                                             
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:2 in test-script                            
+                      inside "Test Case 32"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 30.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 33"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 31.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 34"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 32.  AssertionError  Data contains stock portfolio                            
+                      expected 10000 to equal 8650                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 35"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 33.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 37"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 34.  SyntaxError                                                              
+                      Unexpected end of input                                  
+                      at test-script                                           
+                      inside "Test Case 37"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 35.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 38"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 36.  AssertionError  Data contains wallet transactions                        
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 39"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 37.  AssertionError  Data contains stock portfolio                            
+                      expected 10000 to equal 8650                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 40"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 38.  AssertionError  Data contains stock portfolio                            
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 41"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 39.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 43"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 40.  SyntaxError                                                              
+                      Unexpected end of input                                  
+                      at test-script                                           
+                      inside "Test Case 43"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 41.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 44"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 42.  AssertionError  Data contains wallet transactions                        
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 45"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 43.  AssertionError  Data contains wallet balance                             
+                      expected +0 to equal 814                                 
+                      at assertion:2 in test-script                            
+                      inside "Test Case 46"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 44.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 48"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 45.  AssertionError  Data contains wallet transactions                        
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 49"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 46.  AssertionError  Data contains wallet balance                             
+                      expected 10000 to equal 9186                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 50"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 47.  AssertionError  Data contains stock transactions                         
+                      expected null to be an array                             
+                      at assertion:2 in test-script                            
+                      inside "Test Case 51"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 48.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 57"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 49.  JSONError       Status code is 400                                       
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 57"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 50.  JSONError       Success is false                                         
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 57"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 51.  JSONError       Data contains error message                              
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:2 in test-script                            
+                      inside "Test Case 57"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 52.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 58"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 53.  JSONError       Status code is 400                                       
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 58"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 54.  JSONError       Success is false                                         
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 58"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 55.  JSONError       Data contains error message                              
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:2 in test-script                            
+                      inside "Test Case 58"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 56.  Error                                                                    
+                      connect ECONNREFUSED 127.0.0.1:8585                      
+                      at request                                               
+                      inside "Test Case 60"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 57.  JSONError       Status code is 400                                       
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:0 in test-script                            
+                      inside "Test Case 60"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 58.  JSONError       Success is false                                         
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:1 in test-script                            
+                      inside "Test Case 60"                                    
+[90m     [39m[90m                [39m[90m                                                          [39m
+ 59.  JSONError       Data contains error message                              
+                      Unexpected token u in JSON at position 0                 
+                      at assertion:2 in test-script                            
+                      inside "Test Case 60"                                    
+newman
+
+Example Collection
+
+→ Pretest
+  DELETE http://localhost:8080/wipeDatabaseTables [200 OK, 164B, 111ms]
+
+→ Test Case 1
+  POST http://localhost:8888/register [201 Created, 169B, 29ms]
+  √  Status code is 201
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 2
+  POST http://localhost:8888/register [400 Bad Request, 234B, 17ms]
+  √  Status code is 400
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Username already exists: <nil>'
+  │ }
+  └
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 3
+  POST http://localhost:8888/login [400 Bad Request, 228B, 19ms]
+  √  Status code is 400
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Incorrect password: <nil>'
+  │ }
+  └
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 4
+  POST http://localhost:8888/login [200 OK, 586B, 37ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: {
+  │     token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuY
+  │ W1lIjoiVmFuZ3VhcmQgTHRkLiIsInVzZXJfbmFtZSI6IlZhbmd1YXJ
+  │ kRVRGIiwiZXhwIjoxNzA4OTg5NTMwfQ.oDsnwDd8OxeCN_JUxMc1QD
+  │ 2NW3Ad2gERVyt3K3TPNUU'
+  │   }
+  │ }
+  └
+  √  Success is true
+  √  Data contains token
+  √  Store token in environment variable
+
+→ Test Case 5
+  POST http://localhost:8080/createStock [200 OK, 161B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   data: { stock_id: 1 },
+  │   success: true
+  │ }
+  └
+  √  Data contains stock id
+
+→ Test Case 6
+  POST http://localhost:8080/addStockToUser [200 OK, 164B, 18ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 7
+  POST http://localhost:8080/createStock [200 OK, 161B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   data: { stock_id: 2 },
+  │   success: true
+  │ }
+  └
+  √  Data contains stock id
+
+→ Test Case 8
+  POST http://localhost:8080/addStockToUser [200 OK, 164B, 19ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 9
+  GET http://localhost:5433/getStockPortfolio [200 OK, 402B, 23ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 550
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 369
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 10
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 98ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 11
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 79ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 12
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 38ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  1. Data contains emptystock portfolio
+
+→ Test Case 13
+  GET http://localhost:5433/getStockTransactions [200 OK, 909B, 28ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'c3c7ea0c-5368-4669-b1c6-7936e9e7df
+  │ 5d',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:48:50.689653Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'e7eba66d-c989-4a9a-a5e4-68096bc351
+  │ be',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:48:50.871552Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'c3c7ea0c-5368-4669-b1c6-7936e9e7df
+  │ 5d',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:48:50.689653Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'e7eba66d-c989-4a9a-a5e4-68096bc351
+  │ be',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:48:50.871552Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 14
+  POST http://localhost:8888/register [201 Created, 169B, 31ms]
+  √  Status code is 201
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 15
+  POST http://localhost:8888/login [200 OK, 594B, 59ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: {
+  │     token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuY
+  │ W1lIjoiVGhlIEZpbmFuY2UgR3VydSIsInVzZXJfbmFtZSI6IkZpbmF
+  │ uY2VHdXJ1IiwiZXhwIjoxNzA4OTg5NTMxfQ.602vTiIT8klQ9Ssiko
+  │ hkbQq_A502JEJwUFcwwM4SPbU'
+  │   }
+  │ }
+  └
+  √  Success is true
+  √  Data contains token
+  √  Store token in environment variable
+
+→ Test Case 16
+  GET http://localhost:5433/getStockPrices [200 OK, 400B, 26ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 140
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 135
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 17
+  POST http://localhost:5433/addMoneyToWallet [200 OK, 164B, 24ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Data is null
+
+→ Test Case 18
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 18ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 19
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 289ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 20
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 16ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 21
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 22
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 16ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+  2. Data contains stock portfolio
+
+→ Test Case 23
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 18ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 24
+  GET http://localhost:5433/getStockTransactions [200 OK, 1.29kB, 18ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'c3c7ea0c-5368-4669-b1c6-7936e9e7df
+  │ 5d',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:48:50.689653Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'e7eba66d-c989-4a9a-a5e4-68096bc351
+  │ be',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'PARTIALLY_FULFILLED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:48:50.871552Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'f3d2f143-edb2-447c-aded-10b8f64fa7
+  │ 57',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'COMPLETED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:52.049507Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 25
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  √  Data contains stock portfolio
+
+→ Test Case 26
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 16ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  3. Data contains stock transactions
+
+→ Test Case 27
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 91ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Data is null
+
+→ Test Case 28
+  GET http://localhost:5433/getStockTransactions [200 OK, 976B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     },
+  │     {
+  │       stock_tx_id: '697125ec-94e9-409f-b159-32a5a80f48
+  │ 13',
+  │       stock_id: 2,
+  │       wallet_tx_id: '280fbb06-bd9e-4d26-96ce-01616179d
+  │ 8d3',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: true,
+  │       order_type: 'LIMIT',
+  │       stock_price: 120,
+  │       quantity: 20,
+  │       time_stamp: '2024-02-26T14:48:52.863647Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 29
+  GET http://localhost:5433/getWalletTransactions [200 OK, 707B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     },
+  │     {
+  │       wallet_tx_id: '280fbb06-bd9e-4d26-96ce-01616179d
+  │ 8d3',
+  │       stock_tx_id: '697125ec-94e9-409f-b159-32a5a80f48
+  │ 13',
+  │       is_debit: true,
+  │       amount: 2400,
+  │       time_stamp: '2024-02-26T14:48:52.863647Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 30
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 6260 }
+  │ }
+  └
+  4. Data contains stock portfolio
+
+→ Test Case 31
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 32
+  POST http://localhost:8585/cancelStockTransaction [200 OK, 164B, 47ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 33
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 34
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 35
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+  5. Data contains stock portfolio
+
+→ Test Case 36
+  GET http://localhost:5433/getStockPortfolio [200 OK, 164B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  √  Data is null
+
+→ Test Case 37
+  POST http://localhost:8585/placeStockOrder [400 Bad Request, 257B, 14ms]
+  6⠄ SyntaxError in test-script
+
+→ Test Case 38
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 15ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 39
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains wallet transactions
+
+→ Test Case 40
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+  7. Data contains stock portfolio
+
+→ Test Case 41
+  GET http://localhost:5433/getStockPortfolio [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  8. Data contains stock portfolio
+
+→ Test Case 42
+  GET http://localhost:5433/getStockPrices [200 OK, 400B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 135
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 140
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock prices
+
+→ Test Case 43
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 88ms]
+  9⠄ SyntaxError in test-script
+
+→ Test Case 44
+  GET http://localhost:5433/getStockTransactions [200 OK, 1.69kB, 15ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'c3c7ea0c-5368-4669-b1c6-7936e9e7df
+  │ 5d',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:48:50.689653Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'e7eba66d-c989-4a9a-a5e4-68096bc351
+  │ be',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'PARTIALLY_FULFILLED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:48:50.871552Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'f3d2f143-edb2-447c-aded-10b8f64fa7
+  │ 57',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'COMPLETED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:52.049507Z'
+  │     },
+  │     {
+  │       stock_tx_id: '602d9bfe-ea33-4915-9321-6ec6766fe3
+  │ c3',
+  │       stock_id: 1,
+  │       wallet_tx_id: '53a22096-83f1-4e83-9f1b-b5d7e551b
+  │ 925',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: true,
+  │       order_type: 'LIMIT',
+  │       stock_price: 134,
+  │       quantity: 4,
+  │       time_stamp: '2024-02-26T14:48:54.612856Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'c3c7ea0c-5368-4669-b1c6-7936e9e7df
+  │ 5d',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:48:50.689653Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'e7eba66d-c989-4a9a-a5e4-68096bc351
+  │ be',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'PARTIALLY_FULFILLED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:48:50.871552Z'
+  │     },
+  │     {
+  │       stock_tx_id: 'f3d2f143-edb2-447c-aded-10b8f64fa7
+  │ 57',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'COMPLETED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:52.049507Z'
+  │     },
+  │     {
+  │       stock_tx_id: '602d9bfe-ea33-4915-9321-6ec6766fe3
+  │ c3',
+  │       stock_id: 1,
+  │       wallet_tx_id: '53a22096-83f1-4e83-9f1b-b5d7e551b
+  │ 925',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: true,
+  │       order_type: 'LIMIT',
+  │       stock_price: 134,
+  │       quantity: 4,
+  │       time_stamp: '2024-02-26T14:48:54.612856Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 45
+  GET http://localhost:5433/getWalletTransactions [200 OK, 436B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '53a22096-83f1-4e83-9f1b-b5d7e551b
+  │ 925',
+  │       stock_tx_id: '602d9bfe-ea33-4915-9321-6ec6766fe3
+  │ c3',
+  │       is_debit: true,
+  │       amount: 536,
+  │       time_stamp: '2024-02-26T14:48:54.612856Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains wallet transactions
+
+→ Test Case 46
+  GET http://localhost:5433/getWalletBalance [200 OK, 190B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 814 }
+  │ }
+  └
+  √  Data contains wallet balance
+
+→ Test Case 47
+  GET http://localhost:5433/getStockPrices [200 OK, 400B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 140
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 135
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock prices
+
+→ Test Case 48
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 14ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 49
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains wallet transactions
+
+→ Test Case 50
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+ 10. Data contains wallet balance
+
+→ Test Case 51
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 14ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'a3dc5b6f-c57c-4adf-adf9-1c7e4c9f48
+  │ c4',
+  │       stock_id: 1,
+  │       wallet_tx_id: '262b6093-c194-4b3b-8af8-a1b276d2a
+  │ 081',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:48:51.818956Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 52
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 22ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 53
+  GET http://localhost:5433/getStockPortfolio [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 54
+  GET http://localhost:5433/getWalletTransactions [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 55
+  GET http://localhost:5433/getStockTransactions [400 Bad Request, 262B, 1ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 56
+  POST http://localhost:5433/addMoneyToWallet [400 Bad Request, 224B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Invalid amount: <nil>'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 57
+  POST http://localhost:8585/placeStockOrder [400 Bad Request, 210B, 3ms]
+  ┌
+  │ {
+  │   data: null,
+  │   message: 'Price must be null for market orders',
+  │   success: false
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 58
+  POST http://localhost:8585/cancelStockTransaction [400 Bad Request, 189B, 7ms]
+  ┌
+  │ {
+  │   data: null,
+  │   message: 'Order not found',
+  │   success: false
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 59
+  POST http://localhost:5433/addMoneyToWallet [400 Bad Request, 262B, 1ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 60
+  POST http://localhost:8585/placeStockOrder [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+[90m┌─────────────────────────[39m[90m┬───────────────────[39m[90m┬──────────────────┐[39m
+[90m│[39m                         [90m│[39m          executed [90m│[39m           failed [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m              iterations [90m│[39m                 1 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m                requests [90m│[39m                61 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m            test-scripts [90m│[39m                60 [90m│[39m                2 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m      prerequest-scripts [90m│[39m                54 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m              assertions [90m│[39m               172 [90m│[39m                8 [90m│[39m
+[90m├─────────────────────────┴───────────────────┴──────────────────┤[39m
+[90m│[39m total run duration: 6.9s                                       [90m│[39m
+[90m├────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m total data received: 13.85kB (approx)                          [90m│[39m
+[90m├────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m average response time: 27ms [min: 1ms, max: 289ms, s.d.: 41ms] [90m│[39m
+[90m└────────────────────────────────────────────────────────────────┘[39m
+
+[31m   # [39m[31m failure        [39m[31m detail                                          [39m
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 01.  AssertionError  Data contains emptystock portfolio              
+                      expected { success: true, …(1) } to be an array 
+                      at assertion:2 in test-script                   
+                      inside "Test Case 12"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 02.  AssertionError  Data contains stock portfolio                   
+                      expected 8660 to equal 8650                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 22"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 03.  AssertionError  Data contains stock transactions                
+                      expected null to be an array                    
+                      at assertion:2 in test-script                   
+                      inside "Test Case 26"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 04.  AssertionError  Data contains stock portfolio                   
+                      expected 6260 to equal 6250                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 30"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 05.  AssertionError  Data contains stock portfolio                   
+                      expected 8660 to equal 8650                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 35"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 06.  SyntaxError                                                     
+                      Unexpected end of input                         
+                      at test-script                                  
+                      inside "Test Case 37"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 07.  AssertionError  Data contains stock portfolio                   
+                      expected 8660 to equal 8650                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 40"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 08.  AssertionError  Data contains stock portfolio                   
+                      expected null to be an array                    
+                      at assertion:2 in test-script                   
+                      inside "Test Case 41"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 09.  SyntaxError                                                     
+                      Unexpected end of input                         
+                      at test-script                                  
+                      inside "Test Case 43"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 10.  AssertionError  Data contains wallet balance                    
+                      expected 8660 to equal 9186                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 50"                           
+newman
+
+Example Collection
+
+→ Pretest
+  DELETE http://localhost:8080/wipeDatabaseTables [200 OK, 164B, 99ms]
+
+→ Test Case 1
+  POST http://localhost:8888/register [201 Created, 169B, 30ms]
+  √  Status code is 201
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 2
+  POST http://localhost:8888/register [400 Bad Request, 234B, 15ms]
+  √  Status code is 400
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Username already exists: <nil>'
+  │ }
+  └
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 3
+  POST http://localhost:8888/login [400 Bad Request, 228B, 17ms]
+  √  Status code is 400
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Incorrect password: <nil>'
+  │ }
+  └
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 4
+  POST http://localhost:8888/login [200 OK, 586B, 25ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: {
+  │     token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuY
+  │ W1lIjoiVmFuZ3VhcmQgTHRkLiIsInVzZXJfbmFtZSI6IlZhbmd1YXJ
+  │ kRVRGIiwiZXhwIjoxNzA4OTg5NjQyfQ.-8cfQw7iUBk04rRSaWFZmx
+  │ UXLhwLXsR3UqJpInjbk5I'
+  │   }
+  │ }
+  └
+  √  Success is true
+  √  Data contains token
+  √  Store token in environment variable
+
+→ Test Case 5
+  POST http://localhost:8080/createStock [200 OK, 161B, 31ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   data: { stock_id: 1 },
+  │   success: true
+  │ }
+  └
+  √  Data contains stock id
+
+→ Test Case 6
+  POST http://localhost:8080/addStockToUser [200 OK, 164B, 21ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 7
+  POST http://localhost:8080/createStock [200 OK, 161B, 19ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   data: { stock_id: 2 },
+  │   success: true
+  │ }
+  └
+  √  Data contains stock id
+
+→ Test Case 8
+  POST http://localhost:8080/addStockToUser [200 OK, 164B, 25ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 9
+  GET http://localhost:5433/getStockPortfolio [200 OK, 402B, 24ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 550
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 369
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 10
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 102ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 11
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 75ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+
+→ Test Case 12
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  1. Data contains emptystock portfolio
+
+→ Test Case 13
+  GET http://localhost:5433/getStockTransactions [200 OK, 909B, 15ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'bf455090-46da-4fb6-b574-c5e8c2d158
+  │ ce',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:50:42.651663Z'
+  │     },
+  │     {
+  │       stock_tx_id: '875bfb6a-a92b-4709-85b1-718917525c
+  │ b7',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:50:42.832261Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'bf455090-46da-4fb6-b574-c5e8c2d158
+  │ ce',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:50:42.651663Z'
+  │     },
+  │     {
+  │       stock_tx_id: '875bfb6a-a92b-4709-85b1-718917525c
+  │ b7',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:50:42.832261Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 14
+  POST http://localhost:8888/register [201 Created, 169B, 18ms]
+  √  Status code is 201
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 15
+  POST http://localhost:8888/login [200 OK, 594B, 20ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: {
+  │     token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuY
+  │ W1lIjoiVGhlIEZpbmFuY2UgR3VydSIsInVzZXJfbmFtZSI6IkZpbmF
+  │ uY2VHdXJ1IiwiZXhwIjoxNzA4OTg5NjQzfQ.F6mpTQhjzRb1AaFNsA
+  │ 8ZpyL9YO7yhPsSLd5_t6uE1Qg'
+  │   }
+  │ }
+  └
+  √  Success is true
+  √  Data contains token
+  √  Store token in environment variable
+
+→ Test Case 16
+  GET http://localhost:5433/getStockPrices [200 OK, 400B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 140
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 135
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 17
+  POST http://localhost:5433/addMoneyToWallet [200 OK, 164B, 17ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Data is null
+
+→ Test Case 18
+  GET http://localhost:5433/getWalletBalance [200 OK, 192B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 10000 }
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 19
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 205ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 20
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 21
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 22
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+  2. Data contains stock portfolio
+
+→ Test Case 23
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 24
+  GET http://localhost:5433/getStockTransactions [200 OK, 1.29kB, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'bf455090-46da-4fb6-b574-c5e8c2d158
+  │ ce',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:50:42.651663Z'
+  │     },
+  │     {
+  │       stock_tx_id: '875bfb6a-a92b-4709-85b1-718917525c
+  │ b7',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'PARTIALLY_FULFILLED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:50:42.832261Z'
+  │     },
+  │     {
+  │       stock_tx_id: '0d8a8301-a0ce-49d0-be55-f3dff992a3
+  │ 30',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'COMPLETED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.839514Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 25
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  √  Data contains stock portfolio
+
+→ Test Case 26
+  GET http://localhost:5433/getWalletTransactions [200 OK, 164B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  3. Data contains stock transactions
+
+→ Test Case 27
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 81ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Data is null
+
+→ Test Case 28
+  GET http://localhost:5433/getStockTransactions [200 OK, 976B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     },
+  │     {
+  │       stock_tx_id: '20b8cca7-5115-4e8c-ac51-b3df0bb6d9
+  │ e6',
+  │       stock_id: 2,
+  │       wallet_tx_id: 'aef4cf53-a32e-41fe-8fc3-30dc929e9
+  │ e6f',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: true,
+  │       order_type: 'LIMIT',
+  │       stock_price: 120,
+  │       quantity: 20,
+  │       time_stamp: '2024-02-26T14:50:44.676285Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 29
+  GET http://localhost:5433/getWalletTransactions [200 OK, 707B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     },
+  │     {
+  │       wallet_tx_id: 'aef4cf53-a32e-41fe-8fc3-30dc929e9
+  │ e6f',
+  │       stock_tx_id: '20b8cca7-5115-4e8c-ac51-b3df0bb6d9
+  │ e6',
+  │       is_debit: true,
+  │       amount: 2400,
+  │       time_stamp: '2024-02-26T14:50:44.676285Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 30
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 6260 }
+  │ }
+  └
+  4. Data contains stock portfolio
+
+→ Test Case 31
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 32
+  POST http://localhost:8585/cancelStockTransaction [200 OK, 164B, 43ms]
+  √  Status code is 200
+  ┌
+  │ { success: true, data: null }
+  └
+  √  Success is true
+  √  Data is null
+
+→ Test Case 33
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 34
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 13ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 35
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+  5. Data contains stock portfolio
+
+→ Test Case 36
+  GET http://localhost:5433/getStockPortfolio [200 OK, 164B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  √  Data is null
+
+→ Test Case 37
+  POST http://localhost:8585/placeStockOrder [400 Bad Request, 257B, 15ms]
+  6⠄ SyntaxError in test-script
+
+→ Test Case 38
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 17ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 39
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains wallet transactions
+
+→ Test Case 40
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+  7. Data contains stock portfolio
+
+→ Test Case 41
+  GET http://localhost:5433/getStockPortfolio [200 OK, 164B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ { success: true, data: null }
+  └
+  8. Data contains stock portfolio
+
+→ Test Case 42
+  GET http://localhost:5433/getStockPrices [200 OK, 400B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 135
+  │     },
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 140
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock prices
+
+→ Test Case 43
+  POST http://localhost:8585/placeStockOrder [200 OK, 164B, 88ms]
+  9⠄ SyntaxError in test-script
+
+→ Test Case 44
+  GET http://localhost:5433/getStockTransactions [200 OK, 1.69kB, 14ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'bf455090-46da-4fb6-b574-c5e8c2d158
+  │ ce',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:50:42.651663Z'
+  │     },
+  │     {
+  │       stock_tx_id: '875bfb6a-a92b-4709-85b1-718917525c
+  │ b7',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'PARTIALLY_FULFILLED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:50:42.832261Z'
+  │     },
+  │     {
+  │       stock_tx_id: '0d8a8301-a0ce-49d0-be55-f3dff992a3
+  │ 30',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'COMPLETED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.839514Z'
+  │     },
+  │     {
+  │       stock_tx_id: '101e4dc6-4be2-4970-9d3f-aa6d8aad19
+  │ be',
+  │       stock_id: 1,
+  │       wallet_tx_id: '6111ba35-81bf-4e2a-bc05-483b0ba5d
+  │ 1dd',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: true,
+  │       order_type: 'LIMIT',
+  │       stock_price: 134,
+  │       quantity: 4,
+  │       time_stamp: '2024-02-26T14:50:46.380288Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: 'bf455090-46da-4fb6-b574-c5e8c2d158
+  │ ce',
+  │       stock_id: 2,
+  │       wallet_tx_id: '',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 140,
+  │       quantity: 369,
+  │       time_stamp: '2024-02-26T14:50:42.651663Z'
+  │     },
+  │     {
+  │       stock_tx_id: '875bfb6a-a92b-4709-85b1-718917525c
+  │ b7',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'PARTIALLY_FULFILLED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 550,
+  │       time_stamp: '2024-02-26T14:50:42.832261Z'
+  │     },
+  │     {
+  │       stock_tx_id: '0d8a8301-a0ce-49d0-be55-f3dff992a3
+  │ 30',
+  │       stock_id: 1,
+  │       wallet_tx_id: '',
+  │       order_status: 'COMPLETED',
+  │       is_buy: false,
+  │       order_type: 'LIMIT',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.839514Z'
+  │     },
+  │     {
+  │       stock_tx_id: '101e4dc6-4be2-4970-9d3f-aa6d8aad19
+  │ be',
+  │       stock_id: 1,
+  │       wallet_tx_id: '6111ba35-81bf-4e2a-bc05-483b0ba5d
+  │ 1dd',
+  │       order_status: 'IN_PROGRESS',
+  │       is_buy: true,
+  │       order_type: 'LIMIT',
+  │       stock_price: 134,
+  │       quantity: 4,
+  │       time_stamp: '2024-02-26T14:50:46.380288Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 45
+  GET http://localhost:5433/getWalletTransactions [200 OK, 436B, 15ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '6111ba35-81bf-4e2a-bc05-483b0ba5d
+  │ 1dd',
+  │       stock_tx_id: '101e4dc6-4be2-4970-9d3f-aa6d8aad19
+  │ be',
+  │       is_debit: true,
+  │       amount: 536,
+  │       time_stamp: '2024-02-26T14:50:46.380288Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains wallet transactions
+
+→ Test Case 46
+  GET http://localhost:5433/getWalletBalance [200 OK, 190B, 16ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 814 }
+  │ }
+  └
+  √  Data contains wallet balance
+
+→ Test Case 47
+  GET http://localhost:5433/getStockPrices [200 OK, 400B, 14ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       current_price: 140
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       current_price: 135
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock prices
+
+→ Test Case 48
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 15ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 49
+  GET http://localhost:5433/getWalletTransactions [200 OK, 437B, 18ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       is_debit: true,
+  │       amount: 1350,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains wallet transactions
+
+→ Test Case 50
+  GET http://localhost:5433/getWalletBalance [200 OK, 191B, 16ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: { balance: 8660 }
+  │ }
+  └
+ 10. Data contains wallet balance
+
+→ Test Case 51
+  GET http://localhost:5433/getStockTransactions [200 OK, 571B, 16ms]
+  √  Status code is 200
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_tx_id: '4dc1eb49-c0c3-4c5c-906d-b90e2c1d66
+  │ 3a',
+  │       stock_id: 1,
+  │       wallet_tx_id: '0638cd61-c18f-4e08-8609-ab2184160
+  │ 1cd',
+  │       order_status: 'COMPLETED',
+  │       is_buy: true,
+  │       order_type: 'MARKET',
+  │       stock_price: 135,
+  │       quantity: 10,
+  │       time_stamp: '2024-02-26T14:50:43.677662Z'
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock transactions
+
+→ Test Case 52
+  GET http://localhost:5433/getStockPortfolio [200 OK, 398B, 16ms]
+  √  Status code is 200
+  √  Success is true
+  ┌
+  │ {
+  │   success: true,
+  │   data: [
+  │     {
+  │       stock_id: 2,
+  │       stock_name: 'Apple',
+  │       quantity_owned: 0
+  │     },
+  │     {
+  │       stock_id: 1,
+  │       stock_name: 'Google',
+  │       quantity_owned: 0
+  │     }
+  │   ]
+  │ }
+  └
+  √  Data contains stock portfolio
+
+→ Test Case 53
+  GET http://localhost:5433/getStockPortfolio [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 54
+  GET http://localhost:5433/getWalletTransactions [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 55
+  GET http://localhost:5433/getStockTransactions [400 Bad Request, 262B, 2ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 56
+  POST http://localhost:5433/addMoneyToWallet [400 Bad Request, 224B, 5ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Invalid amount: <nil>'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 57
+  POST http://localhost:8585/placeStockOrder [400 Bad Request, 210B, 8ms]
+  ┌
+  │ {
+  │   data: null,
+  │   message: 'Price must be null for market orders',
+  │   success: false
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 58
+  POST http://localhost:8585/cancelStockTransaction [400 Bad Request, 189B, 7ms]
+  ┌
+  │ {
+  │   data: null,
+  │   message: 'Order not found',
+  │   success: false
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 59
+  POST http://localhost:5433/addMoneyToWallet [400 Bad Request, 262B, 35ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+→ Test Case 60
+  POST http://localhost:8585/placeStockOrder [400 Bad Request, 262B, 1ms]
+  ┌
+  │ {
+  │   success: false,
+  │   data: null,
+  │   message: 'Failed to parse claims: token contains an 
+  │ invalid number of segments'
+  │ }
+  └
+  √  Status code is 400
+  √  Success is false
+  √  Data contains error message
+
+[90m┌─────────────────────────[39m[90m┬───────────────────[39m[90m┬──────────────────┐[39m
+[90m│[39m                         [90m│[39m          executed [90m│[39m           failed [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m              iterations [90m│[39m                 1 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m                requests [90m│[39m                61 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m            test-scripts [90m│[39m                60 [90m│[39m                2 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m      prerequest-scripts [90m│[39m                54 [90m│[39m                0 [90m│[39m
+[90m├─────────────────────────[39m[90m┼───────────────────[39m[90m┼──────────────────┤[39m
+[90m│[39m              assertions [90m│[39m               172 [90m│[39m                8 [90m│[39m
+[90m├─────────────────────────┴───────────────────┴──────────────────┤[39m
+[90m│[39m total run duration: 6.7s                                       [90m│[39m
+[90m├────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m total data received: 13.85kB (approx)                          [90m│[39m
+[90m├────────────────────────────────────────────────────────────────┤[39m
+[90m│[39m average response time: 24ms [min: 1ms, max: 205ms, s.d.: 31ms] [90m│[39m
+[90m└────────────────────────────────────────────────────────────────┘[39m
+
+[31m   # [39m[31m failure        [39m[31m detail                                          [39m
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 01.  AssertionError  Data contains emptystock portfolio              
+                      expected { success: true, …(1) } to be an array 
+                      at assertion:2 in test-script                   
+                      inside "Test Case 12"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 02.  AssertionError  Data contains stock portfolio                   
+                      expected 8660 to equal 8650                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 22"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 03.  AssertionError  Data contains stock transactions                
+                      expected null to be an array                    
+                      at assertion:2 in test-script                   
+                      inside "Test Case 26"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 04.  AssertionError  Data contains stock portfolio                   
+                      expected 6260 to equal 6250                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 30"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 05.  AssertionError  Data contains stock portfolio                   
+                      expected 8660 to equal 8650                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 35"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 06.  SyntaxError                                                     
+                      Unexpected end of input                         
+                      at test-script                                  
+                      inside "Test Case 37"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 07.  AssertionError  Data contains stock portfolio                   
+                      expected 8660 to equal 8650                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 40"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 08.  AssertionError  Data contains stock portfolio                   
+                      expected null to be an array                    
+                      at assertion:2 in test-script                   
+                      inside "Test Case 41"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 09.  SyntaxError                                                     
+                      Unexpected end of input                         
+                      at test-script                                  
+                      inside "Test Case 43"                           
+[90m     [39m[90m                [39m[90m                                                 [39m
+ 10.  AssertionError  Data contains wallet balance                    
+                      expected 8660 to equal 9186                     
+                      at assertion:2 in test-script                   
+                      inside "Test Case 50"                           

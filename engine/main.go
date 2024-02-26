@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -711,6 +711,7 @@ func updateMoneyWallet(userName string, order Order, price *float64, quantity in
 
 	// Calculate total to be added or deducted
 	total := newPrice * float64(quantity)
+	fmt.Println("Total: ", total)
 	if !isAdded {
 		total = total * (-1) // Reduce funds if buying
 	}
