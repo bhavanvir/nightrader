@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -231,7 +231,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			handleError(c, http.StatusBadRequest, "Insufficient funds", err)
 			return
 		}
-
+		
 		if err := updateMoneyWallet(userName, order, order.Price, order.Quantity, false); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to deduct money from user's wallet", err)
 			return
@@ -291,6 +291,8 @@ func TraverseOrderBook(StockTxID string, book *OrderBook, bookType string) (resp
 		Data:    nil,
 	}
 
+	fmt.Println("Traversing order book:")
+
 	var bookOrders *PriorityQueue
 	if bookType == "buy" {
 		bookOrders = &book.BuyOrders
@@ -300,21 +302,86 @@ func TraverseOrderBook(StockTxID string, book *OrderBook, bookType string) (resp
 
 	// Find the index of the order to remove
 	indexToRemove := -1
+	removeOrder := Order{}
 	for i, order := range bookOrders.Order {
-		if order.StockTxID == StockTxID && order.Status == "IN_PROGRESS" && order.OrderType == "LIMIT" {
+		if order.StockTxID == StockTxID && order.Status != "COMPLETED" && order.OrderType == "LIMIT" {
 			indexToRemove = i
+			removeOrder = *order
 			break
 		}
 	}
 
 	// If the order was found, remove it from the heap
 	if indexToRemove != -1 {
-		heap.Remove(bookOrders, indexToRemove)
+		executeRemoveOrder(removeOrder, bookOrders, indexToRemove)
 		response.Success = true
 	}
 
 	return response
 }
+
+func executeRemoveOrder(order Order, bookOrders *PriorityQueue, indexToRemove int) {
+	fmt.Println("Removing order: ", order.StockTxID)
+	heap.Remove(bookOrders, indexToRemove)
+
+	if order.IsBuy {
+		postprocessingRemoveBuyOrder(order)
+	}else {
+		postprocessingRemoveSellOrder(order)
+	}
+}
+
+func postprocessingRemoveBuyOrder(order Order) {
+	if order.Status == "IN_PROGRESS" {
+		fmt.Println("Remove IN_PROGRESS buy order")
+		// refund all dedeucted money back to wallet
+		if err := updateMoneyWallet(order.UserName, order, order.Price, order.Quantity, true); err != nil {
+			fmt.Println("Error updating wallet: ", err)
+		}
+
+		// remove transaction from wallet_transactions
+		if err := deleteWalletTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting wallet transaction: ", err)
+		}
+
+		// remove transaction from stock_transactions
+		if err := deleteStockTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting stock transaction: ", err)
+		}
+	} else {
+		fmt.Println("Remove PARTIALLY_FULFILLED buy order")
+		if err := updateMoneyWallet(order.UserName, order, order.Price, order.Quantity, true); err != nil {
+			fmt.Println("Error updating wallet: ", err)
+		}
+
+		// remove transaction from stock_transactions
+		if err := deleteWalletTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting wallet transaction: ", err)
+		}
+	}
+}
+
+func postprocessingRemoveSellOrder(order Order) {
+	fmt.Println("status: ", order.Status)	
+	if order.Status == "IN_PROGRESS" {
+		fmt.Println("Remove IN_PROGRESS sell order")
+		// refund all dedeucted stock back to portfolio
+		if err := updateStockPortfolio(order.UserName, order, order.Quantity, true); err != nil {
+			fmt.Println("Error updating stock portfolio: ", err)
+		}
+
+		// remove transaction from stock_transactions
+		if err := deleteStockTransaction(order.UserName, order); err != nil {
+			fmt.Println("Error deleting stock transaction: ", err)
+		}
+	} else {
+		fmt.Println("Remove PARTIALLY_FULFILLED sell order")
+		if err := updateStockPortfolio(order.UserName, order, order.Quantity, true); err != nil {
+			fmt.Println("Error updating stock portfolio: ", err)
+		}
+	}
+}
+
 
 func HandleCancelStockTransaction(c *gin.Context) {
 	userName, exists := c.Get("user_name")
@@ -457,7 +524,7 @@ func completeBuyOrder(book *OrderBook, buyOrder *Order, tradeQuantity int) {
 		fmt.Println("Error updating stock portfolio: ", err)
 	}
 
-	if err := setStatus(*buyOrder, "COMPLETED"); err != nil {
+	if err := setStatus(buyOrder, "COMPLETED"); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 }
@@ -545,7 +612,7 @@ func partialFulfillSellOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		fmt.Println("Error updating wallet: ", err)
 	}
 
-	if err := setStatus(*order, "PARTIALLY_FULFILLED"); err != nil {
+	if err := setStatus(order, "PARTIALLY_FULFILLED"); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -578,7 +645,7 @@ func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		fmt.Println("Error updating stock portfolio: ", err)
 	}
 
-	if err := setStatus(*order, "PARTIALLY_FULFILLED"); err != nil {
+	if err := setStatus(order, "PARTIALLY_FULFILLED"); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -611,7 +678,7 @@ func completeSellOrder(book *OrderBook, order *Order, tradeQuantity int, trading
 		fmt.Println("Error updating wallet: ", err)
 	}
 
-	if err := setStatus(*order, "COMPLETED"); err != nil {
+	if err := setStatus(order, "COMPLETED"); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -649,8 +716,8 @@ func updateMoneyWallet(userName string, order Order, price *float64, quantity in
 	}
 
 	// Dont remove: Total = 0 when there is no Sell orders in Queue
-	fmt.Println("Total: ", total)
 	if total == 0 {
+		fmt.Println("Total: ", total)
 		return fmt.Errorf("No Sell stock orders in the queue - Market Price is 0")
 	}
 
@@ -694,11 +761,6 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 			UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
 		if err != nil {
 			return fmt.Errorf("Failed to update user stocks: %w", err)
-		}
-		_, err = db.Exec(`
-			UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
-		if err != nil {
-			return fmt.Errorf("Failed to update wallet: %w", err)
 		}
     } else {
         // For wallet transactions, update the wallet regardless of the order type
@@ -748,7 +810,7 @@ func setWalletTransaction(userName string, tx Order, price *float64, quantity in
 	return nil
 }
 
-func deleteWalletTransaction(userName string, wallet_tx_id string) error {
+func deleteWalletTransaction(userName string, order Order) error {
 	// Connect to database
 	db, err := openConnection()
 	if err != nil {
@@ -758,7 +820,7 @@ func deleteWalletTransaction(userName string, wallet_tx_id string) error {
 
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
-		DELETE FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, wallet_tx_id)
+		DELETE FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, order.WalletTxID)
 	if err != nil {
 		return fmt.Errorf("Failed to delete wallet transaction: %w", err)
 	}
@@ -830,13 +892,17 @@ func deleteStockTransaction(userName string, order Order) error {
 	return nil
 }
 
-func setStatus(order Order, status string) error {
+func setStatus(order *Order, status string) error {
 	// Connect to database
 	db, err := openConnection()
 	if err != nil {
 		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
 	defer db.Close()
+
+	if status == "PARTIALLY_FULFILLED" {
+		order.Status = status
+	}
 
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
@@ -993,13 +1059,7 @@ func checkAndRemoveExpiredOrders() {
             order := book.BuyOrders.Order[i]
             if isOrderExpired(order) {
                 // Remove the expired order from the priority queue
-                heap.Remove(&book.BuyOrders, i)
-
-                // Update user's wallet when an order is removed
-				// ToDo
-                // if err := updateMoneyWallet(order.UserName, *order, price *float64, quantity int, true); err != nil {
-                //     // Handle error
-                // }
+                executeRemoveOrder(*order, &book.BuyOrders, i)
             } else {
                 i++
             }
@@ -1010,13 +1070,7 @@ func checkAndRemoveExpiredOrders() {
             order := book.SellOrders.Order[i]
             if isOrderExpired(order) {
                 // Remove the expired order from the priority queue
-                heap.Remove(&book.SellOrders, i)
-
-                // Update user's stock portfolio when an order is removed
-				// ToDo
-                // if err := updateStockPortfolio(order.UserName, *order, quantity int, true); err != nil {
-                //     // Handle error
-                // }
+				executeRemoveOrder(*order, &book.SellOrders, i)
             } else {
                 i++
             }
