@@ -776,11 +776,15 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 		}
     } else {
         // For wallet transactions, update the wallet regardless of the order type
-        _, err = db.Exec(`
-            UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
-        if err != nil {
-            return fmt.Errorf("Failed to update wallet: %w", err)
-        }
+		if total <= 0 {
+			return fmt.Errorf("No stocks to deduct")
+		} else {
+			_, err = db.Exec(`
+				INSERT INTO user_stocks VALUES($1, $2, $3)`, userName, order.StockID, quantity)
+			if err != nil {
+				return fmt.Errorf("Failed to create user_stock: %w", err)
+			}
+		}
     }
 
     return nil
