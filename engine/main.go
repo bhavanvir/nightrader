@@ -622,6 +622,23 @@ func setWalletTransaction(userName string, tx Order) error {
 	return nil
 }
 
+func deleteWalletTransaction(userName string, wallet_tx_id string) error {
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to database: %w", err)
+	}
+	defer db.Close()
+
+	// Insert transaction to wallet transactions
+	_, err = db.Exec(`
+		DELETE FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, wallet_tx_id)
+	if err != nil {
+		return fmt.Errorf("Failed to delete wallet transaction: %w", err)
+	}
+	return nil
+}
+
 // Store completed stock transactions in the database
 func setStockTransaction(userName string, tx Order) error {
 	fmt.Println("Setting stock transaction")
@@ -661,6 +678,27 @@ func setStockTransaction(userName string, tx Order) error {
 	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID,tx.IsBuy, tx.OrderType, price, tx.Quantity, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
+	}
+	return nil
+}
+
+func deleteStockTransaction(userName string, order Order) error {
+	if order.Status != "IN_PROGRESS" {
+		return fmt.Errorf("Cannot delete completed or partially completed transactions")
+	}
+
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to database: %w", err)
+	}
+	defer db.Close()
+
+	// Insert transaction to wallet transactions
+	_, err = db.Exec(`
+		DELETE FROM stock_transactions WHERE user_name = $1 AND stock_tx_id = $2`, userName, order.StockTxID)
+	if err != nil {
+		return fmt.Errorf("Failed to delete stock transaction: %w", err)
 	}
 	return nil
 }
