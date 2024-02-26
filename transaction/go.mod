@@ -3,10 +3,11 @@ module day-trader/transaction
 go 1.21.6
 
 require (
-	github.com/Poomon001/day-trading-package v1.1.7
+	github.com/Poomon001/day-trading-package v1.1.9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/lib/pq v1.10.9
 )
 
 require (
