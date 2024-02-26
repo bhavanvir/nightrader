@@ -528,7 +528,6 @@ func executeSellTrade(book *OrderBook, buyOrder *Order, order *Order){
 func completeSellOrder(book *OrderBook, order *Order) {
 	if err:= updateMoneyWallet(order.UserName, *order, true); err != nil {
 		fmt.Println("Error updating wallet: ", err)
-<<<<<<< HEAD
 	}
 
 	if err := setStatus(*order, "COMPLETED"); err != nil {
@@ -560,8 +559,6 @@ func updateMoneyWallet(userName string, order Order, isAdded bool) error {
 		}
 	} else {
 		price = *order.Price
-=======
->>>>>>> upstream/main
 	}
 
 	if err := setStatus(*order, "COMPLETED"); err != nil {
@@ -574,7 +571,6 @@ func updateMoneyWallet(userName string, order Order, isAdded bool) error {
 }
 /** === END SELL Order === **/
 
-<<<<<<< HEAD
 func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 	fmt.Println("Deducting stock from portfolio")
 
@@ -606,41 +602,6 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 		if err != nil {
 			return fmt.Errorf("Failed to update user stocks: %w", err)
 		}
-=======
-/** === BUY/SELL Order === **/
-func updateMoneyWallet(userName string, order Order, isAdded bool) error {
-    fmt.Println("Updating money in wallet")
-
-    // Connect to the database
-    db, err := openConnection()
-    if err != nil {
-        return fmt.Errorf("Failed to connect to database: %w", err)
-    }
-    defer db.Close()
-
-    // Calculate the total amount to be added or deducted
-    var total float64
-    if order.OrderType == "MARKET" {
-        // If it's a market order, use the market price
-        marketPrice, err := getMarketStockPrice(order.StockID)
-        if err != nil {
-            return fmt.Errorf("Failed to get market stock price: %w", err)
-        }
-        total = marketPrice * float64(order.Quantity)
-    } else {
-        // If it's a limit order, use the specified price
-        total = *order.Price * float64(order.Quantity)
-    }
-
-    // If it's a sell order, the total amount is added to the wallet
-    // If it's a buy order, the total amount is deducted from the wallet
-    if !isAdded {
-        total *= -1
-    }
-
-	// For stock transactions, only update the wallet if it's a buy order
-	if order.IsBuy {
->>>>>>> upstream/main
 		_, err = db.Exec(`
 			UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
 		if err != nil {
@@ -700,13 +661,10 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
         }
     }
 
-<<<<<<< HEAD
-=======
     return nil
 }
 
 
->>>>>>> upstream/main
 // Store completed wallet transactions in the database
 func setWalletTransaction(userName string, tx Order) error {
 	// Connect to database
@@ -969,9 +927,6 @@ func verifyStockBeforeTransaction(userName string, order Order) error {
 
 	return nil
 }
-<<<<<<< HEAD
-/** === END BUY/SELL Order === **/
-=======
 func checkAndRemoveExpiredOrders() {
     // Iterate over each order book and check for expired orders
     for _, book := range orderBookMap.OrderBooks {
@@ -1023,7 +978,6 @@ func isOrderExpired(order *Order) bool {
     // Check if the order is older than 15 minutes
     return time.Since(orderTime) > 15*time.Minute
 }
->>>>>>> upstream/main
 
 func main() {
 	router := gin.Default()
