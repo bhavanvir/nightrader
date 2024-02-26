@@ -14,5 +14,5 @@ Content-Type: application/json
 
 {
     "stock_id":"1",
-    "quantity":300
+    "quantity":1000
 }
