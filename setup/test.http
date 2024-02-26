@@ -2,9 +2,9 @@
 
 post {{hostname}}/createStock
 Content-Type: application/json
-
+ 
 {
-    "stock_name": "AMD"
+    "stock_name": "Apple"
 }
 
 ###
@@ -14,5 +14,5 @@ Content-Type: application/json
 
 {
     "stock_id":"1",
-    "quantity":1000
+    "quantity":300
 }

@@ -33,7 +33,7 @@ Content-Type: application/json
 {   "stock_id":1,
     "is_buy":false,
     "order_type":"MARKET",
-    "quantity":5,
+    "quantity":500,
     "price": null
 }
 
@@ -46,6 +46,6 @@ Content-Type: application/json
 {   "stock_id":1,
     "is_buy":true,
     "order_type":"MARKET",
-    "quantity":5,
+    "quantity":500,
     "price": null
 }
