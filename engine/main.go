@@ -757,10 +757,22 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 	// User already owns this stock
 	if rows.Next() {
 		// Update the user's stocks
-		_, err = db.Exec(`
-			UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
-		if err != nil {
-			return fmt.Errorf("Failed to update user stocks: %w", err)
+		var amount int
+		if err := rows.Scan(&amount); err != nil {
+			return fmt.Errorf("Error while scanning row: %w", err)
+		}
+		if total < 0 && (amount + total) <= 0 {
+			_, err = db.Exec(`
+				DELETE FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
+			if err != nil {
+				return fmt.Errorf("Failed to update user stocks: %w", err)
+			}
+		} else {
+			_, err = db.Exec(`
+				UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
+			if err != nil {
+				return fmt.Errorf("Failed to update user stocks: %w", err)
+			}			
 		}
     }
 
