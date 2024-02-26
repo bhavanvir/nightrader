@@ -3102,6 +3102,63 @@
           }
         }
       ]
+    },
+    {
+      "name": "Test Case 59",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\": -100}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["addMoneyToWallet"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('invalidToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Success is false\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.false;",
+              "});",
+              "pm.test(\"Data contains error message\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
     }
   ]
 }
