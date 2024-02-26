@@ -1,0 +1,431 @@
+{
+  "info": {
+    "_postman_id": "your-postman-collection-id",
+    "name": "Example Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Pretest",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["wipeDatabaseTables"]
+        }
+      }
+    },
+    {
+      "name": "Test Case 1",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"user_name\": \"VanguardETF\", \"name\": \"Vanguard Ltd.\", \"password\": \"Vang@123\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8888",
+          "path": ["register"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data is null\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 2",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"user_name\": \"VanguardETF\", \"name\": \"Vanguard Ltd.\", \"password\": \"Comp@124\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8888",
+          "path": ["register"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Success is false\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.false;",
+              "});",
+              "pm.test(\"Data contains error message\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Username already exists: <nil>\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 3",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"user_name\": \"VanguardETF\", \"password\": \"Vang@12344\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8888",
+          "path": ["login"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "pm.test(\"Success is false\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.false;",
+              "});",
+              "pm.test(\"Data contains error message\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql(\"Incorrect password: <nil>\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 4",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"user_name\": \"VanguardETF\", \"password\": \"Vang@123\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8888",
+          "path": ["login"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains token\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.token).to.not.be.null;",
+              "});",
+              "pm.test(\"Store token in environment variable\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set(\"compToken\", jsonData.data.token);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 5",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_name\": \"Google\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["createStock"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock id\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data.stock_id).to.be.a('number');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 6",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_id\": \"1\", \"quantity\": 550}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["addStockToUser"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 7",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_name\": \"Apple\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["createStock"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock id\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data.stock_id).to.be.a('number');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 8",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_id\": \"2\", \"quantity\": 369}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["addStockToUser"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ]
+}
