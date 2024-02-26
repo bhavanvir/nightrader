@@ -20,7 +20,7 @@ Content-Type: application/json
 {   "stock_id":1,
     "is_buy":true,
     "order_type":"LIMIT",
-    "quantity":1000,
+    "quantity":100000,
     "price": 100
 }
 
