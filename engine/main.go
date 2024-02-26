@@ -542,85 +542,99 @@ func completeSellOrder(book *OrderBook, order *Order) {
 
 /** === BUY/SELL Order === **/
 func updateMoneyWallet(userName string, order Order, isAdded bool) error {
-	fmt.Println("Deducting money from wallet")
+    fmt.Println("Updating money in wallet")
 
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
+    // Connect to the database
+    db, err := openConnection()
+    if err != nil {
+        return fmt.Errorf("Failed to connect to database: %w", err)
+    }
+    defer db.Close()
 
-	var price float64
-	if order.OrderType == "MARKET" {
-		price, err = getMarketStockPrice(order.StockID)
+    // Calculate the total amount to be added or deducted
+    var total float64
+    if order.OrderType == "MARKET" {
+        // If it's a market order, use the market price
+        marketPrice, err := getMarketStockPrice(order.StockID)
+        if err != nil {
+            return fmt.Errorf("Failed to get market stock price: %w", err)
+        }
+        total = marketPrice * float64(order.Quantity)
+    } else {
+        // If it's a limit order, use the specified price
+        total = *order.Price * float64(order.Quantity)
+    }
+
+    // If it's a sell order, the total amount is added to the wallet
+    // If it's a buy order, the total amount is deducted from the wallet
+    if !isAdded {
+        total *= -1
+    }
+
+	// For stock transactions, only update the wallet if it's a buy order
+	if order.IsBuy {
+		_, err = db.Exec(`
+			UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
 		if err != nil {
-			return fmt.Errorf("Failed to get market stock price: %w", err)
+			return fmt.Errorf("Failed to update wallet: %w", err)
 		}
-	} else {
-		price = *order.Price
-	}
+    } else {
+        // For wallet transactions, update the wallet regardless of the order type
+        _, err = db.Exec(`
+            UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
+        if err != nil {
+            return fmt.Errorf("Failed to update wallet: %w", err)
+        }
+    }
 
-	// Calculate total to be added or deducted
-	total := price * float64(order.Quantity)
-	if !isAdded {
-		total = total * (-1) // Reduce funds if buying
-	}
-
-	// Update the user's wallet
-	_, err = db.Exec(`
-		UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
-	if err != nil {
-		return fmt.Errorf("Failed to update wallet: %w", err)
-	}
-	return nil
+    return nil
 }
 
+// Update the user's stock portfolio with the transaction quantity
+// The isWalletTransaction parameter specifies whether the transaction is related to wallet or stock
 func updateStockPortfolio(userName string, order Order, isAdded bool) error {
-	fmt.Println("Deducting stock from portfolio")
+    fmt.Println("Updating stock portfolio")
 
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
+    // Connect to the database
+    db, err := openConnection()
+    if err != nil {
+        return fmt.Errorf("Failed to connect to database: %w", err)
+    }
+    defer db.Close()
 
-	// Calculate total to be added or deducted
-	total := order.Quantity
-	if !isAdded {
-		total = total * (-1) // Reduce stocks if selling
-	}
-
-	rows, err := db.Query(`
-		SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
-	if err != nil {
-		return fmt.Errorf("Failed to query user stocks: %w", err)
-	}
-	defer rows.Close()
-
-	// User already owns this stock
-	if rows.Next() {
-		// Update the user's stocks
+    // If it's a buy order, the quantity is added to the user's portfolio
+    // If it's a sell order, the quantity is deducted from the user's portfolio
+    var quantity int
+    if !isAdded {
+        quantity = -order.Quantity
+    } else {
+        quantity = order.Quantity
+    }
+	// For wallet transactions, only update the stock portfolio if it's a sell order
+	if !order.IsBuy {
 		_, err = db.Exec(`
-			UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
+			INSERT INTO user_stocks (user_name, stock_id, quantity)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (user_name, stock_id) DO UPDATE
+			SET quantity = user_stocks.quantity + EXCLUDED.quantity`, userName, order.StockID, quantity)
 		if err != nil {
-			return fmt.Errorf("Failed to update user stocks: %w", err)
+			return fmt.Errorf("Failed to update stock portfolio: %w", err)
 		}
-		_, err = db.Exec(`
-			DELETE FROM user_stocks WHERE user_name = $1 AND quantity <= 0`, userName)
-		if err != nil {
-			return fmt.Errorf("Failed to delete empty user stocks: %w", err)
-		}
-	} else { // Create new user_stock
-		_, err = db.Exec(`
-			INSERT INTO user_stocks VALUES ($1, $2, $3)`, userName, order.StockID, total)
-		if err != nil {
-			return fmt.Errorf("Failed to update user stocks: %w", err)
-		}
-	}
-	return nil
+    } else {
+        // For stock transactions, update the stock portfolio regardless of the order type
+        _, err = db.Exec(`
+            INSERT INTO user_stocks (user_name, stock_id, quantity)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (user_name, stock_id) DO UPDATE
+            SET quantity = user_stocks.quantity + EXCLUDED.quantity`, userName, order.StockID, quantity)
+        if err != nil {
+            return fmt.Errorf("Failed to update stock portfolio: %w", err)
+        }
+    }
+
+    return nil
 }
+
 
 // Store completed wallet transactions in the database
 func setWalletTransaction(userName string, tx Order) error {
@@ -884,7 +898,57 @@ func verifyStockBeforeTransaction(userName string, order Order) error {
 
 	return nil
 }
-/** === END BUY/SELL Order === **/
+func checkAndRemoveExpiredOrders() {
+    // Iterate over each order book and check for expired orders
+    for _, book := range orderBookMap.OrderBooks {
+        book.mu.Lock()
+        defer book.mu.Unlock()
+
+        // Iterate over buy orders
+        for i := 0; i < book.BuyOrders.Len(); {
+            order := book.BuyOrders.Order[i]
+            if isOrderExpired(order) {
+                // Remove the expired order from the priority queue
+                heap.Remove(&book.BuyOrders, i)
+
+                // Update user's wallet when an order is removed
+                if err := updateMoneyWallet(order.UserName, *order, true); err != nil {
+                    // Handle error
+                }
+            } else {
+                i++
+            }
+        }
+
+        // Iterate over sell orders
+        for i := 0; i < book.SellOrders.Len(); {
+            order := book.SellOrders.Order[i]
+            if isOrderExpired(order) {
+                // Remove the expired order from the priority queue
+                heap.Remove(&book.SellOrders, i)
+
+                // Update user's stock portfolio when an order is removed
+                if err := updateStockPortfolio(order.UserName, *order, true); err != nil {
+                    // Handle error
+                }
+            } else {
+                i++
+            }
+        }
+    }
+}
+
+func isOrderExpired(order *Order) bool {
+    // Parse the timestamp of the order
+    orderTime, err := time.Parse(time.RFC3339Nano, order.TimeStamp)
+    if err != nil {
+        // Handle error
+        return false
+    }
+
+    // Check if the order is older than 15 minutes
+    return time.Since(orderTime) > 15*time.Minute
+}
 
 func main() {
 	router := gin.Default()
@@ -899,5 +963,14 @@ func main() {
 	identification.Test()
 	router.POST("/placeStockOrder", identification.Identification, HandlePlaceStockOrder)
 	router.POST("/cancelStockTransaction", identification.Identification, HandleCancelStockTransaction)
+
+    // Start a background goroutine to periodically check and remove expired orders
+    go func() {
+        for {
+            time.Sleep(time.Minute)
+            checkAndRemoveExpiredOrders()
+        }
+    }()
+
 	router.Run(":8585")
 }
