@@ -563,7 +563,7 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 	}
 
 	rows, err := db.Query(`
-		SELECT stock_id FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
+		SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
 	if err != nil {
 		return fmt.Errorf("Failed to query user stocks: %w", err)
 	}
@@ -576,6 +576,11 @@ func updateStockPortfolio(userName string, order Order, isAdded bool) error {
 			UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
 		if err != nil {
 			return fmt.Errorf("Failed to update user stocks: %w", err)
+		}
+		_, err = db.Exec(`
+			DELETE FROM user_stocks WHERE user_name = $1 AND quantity <= 0`, userName)
+		if err != nil {
+			return fmt.Errorf("Failed to delete empty user stocks: %w", err)
 		}
 	} else { // Create new user_stock
 		_, err = db.Exec(`
