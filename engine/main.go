@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	// host = "database"
-	host     = "localhost" // for local testing
+	host = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -64,6 +64,7 @@ type Order struct {
 	Price      *float64 `json:"price"`
 	TimeStamp  string  `json:"time_stamp"`
 	Status     string  `json:"status"`
+	UserName   string  `json:"user_name"`
 }
 
 // Define the order book
@@ -180,6 +181,7 @@ func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error
 		Price:      request.Price,
 		TimeStamp:  time.Now().Format(time.RFC3339Nano),
 		Status:     "IN_PROGRESS",
+		UserName:   userName,
 	}
 	return order, nil
 } // createOrder
@@ -437,9 +439,18 @@ func executeBuyTrade(book *OrderBook, order *Order, sellOrder *Order){
 		// execute complete trade for both buy and sell orders
 		order.Quantity = 0
 		sellOrder.Quantity = 0
-	}
+			}
 }
 
+func completeBuyOrder(book *OrderBook, order *Order) {
+	if err:= updateStockPortfolio(order.UserName, *order, true); err != nil {
+		fmt.Println("Error updating stock portfolio: ", err)
+	}
+
+	if err := setStatus(*order, "COMPLETED"); err != nil {
+		fmt.Println("Error setting status: ", err)
+	}
+}
 /** === END BUY Order === **/
 
 /** === SELL Order === **/
@@ -506,9 +517,27 @@ func executeSellTrade(book *OrderBook, buyOrder *Order, order *Order){
 		// execute complete trade for both buy and sell orders
 		buyOrder.Quantity = 0
 		order.Quantity = 0
+		fmt.Println("\n ++++++++ \n")
+		fmt.Println("Buy User: ", buyOrder.UserName)
+		fmt.Println("Sell User: ", order.UserName)	
+		completeBuyOrder(book, buyOrder)
+		completeSellOrder(book, order)
 	}
 }
 
+func completeSellOrder(book *OrderBook, order *Order) {
+	if err:= updateMoneyWallet(order.UserName, *order, true); err != nil {
+		fmt.Println("Error updating wallet: ", err)
+	}
+
+	if err := setStatus(*order, "COMPLETED"); err != nil {
+		fmt.Println("Error setting status: ", err)
+	}
+
+	if err := setWalletTransaction(order.UserName, *order); err != nil {
+		fmt.Println("Error setting wallet transaction: ", err)
+	}
+}
 /** === END SELL Order === **/
 
 /** === BUY/SELL Order === **/
@@ -713,7 +742,7 @@ func setStatus(order Order, status string) error {
 
 	// Insert transaction to wallet transactions
 	_, err = db.Exec(`
-		UPDATE stock_transactions SET order_status = $1 WHERE user_name = $2 AND stock_tx_id = $3`, status, userName, order.StockTxID)
+		UPDATE stock_transactions SET order_status = $1 WHERE user_name = $2 AND stock_tx_id = $3`, status, order.UserName, order.StockTxID)
 	if err != nil {
 		return fmt.Errorf("Failed to update status: %w", err)
 	}
