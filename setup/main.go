@@ -146,8 +146,10 @@ func addStockToUser(c *gin.Context) {
 }
 
 func wipeDatabaseTables(c *gin.Context) {
-	// This function is needed when running the postman collection tests, as not doing so 
-	// will cause certain tests to fail
+	/* 
+	This function is needed when running the postman collection tests, as not doing so 
+	will cause certain tests to fail 
+	*/
 
     db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
     if err != nil {
