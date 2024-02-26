@@ -24,9 +24,7 @@ jobs:
 
       - name: Run Docker Compose
         run: |
-          docker-compose up --build -d \
-          authentication \
-          database
+          docker-compose up --build -d database authentication transaction setup
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
@@ -37,4 +35,4 @@ jobs:
         run: npm install -g newman
 
       - name: Run Postman tests
-        run: newman run tests/postman-collection.json
+        run: newman run tests/ci-cd.json

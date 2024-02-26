@@ -77,7 +77,7 @@ func createToken(name string, username string, expirationTime time.Time) (string
 
 func createSession(c *gin.Context, token string, expirationTime time.Duration) {
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("session_token", token, int(expirationTime.Seconds()), "/", "http://localhost:3000", false, false)
+	c.SetCookie("token", token, int(expirationTime.Seconds()), "/", "http://localhost:3000", false, false)
 }
 
 func postLogin(c *gin.Context) {

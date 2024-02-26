@@ -662,6 +662,7 @@ func updateMoneyWallet(userName string, order Order, price *float64, quantity in
 	}
 	return nil
 }
+/** === END SELL Order === **/
 
 func updateStockPortfolio(userName string, order Order, quantity int, isAdded bool) error {
 	fmt.Println("Deducting stock from portfolio")
@@ -695,18 +696,20 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 			return fmt.Errorf("Failed to update user stocks: %w", err)
 		}
 		_, err = db.Exec(`
-			DELETE FROM user_stocks WHERE user_name = $1 AND quantity <= 0`, userName)
+			UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
 		if err != nil {
-			return fmt.Errorf("Failed to delete empty user stocks: %w", err)
+			return fmt.Errorf("Failed to update wallet: %w", err)
 		}
-	} else { // Create new user_stock
-		_, err = db.Exec(`
-			INSERT INTO user_stocks VALUES ($1, $2, $3)`, userName, order.StockID, total)
-		if err != nil {
-			return fmt.Errorf("Failed to update user stocks: %w", err)
-		}
-	}
-	return nil
+    } else {
+        // For wallet transactions, update the wallet regardless of the order type
+        _, err = db.Exec(`
+            UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
+        if err != nil {
+            return fmt.Errorf("Failed to update wallet: %w", err)
+        }
+    }
+
+    return nil
 }
 
 // Store completed wallet transactions in the database
@@ -979,7 +982,59 @@ func verifyStockBeforeTransaction(userName string, order Order) error {
 
 	return nil
 }
-/** === END BUY/SELL Order === **/
+func checkAndRemoveExpiredOrders() {
+    // Iterate over each order book and check for expired orders
+    for _, book := range orderBookMap.OrderBooks {
+        book.mu.Lock()
+        defer book.mu.Unlock()
+
+        // Iterate over buy orders
+        for i := 0; i < book.BuyOrders.Len(); {
+            order := book.BuyOrders.Order[i]
+            if isOrderExpired(order) {
+                // Remove the expired order from the priority queue
+                heap.Remove(&book.BuyOrders, i)
+
+                // Update user's wallet when an order is removed
+				// ToDo
+                // if err := updateMoneyWallet(order.UserName, *order, price *float64, quantity int, true); err != nil {
+                //     // Handle error
+                // }
+            } else {
+                i++
+            }
+        }
+
+        // Iterate over sell orders
+        for i := 0; i < book.SellOrders.Len(); {
+            order := book.SellOrders.Order[i]
+            if isOrderExpired(order) {
+                // Remove the expired order from the priority queue
+                heap.Remove(&book.SellOrders, i)
+
+                // Update user's stock portfolio when an order is removed
+				// ToDo
+                // if err := updateStockPortfolio(order.UserName, *order, quantity int, true); err != nil {
+                //     // Handle error
+                // }
+            } else {
+                i++
+            }
+        }
+    }
+}
+
+func isOrderExpired(order *Order) bool {
+    // Parse the timestamp of the order
+    orderTime, err := time.Parse(time.RFC3339Nano, order.TimeStamp)
+    if err != nil {
+        // Handle error
+        return false
+    }
+
+    // Check if the order is older than 15 minutes
+    return time.Since(orderTime) > 15*time.Minute
+}
 
 func main() {
 	router := gin.Default()
@@ -994,5 +1049,14 @@ func main() {
 	identification.Test()
 	router.POST("/placeStockOrder", identification.Identification, HandlePlaceStockOrder)
 	router.POST("/cancelStockTransaction", identification.Identification, HandleCancelStockTransaction)
+
+    // Start a background goroutine to periodically check and remove expired orders
+    go func() {
+        for {
+            time.Sleep(time.Minute)
+            checkAndRemoveExpiredOrders()
+        }
+    }()
+
 	router.Run(":8585")
 }
