@@ -4,7 +4,7 @@ post {{hostname}}/createStock
 Content-Type: application/json
 
 {
-    "stock_name": "AMD"
+    "stock_name": "Apple"
 }
 
 ###
