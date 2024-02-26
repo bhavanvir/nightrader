@@ -199,7 +199,7 @@
               "});",
               "pm.test(\"Store token in environment variable\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.environment.set(\"token\", jsonData.data.token);",
+              "    pm.environment.set(\"compToken\", jsonData.data.token);",
               "});"
             ],
             "type": "text/javascript"
@@ -236,7 +236,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -293,7 +293,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -346,7 +346,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -403,7 +403,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -452,7 +452,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -472,7 +472,7 @@
               "pm.test(\"Data contains stock portfolio\", function () {",
               "    var jsonData = pm.response.json();",
               "    console.log(jsonData);",
-              "    pm.expect(jsonData.data).to.be.an('array');",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -509,7 +509,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -562,7 +562,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -596,10 +596,6 @@
             "value": "application/json"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\"stock_id\": 2, \"is_buy\": false, \"order_type\": \"LIMIT\", \"quantity\": 369, \"price\": 140}"
-        },
         "url": {
           "protocol": "http",
           "host": ["localhost"],
@@ -615,7 +611,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -668,7 +664,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
@@ -685,6 +681,11 @@
               "    var jsonData = pm.response.json();",
               "    console.log(jsonData);",
               "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -778,7 +779,1083 @@
               "});",
               "pm.test(\"Store token in environment variable\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.environment.set(\"token\", jsonData.data.token);",
+              "    pm.environment.set(\"user1Token\", jsonData.data.token);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 16",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockPrices"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 17",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"amount\": 10000}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["addMoneyToWallet"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data is null\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 18",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletBalance"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data.balance).to.be.equal(10000);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 19",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_id\": 1, \"is_buy\": true, \"order_type\": \"MARKET\", \"quantity\": 10, \"price\": null}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8585",
+          "path": ["placeStockOrder"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data is null\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 20",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 21",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 22",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletBalance"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data.balance).to.be.equal(8650);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 23",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockPortfolio"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 24",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 25",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletBalance"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.balance).to.be.equal(1350);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 26",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 27",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_id\": 2, \"is_buy\": true, \"order_type\": \"LIMIT\", \"quantity\": 20, \"price\": 120}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8585",
+          "path": ["placeStockOrder"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data is null\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 28",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 29",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.environment.set(\"appleStockTxId\", jsonData.data[1]['stock_tx_id']);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 30",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletBalance"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data.balance).to.be.equal(6250);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 31",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockPortfolio"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 32",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_tx_id\": \"{{appleStockTxId}}\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8585",
+          "path": ["cancelStockTransaction"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('compToken')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data is null\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 33",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 34",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock transactions\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 35",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getWalletBalance"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('user1Token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains stock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data.balance).to.be.equal(8650);",
               "});"
             ],
             "type": "text/javascript"
