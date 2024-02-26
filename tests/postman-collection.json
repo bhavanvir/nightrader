@@ -524,7 +524,261 @@
               "});",
               "pm.test(\"Success is true\", function () {",
               "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
               "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 11",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_id\": 1, \"is_buy\": false, \"order_type\": \"LIMIT\", \"quantity\": 550, \"price\": 135}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8585",
+          "path": ["placeStockOrder"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 12",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"stock_id\": 2, \"is_buy\": false, \"order_type\": \"LIMIT\", \"quantity\": 369, \"price\": 140}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockPortfolio"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains emptystock portfolio\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData).to.be.an('array').that.is.empty;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 13",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5433",
+          "path": ["getStockTransactions"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.request.headers.add({",
+              "    key: 'Cookie',",
+              "    value: 'token=' + pm.environment.get('token')",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 14",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"user_name\": \"FinanceGuru\", \"name\": \"The Finance Guru\", \"password\": \"Fguru@2024\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8888",
+          "path": ["register"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data is null\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data).to.be.null;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Case 15",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"user_name\": \"FinanceGuru\", \"password\": \"Fguru@2024\"}"
+        },
+        "url": {
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8888",
+          "path": ["login"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test(\"Success is true\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "pm.test(\"Data contains token\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.token).to.not.be.null;",
+              "});",
+              "pm.test(\"Store token in environment variable\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set(\"token\", jsonData.data.token);",
               "});"
             ],
             "type": "text/javascript"
