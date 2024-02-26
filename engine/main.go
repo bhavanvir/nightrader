@@ -708,6 +708,23 @@ func deleteStockTransaction(userName string, order Order) error {
 	return nil
 }
 
+func setStatus(order Order, status string) error {
+	// Connect to database
+	db, err := openConnection()
+	if err != nil {
+		return fmt.Errorf("Failed to connect to database: %w", err)
+	}
+	defer db.Close()
+
+	// Insert transaction to wallet transactions
+	_, err = db.Exec(`
+		UPDATE stock_transactions SET order_status = $1 WHERE user_name = $2 AND stock_tx_id = $3`, status, userName, order.StockTxID)
+	if err != nil {
+		return fmt.Errorf("Failed to update status: %w", err)
+	}
+	return nil
+}
+
 func initializePriorityQueue(order Order) (*OrderBook, error) {
 	// Add the order to the order book corresponding to the stock ID
 	orderBookMap.mu.Lock()
