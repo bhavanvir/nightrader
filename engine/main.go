@@ -774,8 +774,6 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 				return fmt.Errorf("Failed to update user stocks: %w", err)
 			}			
 		}
-<<<<<<< HEAD
-=======
     } else {
         // For wallet transactions, update the wallet regardless of the order type
 		if total <= 0 {
@@ -787,7 +785,6 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 				return fmt.Errorf("Failed to create user_stock: %w", err)
 			}
 		}
->>>>>>> upstream/main
     }
 
     return nil

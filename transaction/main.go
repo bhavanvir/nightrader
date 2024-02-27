@@ -84,6 +84,7 @@ type StockTransactionItem struct {
 	StockID     int     `json:"stock_id"`
 	WalletTxID  string  `json:"wallet_tx_id"`
 	OrderStatus string  `json:"order_status"`
+	ParentTxID  *string  `json:"parent_tx_id"`
 	IsBuy       bool    `json:"is_buy"`
 	OrderType   string  `json:"order_type"`
 	StockPrice  float64 `json:"stock_price"`
@@ -331,7 +332,7 @@ func getStockTransactions(c *gin.Context) {
 	defer db.Close()
 
 	rows, err := db.Query(`
-        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, is_buy, order_type, stock_price, quantity, time_stamp
+        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
         FROM stock_transactions
         WHERE user_name = $1`, userName)
 	if err != nil {
@@ -343,10 +344,11 @@ func getStockTransactions(c *gin.Context) {
 	var stock_transactions []StockTransactionItem
 	for rows.Next() {
 		var item StockTransactionItem
-		if err := rows.Scan(&item.StockTxID, &item.StockID, &item.WalletTxID, &item.OrderStatus, &item.IsBuy, &item.OrderType, &item.StockPrice, &item.Quantity, &item.TimeStamp); err != nil {
+		if err := rows.Scan(&item.StockTxID, &item.StockID, &item.WalletTxID, &item.OrderStatus, &item.ParentTxID, &item.IsBuy, &item.OrderType, &item.StockPrice, &item.Quantity, &item.TimeStamp); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
+		fmt.Println(item)
 		stock_transactions = append(stock_transactions, item)
 	}
 
