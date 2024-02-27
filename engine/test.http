@@ -4,10 +4,10 @@ post {{hostname}}/placeStockOrder
 # Sell Limit Order
 Content-Type: application/json
 
-{   "stock_id":1,
+{   "stock_id":2,
     "is_buy":false,
     "order_type":"LIMIT",
-    "quantity":100,
+    "quantity":3,
     "price": 100
 }
 
@@ -17,10 +17,10 @@ post {{hostname}}/placeStockOrder
 # Buy Limit Order
 Content-Type: application/json
 
-{   "stock_id":1,
+{   "stock_id":2,
     "is_buy":true,
     "order_type":"LIMIT",
-    "quantity":50,
+    "quantity":10,
     "price": 100
 }
 
@@ -30,10 +30,10 @@ post {{hostname}}/placeStockOrder
 # Sell market Order
 Content-Type: application/json
 
-{   "stock_id":1,
+{   "stock_id":2,
     "is_buy":false,
     "order_type":"MARKET",
-    "quantity":10,
+    "quantity":369,
     "price": null
 }
 
@@ -43,7 +43,7 @@ post {{hostname}}/placeStockOrder
 # Buy Market Order
 Content-Type: application/json
 
-{   "stock_id":1,
+{   "stock_id":2,
     "is_buy":true,
     "order_type":"MARKET",
     "quantity":10,
@@ -56,5 +56,5 @@ post {{hostname}}/cancelStockTransaction
 Content-Type: application/json
 
 {   
-    "stock_tx_id":"fc79c1bf-1492-4476-96e7-72aac3941bb1"
+    "stock_tx_id":"8a8287cd-6d8d-4adb-96d5-1b5e666c3a36"
 }
