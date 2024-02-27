@@ -9,3 +9,8 @@ Content-Type: application/json
 ###
 
 get {{hostname}}/getWalletBalance
+
+###
+
+get {{hostname}}/getStockTransactions
+
