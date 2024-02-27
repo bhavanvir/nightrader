@@ -1,4 +1,4 @@
-name: test
+name: Workflow
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,9 +22,17 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ hashFiles('**/Dockerfile', '**/docker-compose.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Run Docker Compose
         run: |
-          docker-compose up --build -d database authentication transaction setup
+          docker-compose up --build -d database authentication transaction setup engine
 
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
@@ -35,4 +43,4 @@ jobs:
         run: npm install -g newman
 
       - name: Run Postman tests
-        run: newman run tests/ci-cd.json
+        run: newman run tests/report-1.json
