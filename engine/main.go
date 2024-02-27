@@ -757,11 +757,37 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 	// User already owns this stock
 	if rows.Next() {
 		// Update the user's stocks
-		_, err = db.Exec(`
-			UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
-		if err != nil {
-			return fmt.Errorf("Failed to update user stocks: %w", err)
+		var amount int
+		if err := rows.Scan(&amount); err != nil {
+			return fmt.Errorf("Error while scanning row: %w", err)
 		}
+		if total < 0 && (amount + total) <= 0 {
+			_, err = db.Exec(`
+				DELETE FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
+			if err != nil {
+				return fmt.Errorf("Failed to update user stocks: %w", err)
+			}
+		} else {
+			_, err = db.Exec(`
+				UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
+			if err != nil {
+				return fmt.Errorf("Failed to update user stocks: %w", err)
+			}			
+		}
+<<<<<<< HEAD
+=======
+    } else {
+        // For wallet transactions, update the wallet regardless of the order type
+		if total <= 0 {
+			return fmt.Errorf("No stocks to deduct")
+		} else {
+			_, err = db.Exec(`
+				INSERT INTO user_stocks VALUES($1, $2, $3)`, userName, order.StockID, quantity)
+			if err != nil {
+				return fmt.Errorf("Failed to create user_stock: %w", err)
+			}
+		}
+>>>>>>> upstream/main
     }
 
     return nil
