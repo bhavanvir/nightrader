@@ -1,5 +1,4 @@
 @hostname = http://localhost:5433
-
 post {{hostname}}/addMoneyToWallet
 Content-Type: application/json
 
@@ -9,4 +8,4 @@ Content-Type: application/json
 
 ###
 
-get {{hostname}}/eatCookies
+get {{hostname}}/getWalletBalance

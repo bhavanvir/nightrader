@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -762,13 +762,6 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 		if err != nil {
 			return fmt.Errorf("Failed to update user stocks: %w", err)
 		}
-    } else {
-        // For wallet transactions, update the wallet regardless of the order type
-        _, err = db.Exec(`
-            UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
-        if err != nil {
-            return fmt.Errorf("Failed to update wallet: %w", err)
-        }
     }
 
     return nil
