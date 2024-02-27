@@ -260,9 +260,9 @@ func getStockPortfolio(c *gin.Context) {
 		portfolio = append(portfolio, item)
 	}
 
-	// Check if the portfolio is empty and set to nil if so
+	// If the portfolio is empty, return an empty array
 	if len(portfolio) == 0 {
-		portfolio = nil
+		portfolio = []StockPortfolioItem{}
 	}
 
 	response := StockPortfolioResponse{

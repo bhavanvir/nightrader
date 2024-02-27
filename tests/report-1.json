@@ -628,9 +628,10 @@
               "    var jsonData = pm.response.json();",
               "    pm.expect(jsonData.success).to.be.true;",
               "});",
-              "pm.test(\"Data is null\", function () {",
+              "pm.test(\"Data contains emptystock portfolio\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.data).to.be.null;",
+              "    console.log(jsonData);",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.empty;",
               "});"
             ],
             "type": "text/javascript"
