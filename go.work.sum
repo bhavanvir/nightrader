@@ -1,5 +1,5 @@
-github.com/Poomon001/day-trading-package v1.1.9 h1:OKy4L6weIGwomup7mAUuI1MYNPpnlGb+v/GDFe8AebM=
-github.com/Poomon001/day-trading-package v1.1.9/go.mod h1:IgIslTuRaJyEEVV6kG4KP7qSxvr1moBj1lWTmobMWNs=
+github.com/Poomon001/day-trading-package v1.2.0 h1:bEtmbmNdigt9GrfwJipEEkcBPPNmseMmaSDottPtC2k=
+github.com/Poomon001/day-trading-package v1.2.0/go.mod h1:IgIslTuRaJyEEVV6kG4KP7qSxvr1moBj1lWTmobMWNs=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/mod v0.8.0/go.mod h1:iBbtSCu2XBx23ZKBPSOrRkjjQPZFPuis4dIYUhu/chs=
 golang.org/x/net v0.17.0/go.mod h1:NxSsAGuq816PNPmqtQdLE42eU2Fs7NoRIZrHJAlaCOE=

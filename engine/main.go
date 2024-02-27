@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -190,13 +190,13 @@ func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error
 func HandlePlaceStockOrder(c *gin.Context) {
 	user_name, exists := c.Get("user_name")
 	if !exists || user_name == nil {
-		handleError(c, http.StatusUnauthorized, "User not authenticated", err)
+		handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 
 	userName, ok := user_name.(string)
 	if !ok {
-		handleError(c, http.StatusBadRequest, "Invalid user name type", err)
+		handleError(c, http.StatusBadRequest, "Invalid user name type", nil)
 		return
 	}
 
@@ -387,7 +387,7 @@ func postprocessingRemoveSellOrder(order Order) {
 func HandleCancelStockTransaction(c *gin.Context) {
 	userName, exists := c.Get("user_name")
 	if !exists || userName == nil {
-		handleError(c, http.StatusUnauthorized, "User not authenticated", err)
+		handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 
@@ -427,7 +427,7 @@ func HandleCancelStockTransaction(c *gin.Context) {
 		}
 	}
 
-	handleError(c, http.StatusBadRequest, "Order not found", err)
+	handleError(c, http.StatusBadRequest, "Order not found", nil)
 }
 
 // Define the structure of the order book map
