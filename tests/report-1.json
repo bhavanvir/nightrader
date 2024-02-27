@@ -631,7 +631,7 @@
               "pm.test(\"Data contains emptystock portfolio\", function () {",
               "    var jsonData = pm.response.json();",
               "    console.log(jsonData);",
-              "    pm.expect(jsonData).to.be.an('array').that.is.empty;",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -679,7 +679,6 @@
               "});",
               "pm.test(\"Success is true\", function () {",
               "    var jsonData = pm.response.json();",
-              "    console.log(jsonData);",
               "    pm.expect(jsonData.success).to.be.true;",
               "});",
               "pm.test(\"Data contains stock transactions\", function () {",
