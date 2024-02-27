@@ -1313,8 +1313,9 @@
               "    var jsonData = pm.response.json();",
               "    pm.expect(jsonData.success).to.be.true;",
               "});",
-              "pm.test(\"Data contains stock portfolio\", function () {",
+              "pm.test(\"Data contains wallet balance\", function () {",
               "    var jsonData = pm.response.json();",
+              "    console.log(jsonData);",
               "    pm.expect(jsonData.data.balance).to.be.equal(1350);",
               "});"
             ],
