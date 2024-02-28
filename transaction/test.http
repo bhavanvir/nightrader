@@ -9,3 +9,11 @@ Content-Type: application/json
 ###
 
 get {{hostname}}/getWalletBalance
+<<<<<<< HEAD
+=======
+
+###
+
+get {{hostname}}/getStockTransactions
+
+>>>>>>> upstream/main

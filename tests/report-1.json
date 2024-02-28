@@ -105,7 +105,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.eql(\"Username already exists: <nil>\");",
+              "    pm.expect(jsonData.data.error).to.eql(\"Username already exists\");",
               "});"
             ],
             "type": "text/javascript"
@@ -150,7 +150,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.eql(\"Incorrect password: <nil>\");",
+              "    pm.expect(jsonData.data.error).to.eql(\"Incorrect password\");",
               "});"
             ],
             "type": "text/javascript"
@@ -1190,7 +1190,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('compToken')",
+              "    value: 'token=' + pm.environment.get('user1Token')",
               "});"
             ],
             "type": "text/javascript"
@@ -2818,7 +2818,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -2872,7 +2872,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -2926,7 +2926,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -2984,7 +2984,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -3042,7 +3042,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -3100,7 +3100,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -3158,7 +3158,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -3216,7 +3216,7 @@
               "});",
               "pm.test(\"Data contains error message\", function () {",
               "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.message).to.not.be.empty;",
+              "    pm.expect(jsonData.data.error).to.not.be.empty;",
               "});"
             ],
             "type": "text/javascript"

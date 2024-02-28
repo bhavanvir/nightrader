@@ -26,6 +26,11 @@ const (
 	namespaceUUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 )
 
+type ErrorResponse struct {
+	Success bool              `json:"success"`
+	Data    map[string]string `json:"data"`
+}
+
 // TODO: Why do we need *bool?
 // Define the structure of the request body for placing a stock order
 type PlaceStockOrderRequest struct {
@@ -82,15 +87,11 @@ type PriorityQueue struct {
 
 // handleError is a helper function to send error responses
 func handleError(c *gin.Context, statusCode int, message string, err error) {
-	errorResponse := map[string]interface{}{
-		"success": false,
-		"data":    nil,
-		"message": message,
+	errorResponse := ErrorResponse{
+		Success: false,
+		Data:    map[string]string{"error": message},
 	}
-	if err != nil {
-		errorResponse["message"] = fmt.Sprintf("%s: %v", message, err)
-	}
-	c.JSON(statusCode, errorResponse)
+	c.IndentedJSON(statusCode, errorResponse)
 }
 
 func openConnection() (*sql.DB, error) {
@@ -206,7 +207,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	}
 
 	if err := validateOrderType(&request); err != nil {
-		handleError(c, http.StatusBadRequest, err.Error(), nil)
+		handleError(c, http.StatusBadRequest, err.Error(), err)
 		return
 	}
 
@@ -774,8 +775,6 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 				return fmt.Errorf("Failed to update user stocks: %w", err)
 			}			
 		}
-<<<<<<< HEAD
-=======
     } else {
         // For wallet transactions, update the wallet regardless of the order type
 		if total <= 0 {
@@ -787,7 +786,6 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 				return fmt.Errorf("Failed to create user_stock: %w", err)
 			}
 		}
->>>>>>> upstream/main
     }
 
     return nil
