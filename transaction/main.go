@@ -20,10 +20,9 @@ const (
 	dbname   = "nt_db"
 )
 
-type Error struct {
-	Success bool    `json:"success"`
-	Data    *string `json:"data"`
-	Message string  `json:"message"`
+type ErrorResponse struct {
+	Success bool              `json:"success"`
+	Data    map[string]string `json:"data"`
 }
 
 type AddMoney struct {
@@ -97,19 +96,18 @@ type StockTransactionResponse struct {
 	Data    []StockTransactionItem `json:"data"`
 }
 
+func handleError(c *gin.Context, statusCode int, message string, err error) {
+	errorResponse := ErrorResponse{
+		Success: false,
+		Data:    map[string]string{"error": message},
+	}
+	c.IndentedJSON(statusCode, errorResponse)
+}
+
 // Helper function to establish a database connection
 func openConnection() (*sql.DB, error) {
 	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	return sql.Open("postgres", postgresqlDbInfo)
-}
-
-func handleError(c *gin.Context, statusCode int, message string, err error) {
-	errorResponse := Error{
-		Success: false,
-		Data:    nil,
-		Message: fmt.Sprintf("%s: %v", message, err),
-	}
-	c.IndentedJSON(statusCode, errorResponse)
 }
 
 func addMoneyToWallet(c *gin.Context) {
@@ -237,6 +235,7 @@ func getStockPortfolio(c *gin.Context) {
 		return
 	}
 	defer db.Close()
+
 	// Retrieves the stock ID, stock name, and quantity owned for all stocks
 	// associated with a particular user. Performs a join operation between the 'user_stocks'
 	// and 'stocks' tables
