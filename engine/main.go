@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	// host = "database"
-	host     = "localhost" // for local testing
+	host = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -89,7 +89,7 @@ type PriorityQueue struct {
 func handleError(c *gin.Context, statusCode int, message string, err error) {
 	errorResponse := ErrorResponse{
 		Success: false,
-		Data:    map[string]string{"error": message},
+		Data:    map[string]string{"error": message + err.Error()},
 	}
 	c.IndentedJSON(statusCode, errorResponse)
 }
@@ -229,7 +229,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 
 	if order.IsBuy {
 		if err := verifyWalletBeforeTransaction(userName, order); err != nil {
-			handleError(c, http.StatusBadRequest, "Insufficient funds", err)
+			handleError(c, http.StatusBadRequest, "Fail to verify Wallet", err)
 			return
 		}
 		
@@ -253,7 +253,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		printq(book)
 	} else {
 		if err := verifyStockBeforeTransaction(userName, order); err != nil {
-			handleError(c, http.StatusBadRequest, "Insufficient stock", err)
+			handleError(c, http.StatusBadRequest, "Fail to verify stocks", err)
 			return
 		}
 
@@ -631,6 +631,8 @@ func partialFulfillSellOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		UserName:   order.UserName,
 	}
 
+	fmt.Println("Completed wallet tx: ", completedOrder.WalletTxID)
+
 	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
 		fmt.Println("Error setting stock transaction: ", err)
 	}
@@ -671,8 +673,10 @@ func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity int) {
 	if err := setWalletTransaction(order.UserName, completedOrder, order.Price, tradeQuantity, false); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
+	
 }
 
+// Assume that completed sell has no wallet_tx_id
 func completeSellOrder(book *OrderBook, order *Order, tradeQuantity int, tradingPrice *float64) {
 	fmt.Println("Sell User: ", order.UserName)
 	if err:= updateMoneyWallet(order.UserName, *order, tradingPrice, tradeQuantity, true); err != nil {
@@ -874,7 +878,11 @@ func setStockTransaction(userName string, tx Order, price *float64, quantity int
 	defer rows.Close()
 
 	wallet_tx_id := ""
-	if rows.Next() {
+
+	// if there is a wallet transaction, then need to pair with it OR,
+	// if status is COMPLETED, the stock transaction need to pair with a wallet transaction
+	if rows.Next() || tx.Status == "COMPLETED"{
+		fmt.Println("Wallet transaction: ", wallet_tx_id)
 		wallet_tx_id = tx.WalletTxID
 	}
 
@@ -1018,6 +1026,13 @@ func verifyWalletBeforeTransaction(userName string, order Order) error {
 	}
 	defer db.Close()
 
+	// get stock id 
+	var stockID int
+	err = db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
+	if err != nil {
+		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
+	}
+
 	var price float64
 	if order.OrderType == "MARKET" {
 		price, err = getMarketStockPrice(order.StockID)
@@ -1050,6 +1065,13 @@ func verifyStockBeforeTransaction(userName string, order Order) error {
 		return fmt.Errorf("Failed to connect to database: %w", err)
 	}
 	defer db.Close()
+
+	// get stock id 
+	var stockID int
+	err = db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
+	if err != nil {
+		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
+	}
 
 	// get user stock portfolio
 	var quantity int
