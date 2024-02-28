@@ -25,10 +25,9 @@ const (
 	dbname   = "nt_db"
 )
 
-type Error struct {
-	Success bool    `json:"success"`
-	Data    *string `json:"data"`
-	Message string  `json:"message"`
+type ErrorResponse struct {
+	Success bool              `json:"success"`
+	Data    map[string]string `json:"data"`
 }
 
 // user_name is a primary key in the DB used to identify user
@@ -55,10 +54,9 @@ type Claims struct {
 }
 
 func handleError(c *gin.Context, statusCode int, message string, err error) {
-	errorResponse := Error{
+	errorResponse := ErrorResponse{
 		Success: false,
-		Data:    nil,
-		Message: fmt.Sprintf("%s: %v", message, err),
+		Data:    map[string]string{"error": message},
 	}
 	c.IndentedJSON(statusCode, errorResponse)
 }

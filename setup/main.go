@@ -30,9 +30,8 @@ type AddStockRequest struct {
 }
 
 type ErrorResponse struct {
-	Success bool   `json:"success"`
-	Data    string `json:"data"`
-	Message string `json:"message"`
+	Success bool              `json:"success"`
+	Data    map[string]string `json:"data"`
 }
 
 type PostResponse struct {
@@ -43,8 +42,7 @@ type PostResponse struct {
 func handleError(c *gin.Context, statusCode int, message string, err error) {
 	errorResponse := ErrorResponse{
 		Success: false,
-		Data:    "",
-		Message: fmt.Sprintf("%s: %v", message, err),
+		Data:    map[string]string{"error": message},
 	}
 	c.IndentedJSON(statusCode, errorResponse)
 }
