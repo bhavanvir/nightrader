@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -525,7 +525,7 @@ func completeBuyOrder(book *OrderBook, buyOrder *Order, tradeQuantity int) {
 		fmt.Println("Error updating stock portfolio: ", err)
 	}
 
-	if err := setStatus(buyOrder, "COMPLETED"); err != nil {
+	if err := setStatus(buyOrder, "COMPLETED", false); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 }
@@ -613,7 +613,7 @@ func partialFulfillSellOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		fmt.Println("Error updating wallet: ", err)
 	}
 
-	if err := setStatus(order, "PARTIALLY_FULFILLED"); err != nil {
+	if err := setStatus(order, "PARTIALLY_FULFILLED", false); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -637,7 +637,7 @@ func partialFulfillSellOrder(book *OrderBook, order *Order, tradeQuantity int) {
 	if err := setWalletTransaction(order.UserName, completedOrder, order.Price, tradeQuantity, true); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
-	
+
 	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
 		fmt.Println("Error setting stock transaction: ", err)
 	}
@@ -649,7 +649,7 @@ func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		fmt.Println("Error updating stock portfolio: ", err)
 	}
 
-	if err := setStatus(order, "PARTIALLY_FULFILLED"); err != nil {
+	if err := setStatus(order, "PARTIALLY_FULFILLED", false); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -678,14 +678,14 @@ func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity int) {
 	
 }
 
-// Assume that completed sell has no wallet_tx_id
+// Assumption: assume that completed sell has wallet_tx_id
 func completeSellOrder(book *OrderBook, order *Order, tradeQuantity int, tradingPrice *float64) {
 	fmt.Println("Sell User: ", order.UserName)
 	if err:= updateMoneyWallet(order.UserName, *order, tradingPrice, tradeQuantity, true); err != nil {
 		fmt.Println("Error updating wallet: ", err)
 	}
 
-	if err := setStatus(order, "COMPLETED"); err != nil {
+	if err := setStatus(order, "COMPLETED", true); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -919,7 +919,7 @@ func deleteStockTransaction(userName string, order Order) error {
 	return nil
 }
 
-func setStatus(order *Order, status string) error {
+func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
 	// Connect to database
 	db, err := openConnection()
 	if err != nil {
@@ -937,6 +937,13 @@ func setStatus(order *Order, status string) error {
 	if err != nil {
 		return fmt.Errorf("Failed to update status: %w", err)
 	}
+
+	// assign wallet_tx_id to stock_tx_id if the Sell order is completed 
+	if isUpdateWalletTxId {
+		_, err = db.Exec(`
+			UPDATE stock_transactions SET wallet_tx_id = $1 WHERE user_name = $2 AND stock_tx_id = $3`, order.WalletTxID, order.UserName, order.StockTxID)
+	}
+
 	return nil
 }
 

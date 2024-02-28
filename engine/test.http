@@ -7,7 +7,7 @@ Content-Type: application/json
 {   "stock_id":1,
     "is_buy":false,
     "order_type":"LIMIT",
-    "quantity":10,
+    "quantity":2,
     "price": 50
 }
 
@@ -20,7 +20,7 @@ Content-Type: application/json
 {   "stock_id":1,
     "is_buy":true,
     "order_type":"LIMIT",
-    "quantity":5,
+    "quantity":10,
     "price": 50
 }
 
@@ -55,5 +55,5 @@ post {{hostname}}/cancelStockTransaction
 Content-Type: application/json
 
 {   
-    "stock_tx_id":"45c60517-20ce-4ab5-94de-58790801c4a1"
+    "stock_tx_id":"fbf5c82b-336b-408b-b65b-f01d69005d26"
 }
