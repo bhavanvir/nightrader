@@ -633,12 +633,13 @@ func partialFulfillSellOrder(book *OrderBook, order *Order, tradeQuantity int) {
 
 	fmt.Println("Completed wallet tx: ", completedOrder.WalletTxID)
 
-	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
-		fmt.Println("Error setting stock transaction: ", err)
-	}
-
+	// setWalletTransaction should always be before the setStockTransaction
 	if err := setWalletTransaction(order.UserName, completedOrder, order.Price, tradeQuantity, true); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
+	}
+	
+	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
+		fmt.Println("Error setting stock transaction: ", err)
 	}
 }
 
@@ -666,12 +667,13 @@ func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		UserName:   order.UserName,
 	}
 
-	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
-		fmt.Println("Error setting stock transaction: ", err)
-	}
-
+	// setWalletTransaction should always be before the setStockTransaction
 	if err := setWalletTransaction(order.UserName, completedOrder, order.Price, tradeQuantity, false); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
+	}
+
+	if err := setStockTransaction(order.UserName, completedOrder, order.Price, tradeQuantity); err != nil {
+		fmt.Println("Error setting stock transaction: ", err)
 	}
 	
 }
