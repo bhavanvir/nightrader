@@ -1908,7 +1908,7 @@
               "pm.test(\"Data is null\", function () {",
               "    var jsonData = pm.response.json();",
               "    console.log(jsonData);",
-              "    pm.expect(jsonData.data).to.be.null;",
+              "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
               "});"
             ],
             "type": "text/javascript"
@@ -2019,6 +2019,10 @@
               "    var jsonData = pm.response.json();",
               "    console.log(jsonData);",
               "    pm.expect(jsonData.data).to.be.an('array').that.is.not.empty;",
+              "});",
+              "pm.test(\"Store token in environment variable\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set(\"googleStockTxId2\", jsonData.data[1].stock_tx_id);",
               "});"
             ],
             "type": "text/javascript"
@@ -3062,7 +3066,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\"stock_tx_id\": \"{{googleStockTxId2}}\"}"
+          "raw": "{\"stock_tx_id\": \"pm.environment.get(\"googleStockTxId2\")\"}"
         },
         "url": {
           "protocol": "http",
