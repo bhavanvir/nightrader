@@ -3066,7 +3066,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\"stock_tx_id\": \"pm.environment.get('user1Token')\"}"
+          "raw": "{\"stock_tx_id\": \"pm.environment.get('googleStockTxId2')\"}"
         },
         "url": {
           "protocol": "http",
