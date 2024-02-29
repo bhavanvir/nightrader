@@ -229,7 +229,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 
 	if order.IsBuy {
 		if err := verifyWalletBeforeTransaction(userName, order); err != nil {
-			handleError(c, http.StatusBadRequest, "Fail to verify Wallet", err)
+			handleError(c, http.StatusBadRequest, "Failed to verify Wallet", err)
 			return
 		}
 		
@@ -253,7 +253,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		printq(book)
 	} else {
 		if err := verifyStockBeforeTransaction(userName, order); err != nil {
-			handleError(c, http.StatusBadRequest, "Fail to verify stocks", err)
+			handleError(c, http.StatusBadRequest, "Failed to verify stocks", err)
 			return
 		}
 
