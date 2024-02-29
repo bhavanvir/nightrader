@@ -1619,7 +1619,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('compToken')",
+              "    value: 'token=' + pm.environment.get('user1Token')",
               "});"
             ],
             "type": "text/javascript"
