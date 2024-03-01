@@ -225,25 +225,6 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		return
 	}
 
-	if order.IsBuy {
-		if _, exists := existingOrderIDs[order.StockID]; !exists {
-			// Call updateMarketStockPrice only if the order.StockID is not in the hashset
-			db, err := openConnection()
-			if err != nil {
-				fmt.Printf("Failed to connect to database: %v\n", err)
-				return
-			}
-
-			_, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *order.Price, order.StockID)
-			if err != nil {
-				fmt.Printf("Failed to update stock price: %v\n", err)
-				return
-			}
-			// Add the order ID to the hashset to mark it as processed
-			existingOrderIDs[order.StockID] = struct{}{}
-		}
-}
-
 	if _, exists := existingOrderIDs[order.StockID]; !exists {
         // Call updateMarketStockPrice only if the order.StockID is not in the hashset
         db, err := openConnection()
