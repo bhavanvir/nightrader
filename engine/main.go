@@ -229,7 +229,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
     updateMarketStockPrice(order.StockID, *order.Price)
     // Add the order ID to the hashset to mark it as processed
     existingOrderIDs[order.StockID] = struct{}{}
-  }
+   	}
 
 	// to be safe, lock here
 	book.mu.Lock()
