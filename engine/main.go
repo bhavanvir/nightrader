@@ -226,21 +226,10 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	}
 
 	if _, exists := existingOrderIDs[order.StockID]; !exists {
-        // Call updateMarketStockPrice only if the order.StockID is not in the hashset
-        db, err := openConnection()
-        if err != nil {
-            fmt.Printf("Failed to connect to database: %v\n", err)
-            return
-        }
-
-        _, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *order.Price, order.StockID)
-        if err != nil {
-            fmt.Printf("Failed to update stock price: %v\n", err)
-            return
-        }
-        // Add the order ID to the hashset to mark it as processed
-        existingOrderIDs[order.StockID] = struct{}{}
-    }
+    updateMarketStockPrice(order.StockID, *order.Price)
+    // Add the order ID to the hashset to mark it as processed
+    existingOrderIDs[order.StockID] = struct{}{}
+   	}
 
 	// to be safe, lock here
 	book.mu.Lock()
@@ -290,12 +279,6 @@ func HandlePlaceStockOrder(c *gin.Context) {
 
 		printq(book)
 	}
-
-	// Update the stock price
-	// if err := updateMarketStockPrice(book, order); err != nil {
-	// 	handleError(c, http.StatusInternalServerError, "Failed to update stock price", err)
-	// 	return
-	// }
 
 	response := PlaceStockOrderResponse{
 		Success: true,
@@ -401,7 +384,6 @@ func postprocessingRemoveSellOrder(order Order) {
 		}
 	}
 }
-
 
 func HandleCancelStockTransaction(c *gin.Context) {
 	userName, exists := c.Get("user_name")
@@ -513,7 +495,6 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 		// refund money, remove transaction from wallet_transactions, stock_transactions, exit with error
 		fmt.Println("Cancel order: No Sell orders available")
 	}
-
 	// Match the buy order with the lowest Sell order that is less than or equal to the buy order price
 	for order.Quantity > 0 && book.SellOrders.Len() > 0 {
 		lowestSellOrder := heap.Pop(&book.SellOrders).(*Order)
@@ -537,6 +518,8 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 func executeBuyTrade(book *OrderBook, order *Order, sellOrder *Order){
 	tradeQuantity := min(order.Quantity, sellOrder.Quantity)
 	tradingPrice := sellOrder.Price
+
+	updateMarketStockPrice(order.StockID, *tradingPrice)
 
 	if order.Quantity > sellOrder.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
@@ -647,6 +630,8 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 func executeSellTrade(book *OrderBook, buyOrder *Order, order *Order){
 	tradeQuantity := min(buyOrder.Quantity, order.Quantity)
 	tradingPrice := buyOrder.Price
+
+	updateMarketStockPrice(order.StockID, *tradingPrice)
 
 	if buyOrder.Quantity > order.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
@@ -1043,8 +1028,7 @@ func processOrder(book *OrderBook, order Order) {
 	}
 }
 
-// Stock market price is determined by the lowest sell order price
-func updateMarketStockPrice(book *OrderBook, order Order) error {
+func updateMarketStockPrice(stockID int, price float64) error {
 	fmt.Println("Updating stock price")
 	// Connect to database
 	db, err := openConnection()
@@ -1053,18 +1037,8 @@ func updateMarketStockPrice(book *OrderBook, order Order) error {
 	}
 	defer db.Close()
 
-	var updatedPrice float64
-
-	// Check if there are Sell orders
-	if book.SellOrders.Len() > 0 {
-		lowestSellOrder := book.SellOrders.Order[0]
-		updatedPrice = *lowestSellOrder.Price
-	} else {
-		updatedPrice = 0
-	}
-
 	// Update the stock price
-	_, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", updatedPrice, order.StockID)
+	_, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", price, stockID)
 	if err != nil {
 		return fmt.Errorf("Failed to update stock price: %w", err)
 	}
