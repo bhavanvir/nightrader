@@ -187,6 +187,8 @@ func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error
 	return order, nil
 } // createOrder
 
+var existingOrderIDs = make(map[int]struct{})
+
 func HandlePlaceStockOrder(c *gin.Context) {
 	user_name, exists := c.Get("user_name")
 	if !exists || user_name == nil {
@@ -222,6 +224,23 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		handleError(c, http.StatusInternalServerError, "Failed to push order to priority queue", bookerr)
 		return
 	}
+
+	if _, exists := existingOrderIDs[order.StockID]; !exists {
+        // Call updateMarketStockPrice only if the order.StockID is not in the hashset
+        db, err := openConnection()
+        if err != nil {
+            fmt.Printf("Failed to connect to database: %v\n", err)
+            return
+        }
+
+        _, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *order.Price, order.StockID)
+        if err != nil {
+            fmt.Printf("Failed to update stock price: %v\n", err)
+            return
+        }
+        // Add the order ID to the hashset to mark it as processed
+        existingOrderIDs[order.StockID] = struct{}{}
+    }
 
 	// to be safe, lock here
 	book.mu.Lock()
@@ -273,10 +292,10 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	}
 
 	// Update the stock price
-	if err := updateMarketStockPrice(book, order); err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to update stock price", err)
-		return
-	}
+	// if err := updateMarketStockPrice(book, order); err != nil {
+	// 	handleError(c, http.StatusInternalServerError, "Failed to update stock price", err)
+	// 	return
+	// }
 
 	response := PlaceStockOrderResponse{
 		Success: true,
@@ -455,6 +474,17 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 		// If the lowest sell order price is less than or equal to the buy order price, execute the trade
 		if *lowestSellOrder.Price == *highestBuyOrder.Price {
 			executeBuyTrade(book, highestBuyOrder , lowestSellOrder)
+			db, err := openConnection()
+            if err != nil {
+                fmt.Printf("Failed to connect to database: %v\n", err)
+                return
+            }
+    
+            _, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *order.Price, order.StockID)
+            if err != nil {
+                fmt.Printf("Failed to update stock price: %v\n", err)
+                return
+            }
 			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n", 
 			highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 		} else {
@@ -488,6 +518,17 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 	for order.Quantity > 0 && book.SellOrders.Len() > 0 {
 		lowestSellOrder := heap.Pop(&book.SellOrders).(*Order)
 		executeBuyTrade(book, &order, lowestSellOrder)
+		// db, err := openConnection()
+		// if err != nil {
+		// 	fmt.Printf("Failed to connect to database: %v\n", err)
+		// 	return
+		// }
+
+		// _, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *order.Price, order.StockID)
+		// if err != nil {
+		// 	fmt.Printf("Failed to update stock price: %v\n", err)
+		// 	return
+		// }
 		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n", 
 		order.StockTxID, order.Quantity, *lowestSellOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 	}
@@ -543,6 +584,17 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 
 		if *highestBuyOrder.Price == *lowestSellOrder.Price {
 			executeSellTrade(book, highestBuyOrder, lowestSellOrder)
+			db, err := openConnection()
+            if err != nil {
+                fmt.Printf("Failed to connect to database: %v\n", err)
+                return
+            }
+    
+            _, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *order.Price, order.StockID)
+            if err != nil {
+                fmt.Printf("Failed to update stock price: %v\n", err)
+                return
+            }
 			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n", 
 			highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 		} else {
@@ -575,6 +627,17 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 		highestBuyOrder := heap.Pop(&book.BuyOrders).(*Order)
 
 		executeSellTrade(book, highestBuyOrder, &order)
+		db, err := openConnection()
+		if err != nil {
+			fmt.Printf("Failed to connect to database: %v\n", err)
+			return
+		}
+
+		_, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *order.Price, order.StockID)
+		if err != nil {
+			fmt.Printf("Failed to update stock price: %v\n", err)
+			return
+		}
 		fmt.Println("Trade executed")
 		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n", 
 		highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, order.StockTxID, order.Quantity, *highestBuyOrder.Price)
