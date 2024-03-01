@@ -2695,7 +2695,7 @@
             "exec": [
               "pm.request.headers.add({",
               "    key: 'Cookie',",
-              "    value: 'token=' + pm.environment.get('user1Token')",
+              "    value: 'token=' + pm.environment.get('compToken')",
               "});"
             ],
             "type": "text/javascript"
