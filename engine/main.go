@@ -1133,6 +1133,7 @@ func verifyStockBeforeTransaction(userName string, order Order) error {
 
 	return nil
 }
+
 func checkAndRemoveExpiredOrders() {
     // Iterate over each order book and check for expired orders
     for _, book := range orderBookMap.OrderBooks {
@@ -1144,7 +1145,13 @@ func checkAndRemoveExpiredOrders() {
             order := book.BuyOrders.Order[i]
             if isOrderExpired(order) {
                 // Remove the expired order from the priority queue
-                executeRemoveOrder(*order, &book.BuyOrders, i)
+                heap.Remove(&book.BuyOrders, i)
+
+                // Update user's wallet when an order is removed
+                err := refundMoney(order.UserName, *order)
+                if err != nil {
+                    fmt.Printf("Failed to refund money for order %s: %v\n", order.StockTxID, err)
+                }
             } else {
                 i++
             }
@@ -1155,13 +1162,62 @@ func checkAndRemoveExpiredOrders() {
             order := book.SellOrders.Order[i]
             if isOrderExpired(order) {
                 // Remove the expired order from the priority queue
-				executeRemoveOrder(*order, &book.SellOrders, i)
+                heap.Remove(&book.SellOrders, i)
+
+                // Update user's stock portfolio when an order is removed
+                err := refundStocks(order.UserName, *order)
+                if err != nil {
+                    fmt.Printf("Failed to refund stocks for order %s: %v\n", order.StockTxID, err)
+                }
             } else {
                 i++
             }
         }
     }
 }
+
+
+
+func refundMoney(userName string, order Order) error {
+    // Connect to the database
+    db, err := openConnection()
+    if err != nil {
+        return fmt.Errorf("Failed to connect to database: %w", err)
+    }
+    defer db.Close()
+
+    // Calculate the total amount to be refunded
+    total := *order.Price * float64(order.Quantity)
+
+    // Update the user's wallet by adding the refunded amount
+    _, err = db.Exec(`
+        UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, total, userName)
+    if err != nil {
+        return fmt.Errorf("Failed to update wallet: %w", err)
+    }
+
+    return nil
+}
+
+func refundStocks(userName string, order Order) error {
+    // Connect to the database
+    db, err := openConnection()
+    if err != nil {
+        return fmt.Errorf("Failed to connect to database: %w", err)
+    }
+    defer db.Close()
+
+    // Update the user's stock portfolio by adding the refunded quantity
+    _, err = db.Exec(`
+        UPDATE user_stocks SET quantity = quantity + $1 
+        WHERE user_name = $2 AND stock_id = $3`, order.Quantity, userName, order.StockID)
+    if err != nil {
+        return fmt.Errorf("Failed to update stock portfolio: %w", err)
+    }
+
+    return nil
+}
+
 
 func isOrderExpired(order *Order) bool {
     // Parse the timestamp of the order
