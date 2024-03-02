@@ -1216,7 +1216,7 @@ func isOrderExpired(order *Order) bool {
     }
 
     // Check if the order is older than 15 minutes
-    return time.Since(orderTime) > 1*time.Minute
+    return time.Since(orderTime) > 15*time.Minute
 }
 
 func main() {
