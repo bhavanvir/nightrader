@@ -1144,14 +1144,8 @@ func checkAndRemoveExpiredOrders() {
         for i := 0; i < book.BuyOrders.Len(); {
             order := book.BuyOrders.Order[i]
             if isOrderExpired(order) {
-                // Remove the expired order from the priority queue
-                heap.Remove(&book.BuyOrders, i)
-
-                // Update user's wallet when an order is removed
-                err := refundMoney(order.UserName, *order)
-                if err != nil {
-                    fmt.Printf("Failed to refund money for order %s: %v\n", order.StockTxID, err)
-                }
+                // Execute the function to remove the expired order and perform post-processing
+                executeRemoveOrder(*order, &book.BuyOrders, i)
             } else {
                 i++
             }
@@ -1161,14 +1155,8 @@ func checkAndRemoveExpiredOrders() {
         for i := 0; i < book.SellOrders.Len(); {
             order := book.SellOrders.Order[i]
             if isOrderExpired(order) {
-                // Remove the expired order from the priority queue
-                heap.Remove(&book.SellOrders, i)
-
-                // Update user's stock portfolio when an order is removed
-                err := refundStocks(order.UserName, *order)
-                if err != nil {
-                    fmt.Printf("Failed to refund stocks for order %s: %v\n", order.StockTxID, err)
-                }
+                // Execute the function to remove the expired order and perform post-processing
+                executeRemoveOrder(*order, &book.SellOrders, i)
             } else {
                 i++
             }
