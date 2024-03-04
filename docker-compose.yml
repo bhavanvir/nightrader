@@ -67,3 +67,16 @@ services:
     restart: always
     ports:
       - "8181:8181"
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "9000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - setup
+      - authentication
+      - transaction
+      - engine
+      - frontend
