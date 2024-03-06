@@ -16,12 +16,12 @@ type Stock struct {
 }
 
 const (
-    host     = "database"
-    // host     = "localhost" // for local testing
-    port     = 5432
-    user     = "nt_user"
-    password = "db123"
-    dbname   = "nt_db"
+	host = "database"
+	// host     = "localhost" // for local testing
+	port     = 5432
+	user     = "nt_user"
+	password = "db123"
+	dbname   = "nt_db"
 )
 
 type AddStockRequest struct {
@@ -144,44 +144,44 @@ func addStockToUser(c *gin.Context) {
 }
 
 func wipeDatabaseTables(c *gin.Context) {
-	/* 
-	This function is needed when running the postman collection tests, as not doing so 
-	will cause certain tests to fail 
+	/*
+		This function is needed when running the postman collection tests, as not doing so
+		will cause certain tests to fail
 	*/
 
-    db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
-    if err != nil {
-        handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-        return
-    }
-    defer db.Close()
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer db.Close()
 
-    // Define a list of tables to truncate
-    tables := []string{"stock_transactions", "stocks", "user_stocks", "users", "wallet_transactions"}
+	// Define a list of tables to truncate
+	tables := []string{"stock_transactions", "stocks", "user_stocks", "users", "wallet_transactions"}
 
-    // Truncate each table. This will delete all rows in the table
-    for _, table := range tables {
-        _, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
-        if err != nil {
-            handleError(c, http.StatusInternalServerError, "Failed to truncate table", err)
-            return
-        }
-    }
+	// Truncate each table. This will delete all rows in the table
+	for _, table := range tables {
+		_, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to truncate table", err)
+			return
+		}
+	}
 
 	// Reset the stock_id sequence to start at  1 after truncating the stocks table. This is necessary because
 	// when we test the endpoint in the postman collection, the stock_id will be auto incremented by 1, causing
 	// the test to fail
-    _, err = db.Exec("ALTER SEQUENCE stocks_stock_id_seq RESTART WITH  1")
-    if err != nil {
-        handleError(c, http.StatusInternalServerError, "Failed to reset stock_id sequence", err)
-        return
-    }
+	_, err = db.Exec("ALTER SEQUENCE stocks_stock_id_seq RESTART WITH  1")
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to reset stock_id sequence", err)
+		return
+	}
 
-    response := PostResponse{
-        Success: true,
-        Data:    nil,
-    }
-    c.IndentedJSON(http.StatusOK, response)
+	response := PostResponse{
+		Success: true,
+		Data:    nil,
+	}
+	c.IndentedJSON(http.StatusOK, response)
 }
 
 func main() {
