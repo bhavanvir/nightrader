@@ -291,7 +291,8 @@ func getWalletTransactions(c *gin.Context) {
         SELECT wt.wallet_tx_id, st.stock_tx_id, wt.is_debit, wt.amount, wt.time_stamp
         FROM wallet_transactions wt
         JOIN stock_transactions st ON st.wallet_tx_id = wt.wallet_tx_id
-        WHERE wt.user_name = $1`, userName)
+        WHERE wt.user_name = $1
+		ORDER BY wt.time_stamp ASC`, userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query wallet transactions", err)
 		return
@@ -333,7 +334,8 @@ func getStockTransactions(c *gin.Context) {
 	rows, err := db.Query(`
         SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
         FROM stock_transactions
-        WHERE user_name = $1`, userName)
+        WHERE user_name = $1
+		ORDER BY time_stamp ASC`, userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query stock transactions", err)
 		return
