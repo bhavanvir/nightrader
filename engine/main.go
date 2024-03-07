@@ -173,19 +173,21 @@ func validateOrderType(request *PlaceStockOrderRequest) error {
 
 func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error) {
 	// Convert StockID to int
-	var stockID int
-	switch v := request.StockID.(type) {
-	case string:
-		id, err := strconv.Atoi(v)
-		if err != nil {
-			return Order{}, fmt.Errorf("failed to parse StockID: %v", err)
-		}
-		stockID = id
-	case int:
-		stockID = v
-	default:
-		return Order{}, fmt.Errorf("unsupported type for StockID: %T", v)
-	}
+    var stockID int
+    switch v := request.StockID.(type) {
+    case string:
+        id, err := strconv.Atoi(v)
+        if err != nil {
+            return Order{}, fmt.Errorf("failed to parse StockID: %v", err)
+        }
+        stockID = id
+    case int:
+        stockID = v
+    case float64: // Handle float64 values
+        stockID = int(v)
+    default:
+        return Order{}, fmt.Errorf("unsupported type for StockID: %T", v)
+    }
 	order := Order{
 		StockTxID:  generateOrderID(),
 		StockID:    stockID,
