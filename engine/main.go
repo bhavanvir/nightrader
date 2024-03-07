@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"strconv"
 
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/gin-gonic/gin"
@@ -34,7 +35,7 @@ type ErrorResponse struct {
 // TODO: Why do we need *bool?
 // Define the structure of the request body for placing a stock order
 type PlaceStockOrderRequest struct {
-	StockID   int      `json:"stock_id" binding:"required"`
+	StockID   interface{} `json:"stock_id" binding:"required"`
 	IsBuy     *bool    `json:"is_buy" binding:"required"`
 	OrderType string   `json:"order_type" binding:"required"`
 	Quantity  int      `json:"quantity" binding:"required"`
@@ -171,9 +172,23 @@ func validateOrderType(request *PlaceStockOrderRequest) error {
 } // validateOrderType
 
 func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error) {
+	// Convert StockID to int
+	var stockID int
+	switch v := request.StockID.(type) {
+	case string:
+		id, err := strconv.Atoi(v)
+		if err != nil {
+			return Order{}, fmt.Errorf("failed to parse StockID: %v", err)
+		}
+		stockID = id
+	case int:
+		stockID = v
+	default:
+		return Order{}, fmt.Errorf("unsupported type for StockID: %T", v)
+	}
 	order := Order{
 		StockTxID:  generateOrderID(),
-		StockID:    request.StockID,
+		StockID:    stockID,
 		WalletTxID: generateWalletID(),
 		ParentTxID: nil,
 		IsBuy:      request.IsBuy != nil && *request.IsBuy,
