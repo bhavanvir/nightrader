@@ -49,13 +49,13 @@ type StockResponse struct {
 }
 
 type StockData struct {
-	StockID      int     `json:"stock_id"`
+	StockID      string  `json:"stock_id"`
 	StockName    string  `json:"stock_name"`
 	CurrentPrice float64 `json:"current_price"`
 }
 
 type StockPortfolioItem struct {
-	StockID       int    `json:"stock_id"`
+	StockID       string `json:"stock_id"`
 	StockName     string `json:"stock_name"`
 	QuantityOwned int    `json:"quantity_owned"`
 }
@@ -80,10 +80,10 @@ type WalletTransactionResponse struct {
 
 type StockTransactionItem struct {
 	StockTxID   string  `json:"stock_tx_id"`
-	StockID     int     `json:"stock_id"`
-	WalletTxID  *string  `json:"wallet_tx_id"`
+	StockID     string  `json:"stock_id"`
+	WalletTxID  *string `json:"wallet_tx_id"`
 	OrderStatus string  `json:"order_status"`
-	ParentTxID  *string  `json:"parent_tx_id"`
+	ParentTxID  *string `json:"parent_stock_tx_id"`
 	IsBuy       bool    `json:"is_buy"`
 	OrderType   string  `json:"order_type"`
 	StockPrice  float64 `json:"stock_price"`
@@ -332,7 +332,7 @@ func getStockTransactions(c *gin.Context) {
 	defer db.Close()
 
 	rows, err := db.Query(`
-        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
+        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
         FROM stock_transactions
         WHERE user_name = $1
 		ORDER BY time_stamp ASC`, userName)
