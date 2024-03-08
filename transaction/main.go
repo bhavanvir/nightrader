@@ -81,7 +81,7 @@ type WalletTransactionResponse struct {
 type StockTransactionItem struct {
 	StockTxID   string  `json:"stock_tx_id"`
 	StockID     int     `json:"stock_id"`
-	WalletTxID  string  `json:"wallet_tx_id"`
+	WalletTxID  *string  `json:"wallet_tx_id"`
 	OrderStatus string  `json:"order_status"`
 	ParentTxID  *string  `json:"parent_tx_id"`
 	IsBuy       bool    `json:"is_buy"`
@@ -349,6 +349,12 @@ func getStockTransactions(c *gin.Context) {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
+<<<<<<< HEAD
+=======
+		if *item.WalletTxID == "" {
+			item.WalletTxID = nil
+		}
+>>>>>>> upstream/main
 		fmt.Println(item)
 		stock_transactions = append(stock_transactions, item)
 	}
