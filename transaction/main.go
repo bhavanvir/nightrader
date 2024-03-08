@@ -349,9 +349,6 @@ func getStockTransactions(c *gin.Context) {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
-		if *item.WalletTxID == "" {
-			item.WalletTxID = nil
-    }
 		fmt.Println(item)
 		stock_transactions = append(stock_transactions, item)
 	}
