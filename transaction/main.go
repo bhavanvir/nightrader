@@ -351,7 +351,7 @@ func getStockTransactions(c *gin.Context) {
 		}
 		if *item.WalletTxID == "" {
 			item.WalletTxID = nil
-		}		
+    }
 		fmt.Println(item)
 		stock_transactions = append(stock_transactions, item)
 	}
