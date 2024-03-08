@@ -349,7 +349,6 @@ func getStockTransactions(c *gin.Context) {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
-		fmt.Println(item)
 		stock_transactions = append(stock_transactions, item)
 	}
 
