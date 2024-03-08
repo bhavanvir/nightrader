@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-	"strconv"
 
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/gin-gonic/gin"
@@ -35,7 +34,7 @@ type ErrorResponse struct {
 // TODO: Why do we need *bool?
 // Define the structure of the request body for placing a stock order
 type PlaceStockOrderRequest struct {
-	StockID   interface{} `json:"stock_id" binding:"required"`
+	StockID   string   `json:"stock_id" binding:"required"`
 	IsBuy     *bool    `json:"is_buy" binding:"required"`
 	OrderType string   `json:"order_type" binding:"required"`
 	Quantity  int      `json:"quantity" binding:"required"`
@@ -61,9 +60,9 @@ type CancelStockTransactionResponse struct {
 
 type Order struct {
 	StockTxID  string  `json:"stock_tx_id"`
-	StockID    int     `json:"stock_id"`
+	StockID    string  `json:"stock_id"`
 	WalletTxID string  `json:"wallet_tx_id"`
-	ParentTxID *string `json:"parent_tx_id"`
+	ParentTxID *string `json:"parent_stock_tx_id"`
 	IsBuy      bool    `json:"is_buy"`
 	OrderType  string  `json:"order_type"`
 	Quantity   int     `json:"quantity"`
@@ -148,7 +147,7 @@ func (pq *PriorityQueue) Printn() {
 	copy(temp.Order, pq.Order)
 	for temp.Len() > 0 {
 		item := heap.Pop(&temp).(*Order)
-		fmt.Printf("Stock Tx ID: %s, StockID: %d, WalletTxID: %s, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
+		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
 	}
 }
 
@@ -172,25 +171,9 @@ func validateOrderType(request *PlaceStockOrderRequest) error {
 } // validateOrderType
 
 func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error) {
-	// Convert StockID to int
-    var stockID int
-    switch v := request.StockID.(type) {
-    case string:
-        id, err := strconv.Atoi(v)
-        if err != nil {
-            return Order{}, fmt.Errorf("failed to parse StockID: %v", err)
-        }
-        stockID = id
-    case int:
-        stockID = v
-    case float64: // Handle float64 values
-        stockID = int(v)
-    default:
-        return Order{}, fmt.Errorf("unsupported type for StockID: %T", v)
-    }
 	order := Order{
 		StockTxID:  generateOrderID(),
-		StockID:    stockID,
+		StockID:    request.StockID,
 		WalletTxID: generateWalletID(),
 		ParentTxID: nil,
 		IsBuy:      request.IsBuy != nil && *request.IsBuy,
@@ -204,7 +187,7 @@ func createOrder(request *PlaceStockOrderRequest, userName string) (Order, error
 	return order, nil
 } // createOrder
 
-var existingOrderIDs = make(map[int]struct{})
+var existingOrderIDs = make(map[string]struct{})
 
 func HandlePlaceStockOrder(c *gin.Context) {
 	user_name, exists := c.Get("user_name")
@@ -450,13 +433,13 @@ func HandleCancelStockTransaction(c *gin.Context) {
 
 // Define the structure of the order book map
 type OrderBookMap struct {
-	OrderBooks map[int]*OrderBook // Map of stock ID to order book
+	OrderBooks map[string]*OrderBook // Map of stock ID to order book
 	mu         sync.Mutex         // Mutex to synchronize access to the map
 }
 
 // Initialize the order book map
 var orderBookMap = OrderBookMap{
-	OrderBooks: make(map[int]*OrderBook),
+	OrderBooks: make(map[string]*OrderBook),
 }
 
 /** === BUY Order === **/
@@ -955,7 +938,7 @@ func setStockTransaction(userName string, tx Order, price *float64, quantity int
 
 	// Insert transaction to stock transactions
 	_, err = db.Exec(`
-		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, parent_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
+		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
 	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, newPrice, quantity, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
@@ -1045,7 +1028,7 @@ func processOrder(book *OrderBook, order Order) {
 	}
 }
 
-func updateMarketStockPrice(stockID int, price float64) error {
+func updateMarketStockPrice(stockID string, price float64) error {
 	fmt.Println("Updating stock price")
 	// Connect to database
 	db, err := openConnection()
@@ -1063,7 +1046,7 @@ func updateMarketStockPrice(stockID int, price float64) error {
 }
 
 // getMarketStockPrice retrieves the current market stock price from the database.
-func getMarketStockPrice(stockID int) (float64, error) {
+func getMarketStockPrice(stockID string) (float64, error) {
 	// Connect to the database
 	db, err := openConnection()
 	if err != nil {
@@ -1090,7 +1073,7 @@ func verifyWalletBeforeTransaction(userName string, order Order) error {
 	defer db.Close()
 
 	// get stock id 
-	var stockID int
+	var stockID string
 	err = db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
 	if err != nil {
 		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
@@ -1130,7 +1113,7 @@ func verifyStockBeforeTransaction(userName string, order Order) error {
 	defer db.Close()
 
 	// get stock id 
-	var stockID int
+	var stockID string
 	err = db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
 	if err != nil {
 		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
