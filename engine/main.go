@@ -810,6 +810,7 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 	defer rows.Close()
 
 	// User already owns this stock
+	// TODO: Why do we need else case here?
 	if rows.Next() {
 		// Update the user's stocks
 		var amount int
