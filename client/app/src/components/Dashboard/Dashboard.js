@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Header from "./Header";
 import AccountInfo from "./AccountInfo";
 import StockPortfolio from "./StockPortfolio";
+import CirculatingStocks from "./CirculatingStocks";
 
 const Dashboard = ({ user }) => {
   const [showAlert, setShowAlert] = useState(false);
@@ -65,7 +66,10 @@ const Dashboard = ({ user }) => {
       <Header user={user} showAlert={showAlertMessage} />
       <div className="container mx-auto">
         <AccountInfo user={user} showAlert={showAlertMessage} />
-        <StockPortfolio user={user} showAlert={showAlertMessage} />
+        <div className="grid grid-cols-2 gap-6">
+          <CirculatingStocks user={user} showAlert={showAlertMessage} />
+          <StockPortfolio user={user} showAlert={showAlertMessage} />
+        </div>
       </div>
     </div>
   );

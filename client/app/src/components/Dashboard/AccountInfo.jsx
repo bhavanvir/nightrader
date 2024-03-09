@@ -18,7 +18,7 @@ export default function AccountInfo({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching your wallet balance. Please try again"
+          "There was an error fetching your wallet balance. Please try again",
         );
       });
   };
@@ -34,7 +34,7 @@ export default function AccountInfo({ user, showAlert }) {
         },
         {
           withCredentials: true,
-        }
+        },
       )
       .then(function (response) {
         showAlert("success", "Successfully added funds to your wallet!");
@@ -44,7 +44,7 @@ export default function AccountInfo({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error adding funds to your wallet. Please try again"
+          "There was an error adding funds to your wallet. Please try again",
         );
       });
   };
@@ -60,7 +60,7 @@ export default function AccountInfo({ user, showAlert }) {
         <div className="card bg-base-300 shadow-xl">
           <div className="card-body">
             <h1 className="text-xl font-bold">Welcome back, {user.name}</h1>
-            <h2 id="liveDateTime" className="text-lg">
+            <h2 id="liveDateTime" className="text-xl">
               <Clock />
             </h2>
           </div>
@@ -69,16 +69,18 @@ export default function AccountInfo({ user, showAlert }) {
           <div className="card bg-base-300 shadow-xl">
             <div className="card-body">
               <h1 className="text-xl font-bold">Account balance</h1>
-              <h2 className="text-lg">${balance}</h2>
-              <button
-                className="btn"
-                onClick={() =>
-                  document.getElementById("funds-modal").showModal()
-                }
-              >
-                Add funds
-                <FundsIcon />
-              </button>
+              <div class="flex items-center justify-start gap-6">
+                <h2 className="text-4xl">${balance}</h2>
+                <button
+                  className="btn"
+                  onClick={() =>
+                    document.getElementById("funds-modal").showModal()
+                  }
+                >
+                  Add funds
+                  <FundsIcon />
+                </button>
+              </div>
 
               <dialog id="funds-modal" className="modal">
                 <div className="modal-box">
@@ -99,7 +101,7 @@ export default function AccountInfo({ user, showAlert }) {
                           } else if (event.key === "-") {
                             // Disable the button if the input is negative
                             document.getElementById(
-                              "funds-modal-input"
+                              "funds-modal-input",
                             ).disabled = true;
                           }
                         }}
