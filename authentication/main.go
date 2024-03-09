@@ -119,7 +119,8 @@ func postLogin(c *gin.Context) {
 		return
 	}
 	if !correctPassword {
-		handleError(c, http.StatusBadRequest, "Incorrect password", nil)
+		// Update to return a 200 error if the password is incorrect
+		handleError(c, http.StatusOK, "Incorrect password", nil)
 		return
 	}
 
@@ -179,7 +180,8 @@ func postRegister(c *gin.Context) {
 		return
 	}
 	if count > 0 {
-		handleError(c, http.StatusBadRequest, "Username already exists", nil)
+		// Return 200 StatusOK if the username already exists
+		handleError(c, http.StatusOK, "Username already exists", nil)
 		return
 	}
 
@@ -198,6 +200,7 @@ func postRegister(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusCreated, successResponse)
 }
+
 
 func main() {
 	router := gin.Default()

@@ -732,8 +732,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -796,8 +795,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${appleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${appleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1223,8 +1221,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1337,8 +1334,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockTxId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockTxId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1491,7 +1487,7 @@
           </elementProp>
         </HTTPSamplerProxy>
         <hashTree>
-          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="Comp HTTP Header Manager" enabled="true">
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="User1 HTTP Header Manager" enabled="true">
             <collectionProp name="HeaderManager.headers">
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Content-Type</stringProp>
@@ -1499,7 +1495,7 @@
               </elementProp>
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">token</stringProp>
-                <stringProp name="Header.value">${compToken}</stringProp>
+                <stringProp name="Header.value">${user1Token}</stringProp>
               </elementProp>
             </collectionProp>
           </HeaderManager>
@@ -1524,8 +1520,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1588,8 +1583,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${appleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${appleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1652,8 +1646,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1811,8 +1804,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleCompStockTxId2}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleCompStockTxId2}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1936,8 +1928,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2000,8 +1991,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${appleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${appleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2114,8 +2104,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockTxId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockTxId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2151,8 +2140,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${appleStockTxId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${appleStockTxId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2378,8 +2366,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2478,8 +2465,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockTxId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockTxId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2515,8 +2501,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${appleStockTxId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${appleStockTxId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">true</boolProp>
             <boolProp name="INVERT">true</boolProp>
@@ -2742,8 +2727,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">&quot;${googleStockId}&quot;
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">&quot;${googleStockId}&quot;</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2806,8 +2790,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2920,8 +2903,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockTxId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockTxId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3243,8 +3225,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3307,8 +3288,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${appleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${appleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3371,8 +3351,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3435,8 +3414,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[3].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[3].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3798,8 +3776,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3961,8 +3938,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockTxId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockTxId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -4119,8 +4095,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleStockId}
-</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -4714,7 +4689,7 @@
         </DebugSampler>
         <hashTree/>
       </hashTree>
-      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
@@ -4793,6 +4768,17 @@
         <boolProp name="CookieManager.clearEachIteration">false</boolProp>
         <boolProp name="CookieManager.controlledByThreadGroup">false</boolProp>
       </CookieManager>
+      <hashTree/>
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
+        <collectionProp name="HeaderManager.headers"/>
+      </HeaderManager>
+      <hashTree/>
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
+        <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+          <collectionProp name="Arguments.arguments"/>
+        </elementProp>
+        <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+      </ConfigTestElement>
       <hashTree/>
     </hashTree>
   </hashTree>
