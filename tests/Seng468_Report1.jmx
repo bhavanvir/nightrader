@@ -71,7 +71,7 @@
           </elementProp>
         </collectionProp>
       </elementProp>
-    </TestPlan>
+          </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="User 1 Thread">
         <intProp name="ThreadGroup.num_threads">1</intProp>
@@ -1653,7 +1653,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].order_status JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].order_status</stringProp>
-            <stringProp name="EXPECTED_VALUE">COMPLETE</stringProp>
+            <stringProp name="EXPECTED_VALUE">COMPLETED</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -1671,7 +1671,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].order_type JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].order_type</stringProp>
-            <stringProp name="EXPECTED_VALUE">MARKET</stringProp>
+            <stringProp name="EXPECTED_VALUE">LIMIT</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3358,7 +3358,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].order_status JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].order_status</stringProp>
-            <stringProp name="EXPECTED_VALUE">COMPLETE</stringProp>
+            <stringProp name="EXPECTED_VALUE">COMPLETED</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3421,7 +3421,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[3].order_status JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[3].order_status</stringProp>
-            <stringProp name="EXPECTED_VALUE">COMPLETE</stringProp>
+            <stringProp name="EXPECTED_VALUE">COMPLETED</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -4165,7 +4165,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].order_status JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].order_status</stringProp>
-            <stringProp name="EXPECTED_VALUE">COMPLETE</stringProp>
+            <stringProp name="EXPECTED_VALUE">COMPLETED</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -4228,7 +4228,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].order_status JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].order_status</stringProp>
-            <stringProp name="EXPECTED_VALUE">COMPLETE</stringProp>
+            <stringProp name="EXPECTED_VALUE">COMPLETED</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -4687,7 +4687,7 @@
         </DebugSampler>
         <hashTree/>
       </hashTree>
-      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
@@ -4761,11 +4761,11 @@
         <stringProp name="filename"></stringProp>
       </ResultCollector>
       <hashTree/>
-      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+      <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
         <collectionProp name="HeaderManager.headers"/>
       </HeaderManager>
       <hashTree/>
-      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults">
+      <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
         <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
           <collectionProp name="Arguments.arguments"/>
         </elementProp>
