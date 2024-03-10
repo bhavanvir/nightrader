@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	github.com/Poomon001/day-trading-package v1.2.0
+	github.com/Poomon001/day-trading-package v1.2.4
 	github.com/bytedance/sonic v1.11.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect

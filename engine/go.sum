@@ -4,6 +4,8 @@ github.com/Poomon001/day-trading-package v1.1.9 h1:OKy4L6weIGwomup7mAUuI1MYNPpnl
 github.com/Poomon001/day-trading-package v1.1.9/go.mod h1:IgIslTuRaJyEEVV6kG4KP7qSxvr1moBj1lWTmobMWNs=
 github.com/Poomon001/day-trading-package v1.2.0 h1:bEtmbmNdigt9GrfwJipEEkcBPPNmseMmaSDottPtC2k=
 github.com/Poomon001/day-trading-package v1.2.0/go.mod h1:IgIslTuRaJyEEVV6kG4KP7qSxvr1moBj1lWTmobMWNs=
+github.com/Poomon001/day-trading-package v1.2.4 h1:mDUWohznNrKfuxGyQN+y4bIEtxmsUHRSqpeUY5slVP0=
+github.com/Poomon001/day-trading-package v1.2.4/go.mod h1:ipoe/nedpNJ0LCSSS7n5XEMppbgwMSdHoCnbgvtpSt8=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
 github.com/bytedance/sonic v1.9.1 h1:6iJ6NqdoxCDr6mbY8h18oSO+cShGSMRGCEo7F2h0x8s=
 github.com/bytedance/sonic v1.9.1/go.mod h1:i736AoUSYt75HyZLoJW9ERYxcy6eaN6h4BZXU064P/U=
