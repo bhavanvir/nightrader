@@ -3143,7 +3143,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;stock_id&quot;:&quot;${appleStockId}&quot;, &quot;is_buy&quot;:true, &quot;order_type&quot;:&quot;LIMIT&quot;,&quot;quantity&quot;:4,&quot;price&quot;:134}</stringProp>
+                <stringProp name="Argument.value">{&quot;stock_id&quot;:&quot;${googleStockId}&quot;, &quot;is_buy&quot;:true, &quot;order_type&quot;:&quot;LIMIT&quot;,&quot;quantity&quot;:4,&quot;price&quot;:134}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -3376,7 +3376,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].order_type JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].order_type</stringProp>
-            <stringProp name="EXPECTED_VALUE">MARKET</stringProp>
+            <stringProp name="EXPECTED_VALUE">LIMIT</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
