@@ -3143,7 +3143,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{&quot;stock_id&quot;:&quot;${appleStockId}&quot;, &quot;is_buy&quot;:false, &quot;order_type&quot;:&quot;LIMIT&quot;,&quot;quantity&quot;:4,&quot;price&quot;:134}</stringProp>
+                <stringProp name="Argument.value">{&quot;stock_id&quot;:&quot;${appleStockId}&quot;, &quot;is_buy&quot;:true, &quot;order_type&quot;:&quot;LIMIT&quot;,&quot;quantity&quot;:4,&quot;price&quot;:134}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
