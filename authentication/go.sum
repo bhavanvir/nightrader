@@ -22,6 +22,10 @@ github.com/Poomon001/day-trading-package v1.2.0 h1:bEtmbmNdigt9GrfwJipEEkcBPPNms
 github.com/Poomon001/day-trading-package v1.2.0/go.mod h1:IgIslTuRaJyEEVV6kG4KP7qSxvr1moBj1lWTmobMWNs=
 github.com/Poomon001/day-trading-package v1.2.4 h1:mDUWohznNrKfuxGyQN+y4bIEtxmsUHRSqpeUY5slVP0=
 github.com/Poomon001/day-trading-package v1.2.4/go.mod h1:ipoe/nedpNJ0LCSSS7n5XEMppbgwMSdHoCnbgvtpSt8=
+github.com/Poomon001/day-trading-package v1.2.6 h1:QXvGDjz6U6wpixUU3DT/2+SjtFyNrbaGaGEv97orgRI=
+github.com/Poomon001/day-trading-package v1.2.6/go.mod h1:ipoe/nedpNJ0LCSSS7n5XEMppbgwMSdHoCnbgvtpSt8=
+github.com/Poomon001/day-trading-package v1.2.7 h1:i75pVOLWhaqkpIM/7UcHUMrVhCT+p8fb/pBMmAb/ng4=
+github.com/Poomon001/day-trading-package v1.2.7/go.mod h1:ipoe/nedpNJ0LCSSS7n5XEMppbgwMSdHoCnbgvtpSt8=
 github.com/Poomon001/test-golang v1.0.1 h1:KVUxmpdz1WwgaipS8pErnkRMi7HwR9z8UgyNhVx32Ps=
 github.com/Poomon001/test-golang v1.0.1/go.mod h1:zV6F/LUEMLl46VJ7Tt7L+0WiauQTqzC83f9sUo9HoAw=
 github.com/Poomon001/test-golang v1.0.2 h1:x4su2RnWafgMb78T6ml0m/ESt0KsOOcP3ketRz2VVkE=
