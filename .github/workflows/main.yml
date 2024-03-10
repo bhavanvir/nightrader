@@ -27,12 +27,12 @@ jobs:
           docker-compose up --build -d database authentication transaction setup engine
 
       - name: Run JMeter Tests
-        uses: QAInsights/PerfAction@v3.1
+        uses: QAInsights/PerfAction@v5.6.2
         with:
           test-plan-path: "./tests/Seng468_Report1_No_Delay.jmx"
 
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: jmeter-results
           path: "./tests/results.jtl"
