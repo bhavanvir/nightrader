@@ -49,55 +49,55 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 }
 
 func createStock(c *gin.Context) {
-    user_name, exists := c.Get("user_name")
-    if !exists || user_name == nil {
-        handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
-        return
-    }
+	user_name, exists := c.Get("user_name")
+	if !exists || user_name == nil {
+		handleError(c, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
 
-    var json Stock
+	var json Stock
 
-    if err := c.BindJSON(&json); err != nil {
-        handleError(c, http.StatusBadRequest, "Invalid request body", err)
-        return
-    }
+	if err := c.BindJSON(&json); err != nil {
+		handleError(c, http.StatusBadRequest, "Invalid request body", err)
+		return
+	}
 
-    // Generate UUID as string for the new stock
-    stockID := uuid.New().String()
+	// Generate UUID as string for the new stock
+	stockID := uuid.New().String()
 
-    // Save stock to database with generated stockID
-    err := saveStockToDatabase(json, stockID)
-    if err != nil {
-        handleError(c, http.StatusInternalServerError, "Failed to save stock to database", err)
-        return
-    }
+	// Save stock to database with generated stockID
+	err := saveStockToDatabase(json, stockID)
+	if err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to save stock to database", err)
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{
-        "success": true,
-        "data": gin.H{
-            "stock_id": stockID,
-        },
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"stock_id": stockID,
+		},
+	})
 }
 
 func saveStockToDatabase(stock Stock, stockID string) error {
-    // Define formatted string for database connection
-    postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	// Define formatted string for database connection
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
-    // Attempt to connect to database
-    db, err := sql.Open("postgres", postgresqlDbInfo)
-    if err != nil {
-        return err
-    }
-    defer db.Close()
+	// Attempt to connect to database
+	db, err := sql.Open("postgres", postgresqlDbInfo)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
 
-    // Insert stock into the stocks table with provided stockID
-    _, err = db.Exec("INSERT INTO stocks (stock_id, stock_name) VALUES ($1, $2)", stockID, stock.StockName)
-    if err != nil {
-        return err
-    }
+	// Insert stock into the stocks table with provided stockID
+	_, err = db.Exec("INSERT INTO stocks (stock_id, stock_name) VALUES ($1, $2)", stockID, stock.StockName)
+	if err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func addStockToUser(c *gin.Context) {

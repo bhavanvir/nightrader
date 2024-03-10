@@ -3,14 +3,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/Poomon001/day-trading-package/tester"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"net/http"
-	"time"
 )
 
 // TODO: need env to store secret key
@@ -71,11 +72,6 @@ func createToken(name string, username string, expirationTime time.Time) (string
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(secretKey)
-}
-
-func createSession(c *gin.Context, token string, expirationTime time.Duration) {
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("token", token, int(expirationTime.Seconds()), "/", "http://localhost:3000", false, false)
 }
 
 func postLogin(c *gin.Context) {
@@ -141,9 +137,6 @@ func postLogin(c *gin.Context) {
 		return
 	}
 
-	// Create a cookie session
-	createSession(c, token, minutes)
-
 	// Respond
 	loginResponse := Response{
 		Success: true,
@@ -200,7 +193,6 @@ func postRegister(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusCreated, successResponse)
 }
-
 
 func main() {
 	router := gin.Default()
