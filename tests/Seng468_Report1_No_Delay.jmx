@@ -2725,7 +2725,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].stock_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[0].stock_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">&quot;${googleStockId}&quot;</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleStockId}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
