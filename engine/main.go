@@ -358,7 +358,7 @@ func postprocessingRemoveBuyOrder(order Order) {
 			fmt.Println("Error deleting stock transaction: ", err)
 		}
 	} else {
-		fmt.Println("Remove PARTIALLY_FULFILLED buy order")
+		fmt.Println("Remove PARTIAL_FULFILLED buy order")
 		if err := updateMoneyWallet(order.UserName, order, order.Price, order.Quantity, true); err != nil {
 			fmt.Println("Error updating wallet: ", err)
 		}
@@ -384,7 +384,7 @@ func postprocessingRemoveSellOrder(order Order) {
 			fmt.Println("Error deleting stock transaction: ", err)
 		}
 	} else {
-		fmt.Println("Remove PARTIALLY_FULFILLED sell order")
+		fmt.Println("Remove PARTIAL_FULFILLED sell order")
 		if err := updateStockPortfolio(order.UserName, order, order.Quantity, true); err != nil {
 			fmt.Println("Error updating stock portfolio: ", err)
 		}
@@ -642,7 +642,7 @@ func partialFulfillSellOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		fmt.Println("Error updating wallet: ", err)
 	}
 
-	if err := setStatus(order, "PARTIALLY_FULFILLED", false); err != nil {
+	if err := setStatus(order, "PARTIAL_FULFILLED", false); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -678,7 +678,7 @@ func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity int) {
 		fmt.Println("Error updating stock portfolio: ", err)
 	}
 
-	if err := setStatus(order, "PARTIALLY_FULFILLED", false); err != nil {
+	if err := setStatus(order, "PARTIAL_FULFILLED", false); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
 
@@ -955,7 +955,7 @@ func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
 	}
 	defer db.Close()
 
-	if status == "PARTIALLY_FULFILLED" {
+	if status == "PARTIAL_FULFILLED" {
 		order.Status = status
 	}
 
