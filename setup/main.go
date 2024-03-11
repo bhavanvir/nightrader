@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/gin-contrib/cors"
@@ -92,7 +93,7 @@ func saveStockToDatabase(stock Stock, stockID string) error {
 	defer db.Close()
 
 	// Insert stock into the stocks table with provided stockID
-	_, err = db.Exec("INSERT INTO stocks (stock_id, stock_name) VALUES ($1, $2)", stockID, stock.StockName)
+    _, err = db.Exec("INSERT INTO stocks (stock_id, stock_name, time_added) VALUES ($1, $2, $3)", stockID, stock.StockName, time.Now())
 	if err != nil {
 		return err
 	}

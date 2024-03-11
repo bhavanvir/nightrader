@@ -196,8 +196,9 @@ func getStockPrices(c *gin.Context) {
 	defer db.Close()
 
 	rows, err := db.Query(`
-        SELECT stock_id, stock_name, current_price
-        FROM stocks`)
+		SELECT stock_id, stock_name, current_price
+		FROM stocks
+		ORDER BY time_added ASC`)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query stock prices", err)
 		return
