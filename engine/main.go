@@ -88,9 +88,13 @@ type PriorityQueue struct {
 
 // handleError is a helper function to send error responses
 func handleError(c *gin.Context, statusCode int, message string, err error) {
+	errorMessage := message
+    if err != nil {
+        errorMessage += err.Error()
+    }
 	errorResponse := ErrorResponse{
 		Success: false,
-		Data:    map[string]string{"error": message + err.Error()},
+		Data:    map[string]string{"error": errorMessage},
 	}
 	c.IndentedJSON(statusCode, errorResponse)
 }
@@ -417,6 +421,13 @@ func HandleCancelStockTransaction(c *gin.Context) {
 		foundBuy := TraverseOrderBook(StockTxID, book, "buy")
 		foundSell := TraverseOrderBook(StockTxID, book, "sell")
 
+		if !(foundBuy.Success || foundSell.Success) {
+			fmt.Println("Order not found")
+			errorMessage := fmt.Sprintf("Order [StockTxID: %s] not found", StockTxID)
+			handleError(c, http.StatusBadRequest, errorMessage, nil)
+			return
+		}
+
 		// Inside TraverseOrderBook, after removing the item
 		fmt.Println("\n --- Current Sell Queue --- \n")
 		book.SellOrders.Printn()
@@ -435,7 +446,8 @@ func HandleCancelStockTransaction(c *gin.Context) {
 		}
 	}
 
-	handleError(c, http.StatusBadRequest, "Order not found", nil)
+	errorMessage := fmt.Sprintf("Order [StockTxID: %s] not found", StockTxID)
+	handleError(c, http.StatusBadRequest, errorMessage, nil)
 }
 
 // Define the structure of the order book map
