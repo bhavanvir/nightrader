@@ -43,7 +43,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
               onClick={() => handleSort("stock_id")}
             >
               <div className="flex items-center gap-2">
-                Stock ID{" "}
+                ID{" "}
                 {sortColumn === "stock_id" &&
                   (sortOrder === "asc" ? <UpArrowIcon /> : <DownArrowIcon />)}
               </div>
@@ -53,7 +53,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
               onClick={() => handleSort("stock_name")}
             >
               <div className="flex items-center gap-2">
-                Stock Name{" "}
+                Name{" "}
                 {sortColumn === "stock_name" &&
                   (sortOrder === "asc" ? <UpArrowIcon /> : <DownArrowIcon />)}
               </div>
@@ -63,7 +63,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
               onClick={() => handleSort("quantity_owned")}
             >
               <div className="flex items-center gap-2">
-                Quantity Owned{" "}
+                Quantity{" "}
                 {sortColumn === "quantity_owned" &&
                   (sortOrder === "asc" ? <UpArrowIcon /> : <DownArrowIcon />)}
               </div>

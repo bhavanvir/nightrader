@@ -80,6 +80,7 @@ export default function SignInForm() {
           },
         )
         .then(function (response) {
+          localStorage.setItem("token", response.data.data.token);
           Auth.setAuth(true);
         })
         .catch(function (error) {

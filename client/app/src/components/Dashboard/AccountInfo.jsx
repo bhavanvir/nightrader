@@ -7,10 +7,19 @@ import Clock from "./Clock";
 export default function AccountInfo({ user, showAlert }) {
   const [balance, setBalance] = useState(0);
 
+  let canadianDollar = new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+    minimumFractionDigits: 0,
+  });
+
   const fetchWalletBalance = async () => {
     await axios
       .get("http://localhost:5433/getWalletBalance", {
         withCredentials: true,
+        headers: {
+          token: localStorage.getItem("token"),
+        },
       })
       .then(function (response) {
         setBalance(response.data.data.balance);
@@ -34,6 +43,9 @@ export default function AccountInfo({ user, showAlert }) {
         },
         {
           withCredentials: true,
+          headers: {
+            token: localStorage.getItem("token"),
+          },
         },
       )
       .then(function (response) {
@@ -70,7 +82,7 @@ export default function AccountInfo({ user, showAlert }) {
             <div className="card-body">
               <h1 className="text-xl font-bold">Account balance</h1>
               <div class="flex items-center justify-start gap-6">
-                <h2 className="text-4xl">${balance}</h2>
+                <h2 className="text-4xl">{canadianDollar.format(balance)}</h2>
                 <button
                   className="btn"
                   onClick={() =>

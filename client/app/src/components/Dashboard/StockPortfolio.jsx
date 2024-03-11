@@ -10,6 +10,9 @@ export default function StockPortfolio({ user, showAlert }) {
     await axios
       .get("http://localhost:5433/getStockPortfolio", {
         withCredentials: true,
+        headers: {
+          token: localStorage.getItem("token"),
+        },
       })
       .then(function (response) {
         setStockPortfolio(response.data.data);

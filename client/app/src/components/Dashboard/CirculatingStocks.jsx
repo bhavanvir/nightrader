@@ -10,6 +10,9 @@ export default function CirculatingStocks({ user, showAlert }) {
     await axios
       .get("http://localhost:5433/getStockPrices", {
         withCredentials: true,
+        headers: {
+          token: localStorage.getItem("token"),
+        },
       })
       .then(function (response) {
         setCirculatingStocks(response.data.data);
