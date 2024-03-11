@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS stocks (
     stock_id TEXT UNIQUE PRIMARY KEY,
     stock_name TEXT UNIQUE,
-    current_price NUMERIC(12,2) DEFAULT 0
+    current_price NUMERIC(12,2) DEFAULT 0,
+    time_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_stocks (
