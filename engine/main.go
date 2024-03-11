@@ -421,13 +421,6 @@ func HandleCancelStockTransaction(c *gin.Context) {
 		foundBuy := TraverseOrderBook(StockTxID, book, "buy")
 		foundSell := TraverseOrderBook(StockTxID, book, "sell")
 
-		if !(foundBuy.Success || foundSell.Success) {
-			fmt.Println("Order not found")
-			errorMessage := fmt.Sprintf("Order [StockTxID: %s] not found", StockTxID)
-			handleError(c, http.StatusBadRequest, errorMessage, nil)
-			return
-		}
-
 		// Inside TraverseOrderBook, after removing the item
 		fmt.Println("\n --- Current Sell Queue --- \n")
 		book.SellOrders.Printn()
