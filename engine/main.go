@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	// host = "database"
-	host     = "localhost" // for local testing
+	host = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -1230,7 +1230,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "token"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "token"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
 
