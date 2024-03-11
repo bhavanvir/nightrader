@@ -49,13 +49,13 @@ type StockResponse struct {
 }
 
 type StockData struct {
-	StockID      int     `json:"stock_id"`
+	StockID      string  `json:"stock_id"`
 	StockName    string  `json:"stock_name"`
 	CurrentPrice float64 `json:"current_price"`
 }
 
 type StockPortfolioItem struct {
-	StockID       int    `json:"stock_id"`
+	StockID       string `json:"stock_id"`
 	StockName     string `json:"stock_name"`
 	QuantityOwned int    `json:"quantity_owned"`
 }
@@ -80,10 +80,10 @@ type WalletTransactionResponse struct {
 
 type StockTransactionItem struct {
 	StockTxID   string  `json:"stock_tx_id"`
-	StockID     int     `json:"stock_id"`
-	WalletTxID  *string  `json:"wallet_tx_id"`
+	StockID     string  `json:"stock_id"`
+	WalletTxID  *string `json:"wallet_tx_id"`
 	OrderStatus string  `json:"order_status"`
-	ParentTxID  *string  `json:"parent_tx_id"`
+	ParentTxID  *string `json:"parent_stock_tx_id"`
 	IsBuy       bool    `json:"is_buy"`
 	OrderType   string  `json:"order_type"`
 	StockPrice  float64 `json:"stock_price"`
@@ -196,8 +196,9 @@ func getStockPrices(c *gin.Context) {
 	defer db.Close()
 
 	rows, err := db.Query(`
-        SELECT stock_id, stock_name, current_price
-        FROM stocks`)
+		SELECT stock_id, stock_name, current_price
+		FROM stocks
+		ORDER BY time_added ASC`)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query stock prices", err)
 		return
@@ -332,7 +333,7 @@ func getStockTransactions(c *gin.Context) {
 	defer db.Close()
 
 	rows, err := db.Query(`
-        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
+        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
         FROM stock_transactions
         WHERE user_name = $1
 		ORDER BY time_stamp ASC`, userName)
@@ -349,13 +350,7 @@ func getStockTransactions(c *gin.Context) {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
-<<<<<<< HEAD
-=======
-		if *item.WalletTxID == "" {
-			item.WalletTxID = nil
-		}
->>>>>>> upstream/main
-		fmt.Println(item)
+
 		stock_transactions = append(stock_transactions, item)
 	}
 
@@ -372,7 +367,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "token"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
 

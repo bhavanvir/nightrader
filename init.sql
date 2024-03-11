@@ -6,14 +6,15 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS stocks (
-    stock_id SERIAL UNIQUE PRIMARY KEY,
+    stock_id TEXT UNIQUE PRIMARY KEY,
     stock_name TEXT UNIQUE,
-    current_price NUMERIC(12,2) DEFAULT 0
+    current_price NUMERIC(12,2) DEFAULT 0,
+    time_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS user_stocks (
     user_name TEXT REFERENCES users(user_name),
-    stock_id INTEGER REFERENCES stocks(stock_id),
+    stock_id TEXT REFERENCES stocks(stock_id),
     quantity INTEGER,
     PRIMARY KEY (user_name, stock_id)
 );
@@ -29,10 +30,10 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
 CREATE TABLE IF NOT EXISTS stock_transactions (
     stock_tx_id TEXT UNIQUE PRIMARY KEY,
     user_name TEXT REFERENCES users(user_name),
-    stock_id INTEGER REFERENCES stocks(stock_id),
+    stock_id TEXT REFERENCES stocks(stock_id),
     wallet_tx_id TEXT,
     order_status TEXT,
-    parent_tx_id TEXT,
+    parent_stock_tx_id TEXT,
     is_buy BOOLEAN,
     order_type TEXT,
     stock_price NUMERIC(12,2) NOT NULL,

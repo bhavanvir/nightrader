@@ -3,14 +3,15 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/Poomon001/day-trading-package/tester"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-	"net/http"
-	"time"
 )
 
 // TODO: need env to store secret key
@@ -73,11 +74,6 @@ func createToken(name string, username string, expirationTime time.Time) (string
 	return token.SignedString(secretKey)
 }
 
-func createSession(c *gin.Context, token string, expirationTime time.Duration) {
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("token", token, int(expirationTime.Seconds()), "/", "http://localhost:3000", false, false)
-}
-
 func postLogin(c *gin.Context) {
 	var login Login
 
@@ -119,7 +115,8 @@ func postLogin(c *gin.Context) {
 		return
 	}
 	if !correctPassword {
-		handleError(c, http.StatusBadRequest, "Incorrect password", nil)
+		// Update to return a 200 error if the password is incorrect
+		handleError(c, http.StatusOK, "Incorrect password", nil)
 		return
 	}
 
@@ -139,9 +136,6 @@ func postLogin(c *gin.Context) {
 		handleError(c, http.StatusInternalServerError, "Failed to create token", err)
 		return
 	}
-
-	// Create a cookie session
-	createSession(c, token, minutes)
 
 	// Respond
 	loginResponse := Response{
@@ -179,7 +173,8 @@ func postRegister(c *gin.Context) {
 		return
 	}
 	if count > 0 {
-		handleError(c, http.StatusBadRequest, "Username already exists", nil)
+		// Return 200 StatusOK if the username already exists
+		handleError(c, http.StatusOK, "Username already exists", nil)
 		return
 	}
 
@@ -205,7 +200,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "token"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
 

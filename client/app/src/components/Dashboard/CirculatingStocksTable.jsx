@@ -3,16 +3,16 @@ import { useState } from "react";
 import UpArrowIcon from "../../assets/icons/UpArrowIcon";
 import DownArrowIcon from "../../assets/icons/DownArrowIcon";
 
-// Set a default value for stockPortfolio to avoid errors when it's not passed
-export default function StockPortfolioTable({ stockPortfolio }) {
+// Set a default value for circulatingStocks to avoid errors when it's not passed
+export default function CirculatingStocksTable({ circulatingStocks }) {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
 
-  if (!stockPortfolio) {
-    stockPortfolio = [];
+  if (!circulatingStocks) {
+    circulatingStocks = [];
   }
 
-  const sortedPortfolio = [...stockPortfolio].sort((a, b) => {
+  const sortedPortfolio = [...circulatingStocks].sort((a, b) => {
     if (sortColumn) {
       if (sortOrder === "asc") {
         return a[sortColumn] > b[sortColumn] ? 1 : -1;
@@ -60,11 +60,11 @@ export default function StockPortfolioTable({ stockPortfolio }) {
             </th>
             <th
               className="max-w-10 text-lg"
-              onClick={() => handleSort("quantity_owned")}
+              onClick={() => handleSort("current_price")}
             >
               <div className="flex items-center gap-2">
-                Quantity{" "}
-                {sortColumn === "quantity_owned" &&
+                Price{" "}
+                {sortColumn === "current_price" &&
                   (sortOrder === "asc" ? <UpArrowIcon /> : <DownArrowIcon />)}
               </div>
             </th>
@@ -75,7 +75,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
             <tr key={index}>
               <td>{stock.stock_id}</td>
               <td>{stock.stock_name}</td>
-              <td>{stock.quantity_owned}</td>
+              <td>${stock.current_price}</td>
             </tr>
           ))}
         </tbody>
