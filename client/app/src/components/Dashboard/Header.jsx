@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
 import LogoIcon from "../../assets/icons/LogoIcon";
 import CryptoJS from "crypto-js";
-import Cookies from "js-cookie";
 import AuthApi from "../../AuthApi";
 
 export default function Header({ user, showAlert }) {
@@ -10,8 +9,8 @@ export default function Header({ user, showAlert }) {
 
   // Function to handle logout
   const handleLogout = () => {
+    localStorage.removeItem("token");
     Auth.setAuth(false);
-    Cookies.remove("token");
   };
 
   // Function to generate the Gravatar URL
