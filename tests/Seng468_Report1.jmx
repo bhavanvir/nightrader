@@ -3563,7 +3563,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].stock_tx_id JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].stock_tx_id</stringProp>
-            <stringProp name="EXPECTED_VALUE">${googleCompStockTxId3&gt;}</stringProp>
+            <stringProp name="EXPECTED_VALUE">${googleCompStockTxId3}</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3990,8 +3990,8 @@
             <boolProp name="ISREGEX">true</boolProp>
           </JSONPathAssertion>
           <hashTree/>
-          <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[0].amount JSON Assertion" enabled="true">
-            <stringProp name="JSON_PATH">$.data[0].amount</stringProp>
+          <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].amount JSON Assertion" enabled="true">
+            <stringProp name="JSON_PATH">$.data[1].amount</stringProp>
             <stringProp name="EXPECTED_VALUE">536</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
@@ -4689,7 +4689,7 @@
         </DebugSampler>
         <hashTree/>
       </hashTree>
-      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
