@@ -350,6 +350,7 @@ func getStockTransactions(c *gin.Context) {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
+
 		stock_transactions = append(stock_transactions, item)
 	}
 
@@ -366,7 +367,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "token"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "token"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
 

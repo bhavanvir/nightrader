@@ -88,9 +88,13 @@ type PriorityQueue struct {
 
 // handleError is a helper function to send error responses
 func handleError(c *gin.Context, statusCode int, message string, err error) {
+	errorMessage := message
+    if err != nil {
+        errorMessage += err.Error()
+    }
 	errorResponse := ErrorResponse{
 		Success: false,
-		Data:    map[string]string{"error": message + err.Error()},
+		Data:    map[string]string{"error": errorMessage},
 	}
 	c.IndentedJSON(statusCode, errorResponse)
 }
@@ -435,7 +439,8 @@ func HandleCancelStockTransaction(c *gin.Context) {
 		}
 	}
 
-	handleError(c, http.StatusBadRequest, "Order not found", nil)
+	errorMessage := fmt.Sprintf("Order [StockTxID: %s] not found", StockTxID)
+	handleError(c, http.StatusBadRequest, errorMessage, nil)
 }
 
 // Define the structure of the order book map
@@ -1225,7 +1230,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "token"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "token"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
 
