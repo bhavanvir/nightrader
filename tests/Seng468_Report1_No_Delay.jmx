@@ -71,7 +71,9 @@
           </elementProp>
         </collectionProp>
       </elementProp>
-          </TestPlan>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="User 1 Thread">
         <intProp name="ThreadGroup.num_threads">1</intProp>

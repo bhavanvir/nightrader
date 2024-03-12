@@ -89,9 +89,9 @@ type PriorityQueue struct {
 // handleError is a helper function to send error responses
 func handleError(c *gin.Context, statusCode int, message string, err error) {
 	errorMessage := message
-    if err != nil {
-        errorMessage += err.Error()
-    }
+	if err != nil {
+		errorMessage += err.Error()
+	}
 	errorResponse := ErrorResponse{
 		Success: false,
 		Data:    map[string]string{"error": errorMessage},
@@ -215,7 +215,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
 	}
 
 	if err := validateOrderType(&request); err != nil {
-		handleError(c, http.StatusBadRequest, err.Error(), err)
+		handleError(c, http.StatusOK, err.Error(), err)
 		return
 	}
 
@@ -440,7 +440,7 @@ func HandleCancelStockTransaction(c *gin.Context) {
 	}
 
 	errorMessage := fmt.Sprintf("Order [StockTxID: %s] not found", StockTxID)
-	handleError(c, http.StatusBadRequest, errorMessage, nil)
+	handleError(c, http.StatusOK, errorMessage, nil)
 }
 
 // Define the structure of the order book map
