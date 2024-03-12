@@ -3,7 +3,7 @@ module day-trader/authentication
 go 1.21.6
 
 require (
-	github.com/Poomon001/day-trading-package v1.2.7
+	github.com/Poomon001/day-trading-package v1.2.8
 	github.com/Poomon001/test-golang v1.0.2
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/cors v1.5.0
