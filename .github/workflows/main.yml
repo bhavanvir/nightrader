@@ -1,4 +1,4 @@
-name: test
+name: Tester
 
 on:
   push:
@@ -26,13 +26,13 @@ jobs:
         run: |
           docker-compose up --build -d database authentication transaction setup engine
 
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
+      - name: Run JMeter Tests
+        uses: QAInsights/PerfAction@v5.6.2
         with:
-          node-version: 18
+          test-plan-path: "./tests/Seng468_Report1_No_Delay.jmx"
 
-      - name: Install Newman
-        run: npm install -g newman
-
-      - name: Run Postman tests
-        run: newman run tests/report-1.postman_collection.json
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-results
+          path: "./tests/results.jtl"

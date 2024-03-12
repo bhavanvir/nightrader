@@ -10,6 +10,9 @@ export default function StockPortfolio({ user, showAlert }) {
     await axios
       .get("http://localhost:5433/getStockPortfolio", {
         withCredentials: true,
+        headers: {
+          token: localStorage.getItem("token"),
+        },
       })
       .then(function (response) {
         setStockPortfolio(response.data.data);
@@ -17,14 +20,13 @@ export default function StockPortfolio({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching your stock portfolio. Please try again"
+          "There was an error fetching your stock portfolio. Please try again",
         );
       });
   };
 
-  // eslint-disable-next-line
   useEffect(() => {
-    fetchStockPortfolio();
+    fetchStockPortfolio(); // eslint-disable-next-line
   }, []);
 
   return (

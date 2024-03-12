@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -61,8 +63,11 @@ func createStock(c *gin.Context) {
 		return
 	}
 
-	// Save stock to database
-	stockID, err := saveStockToDatabase(json)
+	// Generate UUID as string for the new stock
+	stockID := uuid.New().String()
+
+	// Save stock to database with generated stockID
+	err := saveStockToDatabase(json, stockID)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to save stock to database", err)
 		return
@@ -76,26 +81,24 @@ func createStock(c *gin.Context) {
 	})
 }
 
-func saveStockToDatabase(stock Stock) (int, error) {
+func saveStockToDatabase(stock Stock, stockID string) error {
 	// Define formatted string for database connection
 	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
 	// Attempt to connect to database
 	db, err := sql.Open("postgres", postgresqlDbInfo)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer db.Close()
 
-	var stockID int
-
-	// Insert stock into the stocks table and retrieve the generated stock_id
-	err = db.QueryRow("INSERT INTO stocks (stock_name) VALUES ($1) RETURNING stock_id", stock.StockName).Scan(&stockID)
+	// Insert stock into the stocks table with provided stockID
+    _, err = db.Exec("INSERT INTO stocks (stock_id, stock_name, time_added) VALUES ($1, $2, $3)", stockID, stock.StockName, time.Now())
 	if err != nil {
-		return 0, err
+		return err
 	}
 
-	return stockID, nil
+	return nil
 }
 
 func addStockToUser(c *gin.Context) {

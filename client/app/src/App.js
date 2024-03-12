@@ -5,7 +5,6 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
-import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 
 import Home from "./components/Home/Home";
@@ -19,8 +18,8 @@ function App() {
   const [user, setUser] = useState({});
 
   useEffect(() => {
-    const readCookie = () => {
-      const sessionToken = Cookies.get("token");
+    const readToken = () => {
+      const sessionToken = localStorage.getItem("token");
       if (sessionToken) {
         const decodedUser = jwtDecode(sessionToken);
         setUser(decodedUser);
@@ -28,7 +27,7 @@ function App() {
       }
     };
 
-    readCookie();
+    readToken();
   }, []);
 
   return (
