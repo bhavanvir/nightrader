@@ -125,7 +125,7 @@ func addMoneyToWallet(c *gin.Context) {
 	}
 
 	if addMoney.Amount <= 0 {
-		handleError(c, http.StatusBadRequest, "Invalid amount", nil)
+		handleError(c, http.StatusOK, "Invalid amount", nil)
 		return
 	}
 
