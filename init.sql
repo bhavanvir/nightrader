@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS user_stocks (
     user_name TEXT REFERENCES users(user_name),
     stock_id TEXT REFERENCES stocks(stock_id),
     quantity INTEGER,
+    time_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_name, stock_id)
 );
 
