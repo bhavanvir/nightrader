@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -1221,7 +1221,7 @@ func isOrderExpired(order *Order) bool {
 	}
 
 	// Check if the order is older than 15 minutes
-	return time.Since(orderTime) > 15*time.Minute
+	return time.Since(orderTime) > 14*time.Minute
 }
 
 func main() {
@@ -1241,6 +1241,7 @@ func main() {
 	// Start a background goroutine to periodically check and remove expired orders
 	go func() {
 		for {
+			fmt.Println("Clear for expired orders")
 			time.Sleep(time.Minute)
 			checkAndRemoveExpiredOrders()
 		}
