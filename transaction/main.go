@@ -245,7 +245,7 @@ func getStockPortfolio(c *gin.Context) {
         FROM user_stocks us
         JOIN stocks s ON s.stock_id = us.stock_id
         WHERE us.user_name = $1
-		ORDER BY time_added ASC`, userName)
+		ORDER BY us.time_added ASC`, userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio", err)
 		return
