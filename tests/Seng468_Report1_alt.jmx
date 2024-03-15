@@ -1673,7 +1673,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].order_type JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].order_type</stringProp>
-            <stringProp name="EXPECTED_VALUE">LIMIT</stringProp>
+            <stringProp name="EXPECTED_VALUE">MARKET</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -2849,6 +2849,13 @@
             <stringProp name="Sample.scope">all</stringProp>
           </JSONPostProcessor>
           <hashTree/>
+          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="googleWalletTxId2 Extractor" enabled="true">
+            <stringProp name="JSONPostProcessor.referenceNames">googleWalletTxId2</stringProp>
+            <stringProp name="JSONPostProcessor.jsonPathExprs">$.data[1].wallet_tx_id</stringProp>
+            <stringProp name="JSONPostProcessor.match_numbers"></stringProp>
+            <stringProp name="Sample.scope">all</stringProp>
+          </JSONPostProcessor>
+          <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="39 Get Wallet Transactions Request" enabled="true">
           <stringProp name="HTTPSampler.domain">${BASE_URL}</stringProp>
@@ -3371,7 +3378,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[2].order_type JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[2].order_type</stringProp>
-            <stringProp name="EXPECTED_VALUE">LIMIT</stringProp>
+            <stringProp name="EXPECTED_VALUE">MARKET</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
@@ -3884,13 +3891,6 @@
             <boolProp name="ISREGEX">true</boolProp>
           </JSONPathAssertion>
           <hashTree/>
-          <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="googleWalletTxId2 Extractor" enabled="true">
-            <stringProp name="JSONPostProcessor.referenceNames">googleWalletTxId2</stringProp>
-            <stringProp name="JSONPostProcessor.jsonPathExprs">$.data[1].wallet_tx_id</stringProp>
-            <stringProp name="JSONPostProcessor.match_numbers"></stringProp>
-            <stringProp name="Sample.scope">all</stringProp>
-          </JSONPostProcessor>
-          <hashTree/>
         </hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="49 Get Wallet Transactions Request" enabled="true">
           <stringProp name="HTTPSampler.domain">${BASE_URL}</stringProp>
@@ -4185,7 +4185,7 @@
           <hashTree/>
           <JSONPathAssertion guiclass="JSONPathAssertionGui" testclass="JSONPathAssertion" testname="data[1].order_type JSON Assertion" enabled="true">
             <stringProp name="JSON_PATH">$.data[1].order_type</stringProp>
-            <stringProp name="EXPECTED_VALUE">LIMIT</stringProp>
+            <stringProp name="EXPECTED_VALUE">MARKET</stringProp>
             <boolProp name="JSONVALIDATION">true</boolProp>
             <boolProp name="EXPECT_NULL">false</boolProp>
             <boolProp name="INVERT">false</boolProp>
