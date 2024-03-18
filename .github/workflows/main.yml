@@ -43,14 +43,14 @@ jobs:
             fi
 
             if [[ " ${testsToSkip[@]} " =~ " ${label} " ]]; then
-              echo "Skipping test for label: $label"
+              echo "Skipping test for label: $label ➖"
               continue
             fi
 
             if [ "$success" = "true" ]; then
-              echo "Test passed for label: $label"
+              echo "Passed test for label: $label ✔️"
             else
-              echo "Test failed for label: $label"
+              echo "Failed test for label: $label ✖️"
               fail=true
             fi
           done < ./tests/results.jtl
