@@ -46,6 +46,8 @@ services:
     environment:
       PORT: 8585
       GIN_MODE: release
+    depends_on:
+      - mongo  # Adding mongo as a dependency
     networks:
       - nt-network
 
@@ -73,6 +75,14 @@ services:
     networks:
       - nt-network
 
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - nt-network
+
   proxy:
     image: nginx:latest
     container_name: proxy
@@ -87,6 +97,7 @@ services:
       - transaction
       - engine
       - database
+      - mongo
     networks:
       - nt-network
 
