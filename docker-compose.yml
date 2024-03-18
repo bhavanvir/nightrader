@@ -47,7 +47,7 @@ services:
       PORT: 8585
       GIN_MODE: release
     depends_on:
-      - mongo  # Adding mongo as a dependency
+      - mongo
     networks:
       - nt-network
 
