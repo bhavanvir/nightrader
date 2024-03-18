@@ -27,8 +27,8 @@ const (
 )
 
 type AddStockRequest struct {
-	StockID  string `json:"stock_id"`
-	Quantity int    `json:"quantity"`
+	StockID  string  `json:"stock_id"`
+	Quantity float64 `json:"quantity"`
 }
 
 type ErrorResponse struct {
