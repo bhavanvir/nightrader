@@ -33,7 +33,20 @@ jobs:
       - name: Parse and check results.jtl
         run: |
           fail=false
+          isFirstLine=true
+          declare -a testsToSkip=("51 Get Stock Transactions Request" "52 Get Stock Portfolio Request")  # These tests require a sleep time of 15 minutes
+
           while IFS=, read -r timeStamp elapsed label responseCode responseMessage threadName dataType success failureMessage bytes sentBytes grpThreads allThreads URL Latency IdleTime Connect; do
+            if [ "$isFirstLine" = "true" ]; then
+              isFirstLine=false
+              continue
+            fi
+
+            if [[ " ${testsToSkip[@]} " =~ " ${label} " ]]; then
+              echo "Skipping test for label: $label"
+              continue
+            fi
+
             if [ "$success" = "true" ]; then
               echo "Test passed for label: $label"
             else
@@ -41,6 +54,7 @@ jobs:
               fail=true
             fi
           done < ./tests/results.jtl
+
           if [ "$fail" = "true" ]; then
             exit 1
           fi
