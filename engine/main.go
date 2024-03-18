@@ -460,6 +460,7 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 	// Add the buy order to the buy queue
 	heap.Push(&book.BuyOrders, &order)
 	highestBuyOrder := heap.Pop(&book.BuyOrders).(*Order)
+	LogOrder(*highestBuyOrder)
 
 	// If the buy order is a limit order, match it with the lowest sell order that is less than or equal to the buy order price
 	for highestBuyOrder.Quantity > 0 && book.SellOrders.Len() > 0 {
@@ -566,6 +567,8 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 	// Add the Sell order to the sell queue
 	heap.Push(&book.SellOrders, &order)
 	lowestSellOrder := heap.Pop(&book.SellOrders).(*Order)
+
+	LogOrder(*lowestSellOrder)
 
 	for lowestSellOrder.Quantity > 0 && book.BuyOrders.Len() > 0 {
 		highestBuyOrder := heap.Pop(&book.BuyOrders).(*Order)
