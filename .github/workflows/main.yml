@@ -30,6 +30,21 @@ jobs:
         run: |
           while [ ! -s ./tests/results.jtl ]; do sleep 5; done
 
+      - name: Parse and check results.jtl
+        run: |
+          fail=false
+          while IFS=, read -r timeStamp elapsed label responseCode responseMessage threadName dataType success failureMessage bytes sentBytes grpThreads allThreads URL Latency IdleTime Connect; do
+            if [ "$success" = "true" ]; then
+              echo "Test passed for label: $label"
+            else
+              echo "Test failed for label: $label"
+              fail=true
+            fi
+          done < ./tests/results.jtl
+          if [ "$fail" = "true" ]; then
+            exit 1
+          fi
+
       - name: Upload Test Results
         uses: actions/upload-artifact@v3
         with:
