@@ -71,7 +71,7 @@
           </elementProp>
           <elementProp name="stockFile" elementType="Argument">
             <stringProp name="Argument.name">stockFile</stringProp>
-            <stringProp name="Argument.value">tests/TestRun2/Config/stockIds.csv</stringProp>
+            <stringProp name="Argument.value">tests/TestRun2/ConfigstockIds.csv</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="userFile" elementType="Argument">
