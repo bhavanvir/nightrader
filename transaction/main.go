@@ -26,7 +26,7 @@ type ErrorResponse struct {
 }
 
 type AddMoney struct {
-	Amount int `json:"amount"`
+	Amount float64 `json:"amount"`
 }
 
 type PostResponse struct {
@@ -55,9 +55,9 @@ type StockData struct {
 }
 
 type StockPortfolioItem struct {
-	StockID       string `json:"stock_id"`
-	StockName     string `json:"stock_name"`
-	QuantityOwned int    `json:"quantity_owned"`
+	StockID       string  `json:"stock_id"`
+	StockName     string  `json:"stock_name"`
+	QuantityOwned float64 `json:"quantity_owned"`
 }
 
 type StockPortfolioResponse struct {
@@ -87,7 +87,7 @@ type StockTransactionItem struct {
 	IsBuy       bool    `json:"is_buy"`
 	OrderType   string  `json:"order_type"`
 	StockPrice  float64 `json:"stock_price"`
-	Quantity    int     `json:"quantity"`
+	Quantity    float64 `json:"quantity"`
 	TimeStamp   string  `json:"time_stamp"`
 }
 
