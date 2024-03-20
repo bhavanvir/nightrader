@@ -24,12 +24,40 @@ jobs:
 
       - name: Run Docker Compose
         run: |
-          docker-compose up --build -d database authentication transaction setup engine
+          docker-compose up --build -d database authentication transaction setup engine jmeter
 
-      - name: Run JMeter Tests
-        uses: QAInsights/PerfAction@v5.6.2
-        with:
-          test-plan-path: "./tests/Seng468_Report1_No_Delay.jmx"
+      - name: Wait for results.jtl
+        run: |
+          while [ ! -s ./tests/results.jtl ]; do sleep 5; done
+
+      - name: Parse and check results.jtl
+        run: |
+          fail=false
+          isFirstLine=true
+          declare -a testsToSkip=("51 Get Stock Transactions Request" "52 Get Stock Portfolio Request")  # These tests require a sleep time of 15 minutes
+
+          while IFS=, read -r timeStamp elapsed label responseCode responseMessage threadName dataType success failureMessage bytes sentBytes grpThreads allThreads URL Latency IdleTime Connect; do
+            if [ "$isFirstLine" = "true" ]; then
+              isFirstLine=false
+              continue
+            fi
+
+            if [[ " ${testsToSkip[@]} " =~ " ${label} " ]]; then
+              echo "Skipping test for label: $label ➖"
+              continue
+            fi
+
+            if [ "$success" = "true" ]; then
+              echo "Passed test for label: $label ✔️"
+            else
+              echo "Failed test for label: $label ✖️"
+              fail=true
+            fi
+          done < ./tests/results.jtl
+
+          if [ "$fail" = "true" ]; then
+            exit 1
+          fi
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v3

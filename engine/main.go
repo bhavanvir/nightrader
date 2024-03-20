@@ -38,7 +38,7 @@ type PlaceStockOrderRequest struct {
 	StockID   string   `json:"stock_id" binding:"required"`
 	IsBuy     *bool    `json:"is_buy" binding:"required"`
 	OrderType string   `json:"order_type" binding:"required"`
-	Quantity  int      `json:"quantity" binding:"required"`
+	Quantity  float64  `json:"quantity" binding:"required"`
 	Price     *float64 `json:"price"`
 }
 
@@ -66,7 +66,7 @@ type Order struct {
 	ParentTxID *string  `json:"parent_stock_tx_id"`
 	IsBuy      bool     `json:"is_buy"`
 	OrderType  string   `json:"order_type"`
-	Quantity   int      `json:"quantity"`
+	Quantity   float64      `json:"quantity"`
 	Price      *float64 `json:"price"`
 	TimeStamp  string   `json:"time_stamp"`
 	Status     string   `json:"status"`
@@ -152,7 +152,7 @@ func (pq *PriorityQueue) Printn() {
 	copy(temp.Order, pq.Order)
 	for temp.Len() > 0 {
 		item := heap.Pop(&temp).(*Order)
-		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
+		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %.2f, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
 	}
 }
 
@@ -461,6 +461,7 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 	// Add the buy order to the buy queue
 	heap.Push(&book.BuyOrders, &order)
 	highestBuyOrder := book.BuyOrders.Order[0]
+	LogOrder(*highestBuyOrder)
 
 	// If the buy order is a limit order, match it with the lowest sell order that is less than or equal to the buy order price
 	for highestBuyOrder.Quantity > 0 && book.SellOrders.Len() > 0 {
@@ -508,7 +509,7 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 		executeBuyTrade(book, &order, lowestSellOrder)
 		lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
 
-		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
 			order.StockTxID, order.Quantity, *lowestSellOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 	}
 }
@@ -586,6 +587,8 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 	// Add the Sell order to the sell queue
 	heap.Push(&book.SellOrders, &order)
 	lowestSellOrder := book.SellOrders.Order[0]
+
+	LogOrder(*lowestSellOrder)
 
 	for lowestSellOrder.Quantity > 0 && book.BuyOrders.Len() > 0 {
 		highestBuyOrder := book.BuyOrders.Order[0]
@@ -836,7 +839,7 @@ func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
 
 /** === END SELL Order === **/
 
-func updateStockPortfolio(userName string, order Order, quantity int, isAdded bool) error {
+func updateStockPortfolio(userName string, order Order, quantity float64, isAdded bool) error {
 	fmt.Println("Deducting stock from portfolio")
 
 	// Connect to database
@@ -862,7 +865,7 @@ func updateStockPortfolio(userName string, order Order, quantity int, isAdded bo
 	// User already owns this stock
 	if rows.Next() {
 		// Update the user's stocks
-		var amount int
+		var amount float64
 		if err := rows.Scan(&amount); err != nil {
 			return fmt.Errorf("Error while scanning row: %w", err)
 		}
@@ -1209,7 +1212,7 @@ func verifyStockBeforeTransaction(userName string, order Order) error {
 	}
 
 	// get user stock portfolio
-	var quantity int
+	var quantity float64
 	err = db.QueryRow("SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2", userName, order.StockID).Scan(&quantity)
 	if err != nil {
 		return fmt.Errorf("Failed to get user stock portfolio: %w", err)
