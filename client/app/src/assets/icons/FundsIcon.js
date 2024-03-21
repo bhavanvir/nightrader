@@ -11,7 +11,7 @@ const FundsIcon = (props) => {
       viewBox="0 0 24 24"
       strokeWidth="1.5"
       stroke="currentColor"
-      fill="currentColor"
+      fill="none"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
