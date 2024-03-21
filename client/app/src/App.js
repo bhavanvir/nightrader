@@ -12,7 +12,7 @@ import SignIn from "./components/SignIn/SignIn";
 import SignUp from "./components/SignUp/SignUp";
 import Dashboard from "./components/Dashboard/Dashboard";
 import AuthApi from "./AuthApi";
-import StockDetails from "./components/Stock/StockDetails";
+import Stock from "./components/Stock/Stock";
 
 function App() {
   const [auth, setAuth] = useState(false);
@@ -46,7 +46,7 @@ const AllRoutes = ({ user }) => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/stock/:stockId" element={<StockDetails />} />
+      <Route path="/stock/:stockId" element={<Stock user={user} />} />
       <Route
         path="/signin"
         element={<ProtectedLogin auth={Auth.auth} element={<SignIn />} />}
