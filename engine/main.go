@@ -193,8 +193,6 @@ func createInitOrder(request *PlaceStockOrderRequest, userName string) (Order, e
 	return order, nil
 } // createInitOrder
 
-var existingOrderIDs = make(map[string]struct{})
-
 func HandlePlaceStockOrder(c *gin.Context) {
 	user_name, exists := c.Get("user_name")
 	if !exists || user_name == nil {
