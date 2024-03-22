@@ -5,6 +5,7 @@ import CirculatingStocksTable from "./CirculatingStocksTable";
 
 export default function CirculatingStocks({ user, showAlert }) {
   const [circulatingStocks, setCirculatingStocks] = useState([]);
+  const [stockHistory, setStockHistory] = useState({});
 
   const fetchCirculatingStocks = async () => {
     await axios
@@ -16,14 +17,29 @@ export default function CirculatingStocks({ user, showAlert }) {
       })
       .then(function (response) {
         setCirculatingStocks(response.data.data);
+        updateStockHistory(response.data.data);
       })
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching circulating stocks. Please try again",
+          "There was an error fetching circulating stocks. Please try again"
         );
       });
   };
+
+  const updateStockHistory = (data) => {
+    const newStockHistory = { ...stockHistory };
+    data.forEach((stock) => {
+      if (newStockHistory[stock.stock_id]) {
+        newStockHistory[stock.stock_id].push(stock.current_price);
+      } else {
+        newStockHistory[stock.stock_id] = [stock.current_price];
+      }
+    });
+    setStockHistory(newStockHistory);
+  };
+
+  console.log(stockHistory);
 
   useEffect(() => {
     fetchCirculatingStocks(); // eslint-disable-next-line

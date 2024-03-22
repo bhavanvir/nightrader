@@ -1,11 +1,24 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
-import StockDetails from "./StockDetails";
 import Header from "../Dashboard/Header";
+import BuyTrigger from "./BuyTrigger";
+import SellTrigger from "./SellTrigger";
 
 const Stock = ({ stock, user }) => {
-  const navigate = useNavigate();
+  let canadianDollar = new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+    minimumFractionDigits: 0,
+  });
+
+  const state = useLocation();
+  const { stock_id, stock_name, current_price } = state.state.stock;
+  const Stock = {
+    StockId: stock_id,
+    StockName: stock_name,
+    CurrentPrice: current_price,
+  };
 
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState("");
@@ -65,7 +78,23 @@ const Stock = ({ stock, user }) => {
         </div>
       )}
       <Header user={user} showAlert={showAlertMessage} />
-      <StockDetails stock={stock} />
+      <div>
+        <div className="grid grid-rows-2 justify-center pt-12">
+          <div className="font-bold text-4xl text-center">
+            {Stock.StockName}
+          </div>
+          <div className="text-2xl text-center pt-2">
+            {canadianDollar.format(Stock.CurrentPrice)}
+          </div>
+        </div>
+
+        <div className="container mx-auto w-[75rem]">
+          <div className="grid grid-cols-2 gap-6">
+            <BuyTrigger Stock={Stock} showAlert={showAlertMessage} />
+            <SellTrigger Stock={Stock} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
