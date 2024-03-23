@@ -60,7 +60,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ../init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - nt-network
 
@@ -76,7 +76,7 @@ services:
       - transaction
       - engine
       - database
-    command: -n -t Seng468_Report1_No_Delay.jmx -l results.jtl
+    command: -n -t /tests/Seng468_Report1_No_Delay.jmx -l /tests/results.jtl
     network_mode: host
 
 networks:
