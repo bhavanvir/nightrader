@@ -24,7 +24,7 @@ jobs:
 
       - name: Run Docker Compose
         run: |
-          docker-compose up --build -d database authentication transaction setup engine jmeter
+          docker-compose up -f tests/docker-compose.yml --build -d
 
       - name: Wait for results.jtl
         run: |
