@@ -38,7 +38,7 @@ type PlaceStockOrderRequest struct {
 	StockID   string   `json:"stock_id" binding:"required"`
 	IsBuy     *bool    `json:"is_buy" binding:"required"`
 	OrderType string   `json:"order_type" binding:"required"`
-	Quantity  float64      `json:"quantity" binding:"required"`
+	Quantity  float64  `json:"quantity" binding:"required"`
 	Price     *float64 `json:"price"`
 }
 
@@ -66,7 +66,7 @@ type Order struct {
 	ParentTxID *string  `json:"parent_stock_tx_id"`
 	IsBuy      bool     `json:"is_buy"`
 	OrderType  string   `json:"order_type"`
-	Quantity   float64      `json:"quantity"`
+	Quantity   float64  `json:"quantity"`
 	Price      *float64 `json:"price"`
 	TimeStamp  string   `json:"time_stamp"`
 	Status     string   `json:"status"`
@@ -263,8 +263,8 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		}
 
 		processOrder(book, order)
-
 		printq(book)
+		LogBuyOrder(order)
 	} else {
 		if err := verifyStockBeforeTransaction(userName, order); err != nil {
 			handleError(c, http.StatusBadRequest, "Failed to verify stocks", err)
@@ -282,11 +282,9 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		}
 
 		processOrder(book, order)
-
 		printq(book)
+		LogSellOrder(order)
 	}
-
-	
 
 	response := PlaceStockOrderResponse{
 		Success: true,
@@ -470,7 +468,7 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 			executeBuyTrade(book, highestBuyOrder, lowestSellOrder)
 			lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
 			
-			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 		} else {
 			// If the lowest sell order price is greater than the buy order price, put it back in the sell queue
@@ -506,7 +504,7 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 		executeBuyTrade(book, &order, lowestSellOrder)
 		lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
 
-		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 			order.StockTxID, order.Quantity, *lowestSellOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 	}
 }
@@ -594,7 +592,7 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 			executeSellTrade(book, highestBuyOrder, lowestSellOrder)
 			highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
 
-			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 		} else {
 			fmt.Println("No match found, putting back in the buy queue")
@@ -634,7 +632,7 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 		executeSellTrade(book, highestBuyOrder, &order)
 		highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
 
-		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 			highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, order.StockTxID, order.Quantity, *highestBuyOrder.Price)
 	}
 }
