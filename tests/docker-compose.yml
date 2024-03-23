@@ -4,7 +4,7 @@ services:
   setup:
     container_name: setup
     build:
-      context: ./setup
+      context: ../setup
     ports:
       - "8080:8080"
     environment:
@@ -16,7 +16,7 @@ services:
   authentication:
     container_name: authentication
     build:
-      context: ./authentication
+      context: ../authentication
     ports:
       - "8888:8888"
     environment:
@@ -28,7 +28,7 @@ services:
   transaction:
     container_name: transaction
     build:
-      context: ./transaction
+      context: ../transaction
     ports:
       - "5433:5433"
     environment:
@@ -40,7 +40,7 @@ services:
   engine:
     container_name: engine
     build:
-      context: ./engine
+      context: ../engine
     ports:
       - "8585:8585"
     environment:
@@ -69,14 +69,14 @@ services:
     container_name: jmeter
     platform: linux/amd64
     volumes:
-      - ./tests:/tests
+      - .:/tests
     depends_on:
       - setup
       - authentication
       - transaction
       - engine
       - database
-    command: -n -t /tests/Seng468_Report1_No_Delay.jmx -l /tests/results.jtl
+    command: -n -t Seng468_Report1_No_Delay.jmx -l results.jtl
     network_mode: host
 
 networks:
