@@ -46,8 +46,6 @@ services:
     environment:
       PORT: 8585
       GIN_MODE: release
-    depends_on:
-      - mongo
     networks:
       - nt-network
 

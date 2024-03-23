@@ -24,7 +24,7 @@ jobs:
 
       - name: Run Docker Compose
         run: |
-          docker-compose up -f tests/docker-compose.yml --build -d
+          docker-compose -f tests/docker-compose.yml up -d
 
       - name: Wait for results.jtl
         run: |
