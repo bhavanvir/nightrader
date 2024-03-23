@@ -24,11 +24,11 @@ jobs:
 
       - name: Run Docker Compose
         run: |
-          docker-compose -f tests/docker-compose.yml up -d
+          docker-compose -f ./tests/docker-compose.yml up --build -d
 
       - name: Wait for results.jtl
         run: |
-          while [ ! -s results.jtl ]; do sleep 5; done
+          while [ ! -s ./tests/results.jtl ]; do sleep 5; done
 
       - name: Parse and check results.jtl
         run: |
@@ -53,7 +53,7 @@ jobs:
               echo "Failed test for label: $label ✖️"
               fail=true
             fi
-          done < results.jtl
+          done < ./tests/results.jtl
 
           if [ "$fail" = "true" ]; then
             exit 1
@@ -63,4 +63,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jmeter-results
-          path: "results.jtl"
+          path: "./tests/results.jtl"
