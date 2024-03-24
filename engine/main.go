@@ -152,7 +152,7 @@ func (pq *PriorityQueue) Printn() {
 	copy(temp.Order, pq.Order)
 	for temp.Len() > 0 {
 		item := heap.Pop(&temp).(*Order)
-		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
+		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %.2f, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
 	}
 }
 
@@ -475,7 +475,7 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 				lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
 			}
 			
-			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 		} else {
 			// If the lowest sell order price is greater than the buy order price, put it back in the sell queue
@@ -518,7 +518,7 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 			lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
 		}
 
-		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 			order.StockTxID, order.Quantity, *lowestSellOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 	}
 }
@@ -608,7 +608,7 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 				highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
 			}
 
-			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 		} else {
 			fmt.Println("No match found, putting back in the buy queue")
@@ -655,7 +655,7 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 			highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
 		}
 
-		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%d, Price=$%.2f | Sell Order: ID=%s, Quantity=%d, Price=$%.2f\n",
+		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 			highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, order.StockTxID, order.Quantity, *highestBuyOrder.Price)
 	}
 }
