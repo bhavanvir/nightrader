@@ -719,11 +719,11 @@ func partialFulfillSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice 
 	fmt.Println("Completed wallet tx: ", completedOrder.WalletTxID)
 
 	// setWalletTransaction should always be before the setStockTransaction
-	if err := setWalletTransaction(sellOrder.UserName, completedOrder.WalletTxID, completedOrder.TimeStamp, sellOrder.Price, tradeQuantity, true); err != nil {
+	if err := setWalletTransaction(sellOrder.UserName, completedOrder.WalletTxID, completedOrder.TimeStamp, sellPrice, tradeQuantity, true); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
 
-	if err := setStockTransaction(sellOrder.UserName, completedOrder, completedOrder.Price, tradeQuantity); err != nil {
+	if err := setStockTransaction(sellOrder.UserName, completedOrder, sellPrice, tradeQuantity); err != nil {
 		fmt.Println("Error setting stock transaction: ", err)
 	}
 }
@@ -779,7 +779,7 @@ func partialFulfillBuyOrder(order *Order, tradeQuantity float64, buyPrice *float
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
 
-	if err := setStockTransaction(order.UserName, completedOrder, completedOrder.Price, tradeQuantity); err != nil {
+	if err := setStockTransaction(order.UserName, completedOrder, sellPrice, tradeQuantity); err != nil {
 		fmt.Println("Error setting stock transaction: ", err)
 	}
 
