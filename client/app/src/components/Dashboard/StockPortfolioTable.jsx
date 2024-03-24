@@ -39,17 +39,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
         <thead>
           <tr className="">
             <th
-              className="max-w-10 text-lg"
-              onClick={() => handleSort("stock_id")}
-            >
-              <div className="flex items-center gap-2">
-                ID{" "}
-                {sortColumn === "stock_id" &&
-                  (sortOrder === "asc" ? <UpArrowIcon /> : <DownArrowIcon />)}
-              </div>
-            </th>
-            <th
-              className="max-w-10 text-lg"
+              className="w-1/2 text-lg"
               onClick={() => handleSort("stock_name")}
             >
               <div className="flex items-center gap-2">
@@ -59,7 +49,7 @@ export default function StockPortfolioTable({ stockPortfolio }) {
               </div>
             </th>
             <th
-              className="max-w-10 text-lg"
+              className="w-1/2 text-lg"
               onClick={() => handleSort("quantity_owned")}
             >
               <div className="flex items-center gap-2">
@@ -73,7 +63,6 @@ export default function StockPortfolioTable({ stockPortfolio }) {
         <tbody>
           {sortedPortfolio.map((stock, index) => (
             <tr key={index}>
-              <td>{stock.stock_id}</td>
               <td>{stock.stock_name}</td>
               <td>{stock.quantity_owned}</td>
             </tr>

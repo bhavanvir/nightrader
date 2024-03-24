@@ -1,9 +1,13 @@
 import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+
 import LogoIcon from "../../assets/icons/LogoIcon";
 import CryptoJS from "crypto-js";
 import AuthApi from "../../AuthApi";
 
 export default function Header({ user, showAlert }) {
+  const navigate = useNavigate();
+
   // Use the useContext hook inside the functional component
   const Auth = useContext(AuthApi);
 
@@ -11,6 +15,7 @@ export default function Header({ user, showAlert }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     Auth.setAuth(false);
+    navigate("/signin");
   };
 
   // Function to generate the Gravatar URL

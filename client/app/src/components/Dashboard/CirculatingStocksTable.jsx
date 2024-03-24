@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import UpArrowIcon from "../../assets/icons/UpArrowIcon";
 import DownArrowIcon from "../../assets/icons/DownArrowIcon";
@@ -7,6 +8,13 @@ import DownArrowIcon from "../../assets/icons/DownArrowIcon";
 export default function CirculatingStocksTable({ circulatingStocks }) {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
+  const navigate = useNavigate();
+
+  let canadianDollar = new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+    minimumFractionDigits: 0,
+  });
 
   if (!circulatingStocks) {
     circulatingStocks = [];
@@ -31,6 +39,10 @@ export default function CirculatingStocksTable({ circulatingStocks }) {
       setSortColumn(column);
       setSortOrder("asc");
     }
+  };
+
+  const handleStockClick = (stock) => {
+    navigate(`/stock/${stock.stock_id}`, { state: { stock } });
   };
 
   return (
@@ -73,9 +85,15 @@ export default function CirculatingStocksTable({ circulatingStocks }) {
         <tbody>
           {sortedPortfolio.map((stock, index) => (
             <tr key={index}>
-              <td>{stock.stock_id}</td>
+              <td
+                onClick={() => handleStockClick(stock)}
+                // Add a CSS class and style for changing cursor on hover
+                style={{ cursor: "pointer" }}
+              >
+                {stock.stock_id}
+              </td>
               <td>{stock.stock_name}</td>
-              <td>${stock.current_price}</td>
+              <td>{canadianDollar.format(stock.current_price)}</td>
             </tr>
           ))}
         </tbody>
