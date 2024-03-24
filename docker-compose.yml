@@ -102,6 +102,8 @@ services:
       - nt-network
 
   jmeter:
+    profiles:
+      - ci
     image: justb4/jmeter:latest
     container_name: jmeter
     platform: linux/amd64

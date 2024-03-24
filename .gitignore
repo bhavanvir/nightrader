@@ -2,3 +2,4 @@
 **/test.http
 *.log
 *.jtl
+**/stockIds.csv

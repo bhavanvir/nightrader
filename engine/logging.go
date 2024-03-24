@@ -40,12 +40,29 @@ func init() {
 }
 
 // LogBuyOrder logs the details of a buy order
-func LogOrder(order Order) {
-	logMessage := fmt.Sprintf("Buy Order: StockTxID=%s, StockID=%s, WalletTxID=%s, Quantity=%d, Price=$%.2f, TimeStamp=%s",
-		order.StockTxID, order.StockID, order.WalletTxID, order.Quantity, *order.Price, order.TimeStamp)
-	_, err := collection.InsertOne(context.TODO(), bson.M{"log": logMessage})
-	if err != nil {
-		logger.Printf("Failed to save buy order to MongoDB: %v", err)
-		// Handle error as required
-	}
+func LogBuyOrder(order Order) {
+    var priceStr string
+    if order.Price != nil {
+        priceStr = fmt.Sprintf("$%.2f", *order.Price)
+    } else {
+        priceStr = "null"
+    }
+    logMessage := fmt.Sprintf("Buy Order: StockTxID=%s, StockID=%s, WalletTxID=%s, Quantity=%.2f, Price=%s, TimeStamp=%s, Username=%s",
+        order.StockTxID, order.StockID, order.WalletTxID, order.Quantity, priceStr, order.TimeStamp, order.UserName)
+    _, err := collection.InsertOne(context.TODO(), bson.M{"log": logMessage})
+    if err != nil {
+        logger.Printf("Failed to save buy order to MongoDB: %v", err)
+        // Handle error as required
+    }
+}
+
+
+func LogSellOrder(order Order) {
+    logMessage := fmt.Sprintf("Sell Order: StockTxID=%s, StockID=%s, WalletTxID=%s, Quantity=%.2f, Price=$%.2f, TimeStamp=%s, Username=%s",
+        order.StockTxID, order.StockID, order.WalletTxID, order.Quantity, order.Price, order.TimeStamp, order.UserName)
+    _, err := collection.InsertOne(context.TODO(), bson.M{"log": logMessage})
+    if err != nil {
+        logger.Printf("Failed to save buy order to MongoDB: %v", err)
+        // Handle error as required
+    }
 }
