@@ -91,7 +91,7 @@ const Stock = ({ stock, user }) => {
         <div className="container mx-auto w-[75rem]">
           <div className="grid grid-cols-2 gap-6">
             <BuyTrigger Stock={Stock} showAlert={showAlertMessage} />
-            <SellTrigger Stock={Stock} />
+            <SellTrigger Stock={Stock} showAlert={showAlertMessage} />
           </div>
         </div>
       </div>

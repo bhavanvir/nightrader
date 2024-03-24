@@ -1,9 +1,11 @@
+/* eslint eqeqeq: 0 */
+
 import React, { useState } from "react";
 import axios from "axios";
 
 import PayCard from "../../assets/icons/PayCard";
 
-export default function BuyMarket({ Stock, showAlert }) {
+export default function BuyTrigger({ Stock, showAlert }) {
   const [trigger, setTrigger] = useState("");
   const [quantity, setQuantity] = useState(0);
   const [price, setPrice] = useState(0);

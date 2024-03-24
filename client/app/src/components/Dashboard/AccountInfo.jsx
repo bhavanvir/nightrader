@@ -61,9 +61,9 @@ export default function AccountInfo({ user, showAlert }) {
       });
   };
 
-  // eslint-disable-next-line
   useEffect(() => {
     fetchWalletBalance();
+    // eslint-disable-next-line
   }, []);
 
   return (

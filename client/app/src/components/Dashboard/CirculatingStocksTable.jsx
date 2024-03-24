@@ -10,6 +10,12 @@ export default function CirculatingStocksTable({ circulatingStocks }) {
   const [sortOrder, setSortOrder] = useState("asc");
   const navigate = useNavigate();
 
+  let canadianDollar = new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+    minimumFractionDigits: 0,
+  });
+
   if (!circulatingStocks) {
     circulatingStocks = [];
   }
@@ -79,9 +85,15 @@ export default function CirculatingStocksTable({ circulatingStocks }) {
         <tbody>
           {sortedPortfolio.map((stock, index) => (
             <tr key={index}>
-              <td onClick={() => handleStockClick(stock)}>{stock.stock_id}</td>
+              <td
+                onClick={() => handleStockClick(stock)}
+                // Add a CSS class and style for changing cursor on hover
+                style={{ cursor: "pointer" }}
+              >
+                {stock.stock_id}
+              </td>
               <td>{stock.stock_name}</td>
-              <td>${stock.current_price}</td>
+              <td>{canadianDollar.format(stock.current_price)}</td>
             </tr>
           ))}
         </tbody>
