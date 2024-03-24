@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -152,7 +152,7 @@ func (pq *PriorityQueue) Printn() {
 	copy(temp.Order, pq.Order)
 	for temp.Len() > 0 {
 		item := heap.Pop(&temp).(*Order)
-		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
+		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %.2f, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
 	}
 }
 
