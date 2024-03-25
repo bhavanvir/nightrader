@@ -38,7 +38,7 @@ type PlaceStockOrderRequest struct {
 	StockID   string   `json:"stock_id" binding:"required"`
 	IsBuy     *bool    `json:"is_buy" binding:"required"`
 	OrderType string   `json:"order_type" binding:"required"`
-	Quantity  float64  `json:"quantity" binding:"required"`
+	Quantity  float64      `json:"quantity" binding:"required"`
 	Price     *float64 `json:"price"`
 }
 
@@ -152,7 +152,7 @@ func (pq *PriorityQueue) Printn() {
 	copy(temp.Order, pq.Order)
 	for temp.Len() > 0 {
 		item := heap.Pop(&temp).(*Order)
-		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %d, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
+		fmt.Printf("Stock Tx ID: %s, StockID: %s, WalletTxID: %s, Price: %.2f, Quantity: %.2f, Status: %s, TimeStamp: %s\n", item.StockTxID, item.StockID, item.WalletTxID, *item.Price, item.Quantity, item.Status, item.TimeStamp)
 	}
 }
 
@@ -234,8 +234,8 @@ func HandlePlaceStockOrder(c *gin.Context) {
 		return
 	}
 
-	tradingPrice := getStockTradingPrice(book, order);
-	amount := (*tradingPrice) * float64(order.Quantity)
+	orderPrice := getStockOrderPrice(book, order);
+	amount := (*orderPrice) * float64(order.Quantity)
 
 	// to be safe, lock here
 	book.mu.Lock()
@@ -252,19 +252,19 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			return
 		}
 
-		if err := setWalletTransaction(userName, book, order.WalletTxID, order.TimeStamp, tradingPrice, order.Quantity, false); err != nil {
+		if err := setWalletTransaction(userName, order.WalletTxID, order.TimeStamp, orderPrice, order.Quantity, false); err != nil {
 			handleError(c, http.StatusInternalServerError, "Buy Order setWalletTx Error: "+err.Error(), err)
 			return
 		}
 
-		if err := setStockTransaction(userName, book, order, order.Quantity); err != nil {
+		if err := setStockTransaction(userName, order, orderPrice, order.Quantity); err != nil {
 			handleError(c, http.StatusInternalServerError, "Buy Order setStockTx Error: "+err.Error(), err)
 			return
 		}
 
 		processOrder(book, order)
 		printq(book)
-		LogBuyOrder(order)
+		// LogBuyOrder(order)
 	} else {
 		if err := verifyStockBeforeTransaction(userName, order); err != nil {
 			handleError(c, http.StatusBadRequest, "Failed to verify stocks", err)
@@ -276,14 +276,14 @@ func HandlePlaceStockOrder(c *gin.Context) {
 			return
 		}
 
-		if err := setStockTransaction(userName, book, order, order.Quantity); err != nil {
+		if err := setStockTransaction(userName, order, orderPrice, order.Quantity); err != nil {
 			handleError(c, http.StatusInternalServerError, "Sell Order setStockTx Error: "+err.Error(), err)
 			return
 		}
 
 		processOrder(book, order)
 		printq(book)
-		LogSellOrder(order)
+		// LogSellOrder(order)
 	}
 
 	response := PlaceStockOrderResponse{
@@ -464,9 +464,16 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 
 		// If the lowest sell order price is less than or equal to the buy order price, execute the trade
 		if *lowestSellOrder.Price <= *highestBuyOrder.Price {
+			buyPrice := getStockOrderPrice(book, *highestBuyOrder);
+			sellPrice := getStockOrderPrice(book, *lowestSellOrder);
+
 			// execute the trade
-			executeBuyTrade(book, highestBuyOrder, lowestSellOrder)
-			lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
+			executeBuyTrade(highestBuyOrder, lowestSellOrder, buyPrice, sellPrice)
+
+			// If the sell order quantity is empty, pop it from the queue
+			if lowestSellOrder.Quantity == 0 {
+				lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
+			}
 			
 			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
@@ -500,44 +507,47 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 	for order.Quantity > 0 && book.SellOrders.Len() > 0 {
 		lowestSellOrder := book.SellOrders.Order[0]
 
+		buyPrice := getStockOrderPrice(book, order);
+		sellPrice := getStockOrderPrice(book, *lowestSellOrder);
+
 		// execute the trade
-		executeBuyTrade(book, &order, lowestSellOrder)
-		lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
+		executeBuyTrade(&order, lowestSellOrder, buyPrice, sellPrice)
+		
+		// If the buy order quantity is empty, pop it from the queue
+		if lowestSellOrder.Quantity == 0 {
+			lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
+		}
 
 		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 			order.StockTxID, order.Quantity, *lowestSellOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 	}
 }
 
-func executeBuyTrade(book *OrderBook, buyOrder *Order, sellOrder *Order) {
-	buyPrice := getStockTradingPrice(book, *buyOrder);
-	sellPrice := getStockTradingPrice(book, *sellOrder);
-
+func executeBuyTrade(buyOrder *Order, sellOrder *Order, buyPrice *float64, sellPrice *float64) {
 	tradeQuantity := min(buyOrder.Quantity, sellOrder.Quantity)
 
 	if buyOrder.Quantity > sellOrder.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
 		buyOrder.Quantity -= tradeQuantity
 		sellOrder.Quantity = 0
-		partialFulfillBuyOrder(book, buyOrder, tradeQuantity, buyPrice, sellPrice)
-		completeSellOrder(book, sellOrder, tradeQuantity, sellPrice)
+		partialFulfillBuyOrder(buyOrder, tradeQuantity, buyPrice, sellPrice)
+		completeSellOrder(sellOrder, tradeQuantity, sellPrice)
 	} else if buyOrder.Quantity < sellOrder.Quantity {
 		// execute partial trade for sell order and complete trade for buy order
 		sellOrder.Quantity -= tradeQuantity
 		buyOrder.Quantity = 0
-		heap.Push(&book.SellOrders, sellOrder)
-		completeBuyOrder(book, buyOrder, tradeQuantity, buyPrice, sellPrice)
-		partialFulfillSellOrder(book, sellOrder, tradeQuantity, sellPrice)
+		completeBuyOrder(buyOrder, tradeQuantity, buyPrice, sellPrice)
+		partialFulfillSellOrder(sellOrder, tradeQuantity, sellPrice)
 	} else {
 		// execute complete trade for both buy and sell orders
 		buyOrder.Quantity = 0
 		sellOrder.Quantity = 0
-		completeBuyOrder(book, buyOrder, tradeQuantity, buyPrice, sellPrice)
-		completeSellOrder(book, sellOrder, tradeQuantity, sellPrice)
+		completeBuyOrder(buyOrder, tradeQuantity, buyPrice, sellPrice)
+		completeSellOrder(sellOrder, tradeQuantity, sellPrice)
 	}
 }
 
-func completeBuyOrder(book *OrderBook, buyOrder *Order, tradeQuantity float64, buyPrice *float64, sellPrice *float64) {
+func completeBuyOrder(buyOrder *Order, tradeQuantity float64, buyPrice *float64, sellPrice *float64) {
 	fmt.Println("Buy User: ", buyOrder.UserName)
 	fmt.Println("Buy Wallet_tx: === ", buyOrder.WalletTxID)
 
@@ -573,7 +583,7 @@ func completeBuyOrder(book *OrderBook, buyOrder *Order, tradeQuantity float64, b
 func matchLimitSellOrder(book *OrderBook, order Order) {
 	// initialize the market price if there isn't one yet
 	if book.SellOrders.Len() == 0 {
-		lastSoldStockPrice := getStockTradingPrice(book, order)
+		lastSoldStockPrice := getStockOrderPrice(book, order)
 		if err := updateMarketStockPrice(order.StockID, lastSoldStockPrice); err != nil {
 			fmt.Println("Failed to update Market Stock Price after Limit Sell: ", err)
 		}
@@ -588,9 +598,15 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 
 		// If the lowest sell order price is less than or equal to the buy order price, execute the trade
 		if *lowestSellOrder.Price <= *highestBuyOrder.Price {
+			buyPrice := getStockOrderPrice(book, *highestBuyOrder);
+			sellPrice := getStockOrderPrice(book, *lowestSellOrder);
+
 			// execute the trade
-			executeSellTrade(book, highestBuyOrder, lowestSellOrder)
-			highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
+			executeSellTrade(highestBuyOrder, lowestSellOrder, buyPrice, sellPrice)
+			
+			if highestBuyOrder.Quantity == 0 {
+				highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
+			}
 
 			fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
@@ -628,44 +644,47 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 	for order.Quantity > 0 && book.BuyOrders.Len() > 0 {
 		highestBuyOrder := book.BuyOrders.Order[0]
 
+		buyPrice := getStockOrderPrice(book, *highestBuyOrder);
+		sellPrice := getStockOrderPrice(book, order);
+
 		// execute the trade
-		executeSellTrade(book, highestBuyOrder, &order)
-		highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
+		executeSellTrade(highestBuyOrder, &order, buyPrice, sellPrice)
+
+		// if highestBuyOrder.Quantity <= order.Quantity {
+		if highestBuyOrder.Quantity == 0 {
+			highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
+		}
 
 		fmt.Printf("\nTrade Executed - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 			highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, order.StockTxID, order.Quantity, *highestBuyOrder.Price)
 	}
 }
 
-func executeSellTrade(book *OrderBook, buyOrder *Order, sellOrder *Order) {
-	buyPrice := getStockTradingPrice(book, *buyOrder);
-	sellPrice := getStockTradingPrice(book, *sellOrder);
-
+func executeSellTrade(buyOrder *Order, sellOrder *Order, buyPrice *float64, sellPrice *float64) {
 	tradeQuantity := min(buyOrder.Quantity, sellOrder.Quantity)
 
 	if buyOrder.Quantity > sellOrder.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
 		buyOrder.Quantity -= tradeQuantity
 		sellOrder.Quantity = 0
-		heap.Push(&book.BuyOrders, buyOrder)
-		completeSellOrder(book, sellOrder, tradeQuantity, sellPrice)
-		partialFulfillBuyOrder(book, buyOrder, tradeQuantity, buyPrice, sellPrice)
+		completeSellOrder(sellOrder, tradeQuantity, sellPrice)
+		partialFulfillBuyOrder(buyOrder, tradeQuantity, buyPrice, sellPrice)
 	} else if buyOrder.Quantity < sellOrder.Quantity {
 		// execute partial trade for sell order and complete trade for buy order
 		sellOrder.Quantity -= tradeQuantity
 		buyOrder.Quantity = 0
-		completeBuyOrder(book, buyOrder, tradeQuantity, buyPrice, sellPrice)
-		partialFulfillSellOrder(book, sellOrder, tradeQuantity, sellPrice)
+		completeBuyOrder(buyOrder, tradeQuantity, buyPrice, sellPrice)
+		partialFulfillSellOrder(sellOrder, tradeQuantity, sellPrice)
 	} else {
 		// execute complete trade for both buy and sell orders
 		buyOrder.Quantity = 0
 		sellOrder.Quantity = 0
-		completeBuyOrder(book, buyOrder, tradeQuantity, buyPrice, sellPrice)
-		completeSellOrder(book, sellOrder, tradeQuantity, sellPrice)
+		completeBuyOrder(buyOrder, tradeQuantity, buyPrice, sellPrice)
+		completeSellOrder(sellOrder, tradeQuantity, sellPrice)
 	}
 }
 
-func partialFulfillSellOrder(book *OrderBook, sellOrder *Order, tradeQuantity float64, sellPrice *float64) {
+func partialFulfillSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice *float64) {
 	fmt.Println("Sell User: ", sellOrder.UserName)
 
 	if err := updateMarketStockPrice(sellOrder.StockID, sellPrice); err != nil {
@@ -698,16 +717,16 @@ func partialFulfillSellOrder(book *OrderBook, sellOrder *Order, tradeQuantity fl
 	fmt.Println("Completed wallet tx: ", completedOrder.WalletTxID)
 
 	// setWalletTransaction should always be before the setStockTransaction
-	if err := setWalletTransaction(sellOrder.UserName, book, completedOrder.WalletTxID, completedOrder.TimeStamp, sellOrder.Price, tradeQuantity, true); err != nil {
+	if err := setWalletTransaction(sellOrder.UserName, completedOrder.WalletTxID, completedOrder.TimeStamp, sellPrice, tradeQuantity, true); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
 
-	if err := setStockTransaction(sellOrder.UserName, book, completedOrder, tradeQuantity); err != nil {
+	if err := setStockTransaction(sellOrder.UserName, completedOrder, sellPrice, tradeQuantity); err != nil {
 		fmt.Println("Error setting stock transaction: ", err)
 	}
 }
 
-func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity float64, buyPrice *float64, sellPrice *float64) {
+func partialFulfillBuyOrder(order *Order, tradeQuantity float64, buyPrice *float64, sellPrice *float64) {
 	fmt.Println("Buy User: ", order.UserName)
 	fmt.Println("Buy Wallet_tx: === ", order.WalletTxID)
 
@@ -754,17 +773,17 @@ func partialFulfillBuyOrder(book *OrderBook, order *Order, tradeQuantity float64
 	}
 
 	// setWalletTransaction should always be before the setStockTransaction
-	if err := setWalletTransaction(order.UserName, book, completedOrder.WalletTxID, completedOrder.TimeStamp, sellPrice, tradeQuantity, false); err != nil {
+	if err := setWalletTransaction(order.UserName, completedOrder.WalletTxID, completedOrder.TimeStamp, sellPrice, tradeQuantity, false); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
 
-	if err := setStockTransaction(order.UserName, book, completedOrder, tradeQuantity); err != nil {
+	if err := setStockTransaction(order.UserName, completedOrder, sellPrice, tradeQuantity); err != nil {
 		fmt.Println("Error setting stock transaction: ", err)
 	}
 
 }
 
-func completeSellOrder(book *OrderBook, sellOrder *Order, tradeQuantity float64, sellPrice *float64) {
+func completeSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice *float64) {
 	fmt.Println("Sell User: ", sellOrder.UserName)
 	fmt.Println("Sell Wallet_tx: === ", sellOrder.WalletTxID)
 
@@ -781,7 +800,7 @@ func completeSellOrder(book *OrderBook, sellOrder *Order, tradeQuantity float64,
 		fmt.Println("Error setting status: ", err)
 	}
 
-	if err := setWalletTransaction(sellOrder.UserName, book, sellOrder.WalletTxID, sellOrder.TimeStamp, sellPrice, tradeQuantity, true); err != nil {
+	if err := setWalletTransaction(sellOrder.UserName, sellOrder.WalletTxID, sellOrder.TimeStamp, sellPrice, tradeQuantity, true); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
 	}
 }
@@ -892,7 +911,7 @@ func updateStockPortfolio(userName string, order Order, quantity float64, isAdde
 }
 
 // Store completed wallet transactions based on order matched
-func setWalletTransaction(userName string, book *OrderBook, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {
+func setWalletTransaction(userName string, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {
 	fmt.Println("Setting wallet transaction")
 	// Connect to database
 	db, err := openConnection()
@@ -954,7 +973,7 @@ func getWalletTransactionsAmount(userName string, walletTxID string) (float64, e
 }
 
 // Store transaction based on the order user created
-func setStockTransaction(userName string, book *OrderBook, tx Order, quantity float64) error {
+func setStockTransaction(userName string, tx Order, price *float64, quantity float64) error {
 	fmt.Println("Setting stock transaction")
 	// Connect to database
 	db, err := openConnection()
@@ -962,8 +981,6 @@ func setStockTransaction(userName string, book *OrderBook, tx Order, quantity fl
 		return fmt.Errorf("Failed to insert stock transaction: %w", err)
 	}
 	defer db.Close()
-
-	newPrice := getStockTradingPrice(book, tx)
 
 	// Check if a wallet transaction has been made for this order yet
 	rows, err := db.Query(`
@@ -985,7 +1002,7 @@ func setStockTransaction(userName string, book *OrderBook, tx Order, quantity fl
 	// Insert transaction to stock transactions
 	_, err = db.Exec(`
 		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
-	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, *newPrice, quantity, tx.TimeStamp)
+	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, *price, quantity, tx.TimeStamp)
 	if err != nil {
 		return fmt.Errorf("Failed to commit transaction: %w", err)
 	}
@@ -1095,10 +1112,10 @@ func updateMarketStockPrice(stockID string, price *float64) error {
 	return nil
 }
 
-// get stock trading price for Limit or Market order
+// get stock Order price for Limit or Market order
 // if order is MARKET, get the top of the queue price
 // if order is LIMIT, get the price of the order
-func getStockTradingPrice(book *OrderBook, order Order) *float64 {
+func getStockOrderPrice(book *OrderBook, order Order) *float64 {
 	if order.OrderType == "MARKET" {
 		if book.SellOrders.Len() > 0 && order.IsBuy {
 			return book.SellOrders.Order[0].Price
@@ -1127,7 +1144,7 @@ func verifyWalletBeforeTransaction(userName string, book *OrderBook, order Order
 		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
 	}
 
-	price := getStockTradingPrice(book, order)
+	price := getStockOrderPrice(book, order)
 
 	// get user wallet
 	var wallet float64
@@ -1160,7 +1177,7 @@ func verifyQueueBeforeMarketTransaction(book *OrderBook, order Order) error {
 	if order.OrderType == "MARKET" && order.IsBuy {
 		var totalSellQuantity float64
 		for i := 0; i < book.SellOrders.Len(); i++ {
-			if *book.SellOrders.Order[i].Price == *(getStockTradingPrice(book, order)) {
+			if *book.SellOrders.Order[i].Price == *(getStockOrderPrice(book, order)) {
 				totalSellQuantity += book.SellOrders.Order[i].Quantity
 			}
 		}
@@ -1175,8 +1192,8 @@ func verifyQueueBeforeMarketTransaction(book *OrderBook, order Order) error {
 		var totalBuyQuantity float64
 		for i := 0; i < book.BuyOrders.Len(); i++ {
 			fmt.Println("Buy Order Price: ", *book.BuyOrders.Order[i].Price)
-			fmt.Println("Order Price: ", *getStockTradingPrice(book, order))
-			if *book.BuyOrders.Order[i].Price == *(getStockTradingPrice(book, order)) {
+			fmt.Println("Order Price: ", *getStockOrderPrice(book, order))
+			if *book.BuyOrders.Order[i].Price == *(getStockOrderPrice(book, order)) {
 				totalBuyQuantity += book.BuyOrders.Order[i].Quantity
 			}
 		}
