@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import Header from "../Dashboard/Header";
 import BuyTrigger from "./BuyTrigger";
 import SellTrigger from "./SellTrigger";
+import StockTransactions from "./StockTransactions";
 
 const Stock = ({ stock, user }) => {
   let canadianDollar = new Intl.NumberFormat("en-CA", {
@@ -93,6 +94,11 @@ const Stock = ({ stock, user }) => {
             <BuyTrigger Stock={Stock} showAlert={showAlertMessage} />
             <SellTrigger Stock={Stock} showAlert={showAlertMessage} />
           </div>
+          <StockTransactions
+            user={user}
+            Stock={Stock}
+            showAlert={showAlertMessage}
+          />
         </div>
       </div>
     </div>

@@ -33,7 +33,6 @@ export default function SellTrigger({ Stock, showAlert }) {
           "success",
           `Successfully set a ${trigger.toLowerCase()} sell order!`
         );
-        console.log(response.data.data);
       })
       .catch(function (error) {
         showAlert(
