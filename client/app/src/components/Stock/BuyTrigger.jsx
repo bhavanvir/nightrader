@@ -33,7 +33,6 @@ export default function BuyTrigger({ Stock, showAlert }) {
           "success",
           `Successfully set a ${trigger.toLowerCase()} buy order!`
         );
-        console.log(response.data.data);
       })
       .catch(function (error) {
         showAlert(

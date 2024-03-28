@@ -39,8 +39,6 @@ export default function CirculatingStocks({ user, showAlert }) {
     setStockHistory(newStockHistory);
   };
 
-  console.log(stockHistory);
-
   useEffect(() => {
     fetchCirculatingStocks(); // eslint-disable-next-line
   }, []);
