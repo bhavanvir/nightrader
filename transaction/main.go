@@ -11,6 +11,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var db *sql.DB
+
 const (
 	// host = "database"
 	host = "localhost" // for local testing
@@ -104,12 +106,6 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
 	c.IndentedJSON(statusCode, errorResponse)
 }
 
-// Helper function to establish a database connection
-func openConnection() (*sql.DB, error) {
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	return sql.Open("postgres", postgresqlDbInfo)
-}
-
 func addMoneyToWallet(c *gin.Context) {
 	userName, _ := c.Get("user_name")
 
@@ -129,14 +125,7 @@ func addMoneyToWallet(c *gin.Context) {
 		return
 	}
 
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
-	_, err = db.Exec("UPDATE users SET wallet = wallet + $1 WHERE user_name = $2", addMoney.Amount, userName)
+	_, err := db.Exec("UPDATE users SET wallet = wallet + $1 WHERE user_name = $2", addMoney.Amount, userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to update wallet", err)
 		return
@@ -157,15 +146,8 @@ func getWalletBalance(c *gin.Context) {
 		return
 	}
 
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
 	var balance float64
-	err = db.QueryRow("SELECT wallet FROM users WHERE user_name = $1", userName).Scan(&balance)
+	err := db.QueryRow("SELECT wallet FROM users WHERE user_name = $1", userName).Scan(&balance)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query wallet balance", err)
 		return
@@ -187,13 +169,6 @@ func getStockPrices(c *gin.Context) {
 		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
 		return
 	}
-
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
 
 	rows, err := db.Query(`
 		SELECT stock_id, stock_name, current_price
@@ -229,13 +204,6 @@ func getStockPortfolio(c *gin.Context) {
 		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
 		return
 	}
-
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
 
 	// Retrieves the stock ID, stock name, and quantity owned for all stocks
 	// associated with a particular user. Performs a join operation between the 'user_stocks'
@@ -282,13 +250,6 @@ func getWalletTransactions(c *gin.Context) {
 		return
 	}
 
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
         SELECT wt.wallet_tx_id, st.stock_tx_id, wt.is_debit, wt.amount, wt.time_stamp
         FROM wallet_transactions wt
@@ -326,13 +287,6 @@ func getStockTransactions(c *gin.Context) {
 		return
 	}
 
-	db, err := openConnection()
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
 	rows, err := db.Query(`
         SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
         FROM stock_transactions
@@ -363,6 +317,18 @@ func getStockTransactions(c *gin.Context) {
 }
 
 func main() {
+    postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+    var err error
+    db, err = sql.Open("postgres", postgresqlDbInfo)
+    if err != nil {
+        fmt.Printf("Failed to connect to the database: %v\n", err)
+        return
+    }
+    defer db.Close()
+
+    db.SetMaxOpenConns(50) // Set maximum number of open connections
+    db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
