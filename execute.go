@@ -32,6 +32,7 @@ func executeAllCommands() {
 
     // 3. Delete a file if exists: tests\TestRun2\Config\stockIds.csv
     deleteFileIfExists("tests/TestRun2/Config/stockIds.csv")
+    deleteFileIfExists("tests/TestRun3/Config/stockIds.csv")
 
     // 4. Open new terminal: cd .\engine\. Then go run .\main.go
     executeCommandInNewTerminal("engine", "go", "run", "./main.go")
@@ -58,6 +59,7 @@ func executeCommands1to3() {
 
     // 3. Delete a file if exists: tests\TestRun2\Config\stockIds.csv
     deleteFileIfExists("tests/TestRun2/Config/stockIds.csv")
+    deleteFileIfExists("tests/TestRun3/Config/stockIds.csv")
 
     // Wait for 10 seconds
     time.Sleep(7 * time.Second)
