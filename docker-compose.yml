@@ -51,6 +51,20 @@ services:
     networks:
       - nt-network
 
+  execution:
+    container_name: execution
+    build:
+      context: ./execution
+    ports:
+      - "5555:5555"
+    environment:
+      PORT: 5555
+      GIN_MODE: release
+    depends_on:
+      - mongo
+    networks:
+      - nt-network
+
   frontend:
     container_name: frontend
     build:
@@ -96,6 +110,7 @@ services:
       - authentication
       - transaction
       - engine
+      - execution
       - database
       - mongo
     networks:

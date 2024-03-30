@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+	"bytes"
+	"encoding/json"
 	
 	"github.com/gin-contrib/cors"
 	"github.com/Poomon001/day-trading-package/identification"
@@ -83,6 +85,11 @@ type OrderBook struct {
 type PriorityQueue struct {
 	Order    []*Order
 	LessFunc func(i, j float64) bool
+}
+
+type TradePayload struct {
+	BuyOrder  *Order   `json:"buy_order"`
+	SellOrder *Order   `json:"sell_order"`
 }
 
 // handleError is a helper function to send error responses
@@ -463,11 +470,13 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 
 		// If the lowest sell order price is less than or equal to the buy order price, execute the trade
 		if *lowestSellOrder.Price <= *highestBuyOrder.Price {
-			buyPrice := getStockOrderPrice(book, *highestBuyOrder);
-			sellPrice := getStockOrderPrice(book, *lowestSellOrder);
 
 			// execute the trade
-			executeBuyTrade(highestBuyOrder, lowestSellOrder, buyPrice, sellPrice)
+			err := buyOrderExecution(highestBuyOrder, lowestSellOrder); if err != nil {
+				fmt.Println("Error executing sell order: ", err)
+			}
+
+			executeBuyTrade(highestBuyOrder, lowestSellOrder)
 
 			// If the sell order quantity is empty, pop it from the queue
 			if lowestSellOrder.Quantity == 0 {
@@ -506,11 +515,15 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 	for order.Quantity > 0 && book.SellOrders.Len() > 0 {
 		lowestSellOrder := book.SellOrders.Order[0]
 
-		buyPrice := getStockOrderPrice(book, order);
-		sellPrice := getStockOrderPrice(book, *lowestSellOrder);
-
+		// assign the market price to the market buy order
+		order.Price = getStockOrderPrice(book, order);
+		
 		// execute the trade
-		executeBuyTrade(&order, lowestSellOrder, buyPrice, sellPrice)
+		err := buyOrderExecution(&order, lowestSellOrder); if err != nil {
+			fmt.Println("Error executing sell order: ", err)
+		}
+
+		executeBuyTrade(&order, lowestSellOrder)
 		
 		// If the buy order quantity is empty, pop it from the queue
 		if lowestSellOrder.Quantity == 0 {
@@ -522,8 +535,10 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 	}
 }
 
-func executeBuyTrade(buyOrder *Order, sellOrder *Order, buyPrice *float64, sellPrice *float64) {
+func executeBuyTrade(buyOrder *Order, sellOrder *Order) {
 	tradeQuantity := min(buyOrder.Quantity, sellOrder.Quantity)
+	buyPrice := buyOrder.Price
+	sellPrice := sellOrder.Price
 
 	if buyOrder.Quantity > sellOrder.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
@@ -597,11 +612,13 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 
 		// If the lowest sell order price is less than or equal to the buy order price, execute the trade
 		if *lowestSellOrder.Price <= *highestBuyOrder.Price {
-			buyPrice := getStockOrderPrice(book, *highestBuyOrder);
-			sellPrice := getStockOrderPrice(book, *lowestSellOrder);
-
+			
 			// execute the trade
-			executeSellTrade(highestBuyOrder, lowestSellOrder, buyPrice, sellPrice)
+			err := sellOrderExecution(highestBuyOrder, lowestSellOrder); if err != nil {
+				fmt.Println("Error executing sell order: ", err)
+			}
+
+			executeSellTrade(highestBuyOrder, lowestSellOrder)
 			
 			if highestBuyOrder.Quantity == 0 {
 				highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
@@ -643,11 +660,15 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 	for order.Quantity > 0 && book.BuyOrders.Len() > 0 {
 		highestBuyOrder := book.BuyOrders.Order[0]
 
-		buyPrice := getStockOrderPrice(book, *highestBuyOrder);
-		sellPrice := getStockOrderPrice(book, order);
-
+		// assign the market price to the buy order
+		order.Price = getStockOrderPrice(book, order);
+		
 		// execute the trade
-		executeSellTrade(highestBuyOrder, &order, buyPrice, sellPrice)
+		err := sellOrderExecution(highestBuyOrder, &order); if err != nil {
+			fmt.Println("Error executing sell order: ", err)
+		}
+
+		executeSellTrade(highestBuyOrder, &order)
 
 		// if highestBuyOrder.Quantity <= order.Quantity {
 		if highestBuyOrder.Quantity == 0 {
@@ -659,8 +680,64 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 	}
 }
 
-func executeSellTrade(buyOrder *Order, sellOrder *Order, buyPrice *float64, sellPrice *float64) {
+func sellOrderExecution(buyOrder *Order, sellOrder *Order) error {
+	url := "http://localhost:5555/executeSellTrade"
+	payload := TradePayload{
+		BuyOrder:  buyOrder,
+		SellOrder: sellOrder,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// Handle response if needed
+
+	return nil
+}
+
+func buyOrderExecution(buyOrder *Order, sellOrder *Order) error {
+	url := "http://localhost:5555/executeBuyTrade"
+	payload := TradePayload{
+		BuyOrder:  buyOrder,
+		SellOrder: sellOrder,
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// Handle response if needed
+
+	return nil
+}
+
+func executeSellTrade(buyOrder *Order, sellOrder *Order) {
 	tradeQuantity := min(buyOrder.Quantity, sellOrder.Quantity)
+	buyPrice := buyOrder.Price
+	sellPrice := sellOrder.Price
 
 	if buyOrder.Quantity > sellOrder.Quantity {
 		// execute partial trade for buy order and complete trade for sell order
