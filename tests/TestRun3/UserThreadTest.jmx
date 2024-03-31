@@ -76,12 +76,12 @@
           </elementProp>
           <elementProp name="userFile" elementType="Argument">
             <stringProp name="Argument.name">userFile</stringProp>
-            <stringProp name="Argument.value">tests/TestRun3/UserFiles/UserCreds_10000.csv</stringProp>
+            <stringProp name="Argument.value">tests/TestRun3/UserFiles/UserCreds_1000.csv</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="numUsers" elementType="Argument">
             <stringProp name="Argument.name">numUsers</stringProp>
-            <stringProp name="Argument.value">10000</stringProp>
+            <stringProp name="Argument.value">1000</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
