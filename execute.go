@@ -45,6 +45,9 @@ func executeAllCommands() {
 
     // 7. Open new terminal: cd .\transaction\. Then go run .\main.go
     executeCommandInNewTerminal("transaction", "go", "run", "./main.go")
+
+    // 8. Open new terminal: cd .\execution\. Then go run .\main.go
+    executeCommandInNewTerminal("execution", "go", "run", "./main.go")
 }
 
 func executeCommands1to3() {

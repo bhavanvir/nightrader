@@ -6,6 +6,10 @@ COPY . .
 
 RUN go get github.com/lib/pq
 
+RUN go get github.com/google/uuid
+
 RUN go build -v -o app .
+
+EXPOSE 5555
 
 CMD ["./app"]

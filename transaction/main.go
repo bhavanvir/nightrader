@@ -14,8 +14,8 @@ import (
 var db *sql.DB
 
 const (
-	// host = "database"
-	host = "localhost" // for local testing
+	host = "database"
+	// host = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -215,7 +215,7 @@ func getStockPortfolio(c *gin.Context) {
         WHERE us.user_name = $1
 		ORDER BY us.time_added ASC`, userName)
 	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio", err)
+		handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio" + err.Error() , err)
 		return
 	}
 	defer rows.Close()

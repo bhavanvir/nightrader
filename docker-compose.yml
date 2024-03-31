@@ -48,6 +48,7 @@ services:
       GIN_MODE: release
     depends_on:
       - mongo
+      - execution
     networks:
       - nt-network
 
@@ -60,8 +61,6 @@ services:
     environment:
       PORT: 5555
       GIN_MODE: release
-    depends_on:
-      - mongo
     networks:
       - nt-network
 
