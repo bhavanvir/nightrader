@@ -540,6 +540,9 @@ func setStockTransaction(userName string, tx Order, price *float64, quantity flo
 // For UI display only, backend will NOT use the last sold price to find Market price
 // Backend will use the top of the queue for the Market price 
 func updateMarketStockPrice(stockID string, price *float64) error {
+	
+	fmt.Println("Starting Execution Service \n\n\n ===============")
+
 	fmt.Println("Updating stock price")
 	
 	// Connect to database

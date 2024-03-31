@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
-    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Seng468_TestRun3">
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Seng468_TestRun2">
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
         <collectionProp name="Arguments.arguments">
           <elementProp name="BASE_URL" elementType="Argument">
@@ -71,21 +71,23 @@
           </elementProp>
           <elementProp name="stockFile" elementType="Argument">
             <stringProp name="Argument.name">stockFile</stringProp>
-            <stringProp name="Argument.value">tests/TestRun3/Config/stockIds.csv</stringProp>
+            <stringProp name="Argument.value">C:\Users\Poomon\Desktop\programing projects\Go\Stock Trading Platform\day-trader\tests\TestRun2\Config\stockIds.csv</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="userFile" elementType="Argument">
             <stringProp name="Argument.name">userFile</stringProp>
-            <stringProp name="Argument.value">tests/TestRun3/UserFiles/UserCreds_1000.csv</stringProp>
+            <stringProp name="Argument.value">C:\Users\Poomon\Desktop\programing projects\Go\Stock Trading Platform\day-trader\tests\TestRun2\UserFiles\UserCreds_10.csv</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="numUsers" elementType="Argument">
             <stringProp name="Argument.name">numUsers</stringProp>
-            <stringProp name="Argument.value">1000</stringProp>
+            <stringProp name="Argument.value">100</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
       </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
     </TestPlan>
     <hashTree>
       <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="StockIds">
@@ -100,7 +102,7 @@
         <stringProp name="shareMode">shareMode.all</stringProp>
       </CSVDataSet>
       <hashTree/>
-      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="User CSV">
+      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="User CSV" enabled="true">
         <stringProp name="delimiter">,</stringProp>
         <stringProp name="fileEncoding"></stringProp>
         <stringProp name="filename">${userFile}</stringProp>
@@ -112,9 +114,9 @@
         <stringProp name="variableNames">username,password,name </stringProp>
       </CSVDataSet>
       <hashTree/>
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="User Thread Group">
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="User Thread Group" enabled="true">
         <stringProp name="ThreadGroup.num_threads">${numUsers}</stringProp>
-        <stringProp name="ThreadGroup.ramp_time">0.05</stringProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
@@ -181,7 +183,7 @@
         </HTTPSamplerProxy>
         <hashTree>
           <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="500ms Constant Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">1000</stringProp>
+            <stringProp name="ConstantTimer.delay">500</stringProp>
           </ConstantTimer>
           <hashTree/>
           <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
@@ -774,7 +776,7 @@
         <stringProp name="filename"></stringProp>
       </ResultCollector>
       <hashTree/>
-      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report">
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report" enabled="true">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
