@@ -3,5 +3,5 @@
 *.log
 *.jtl
 **/stockIds.csv
-tests/
+tests/*
 execute.go
