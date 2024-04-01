@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import Header from "./Header";
+import Header from "../Header/Header";
 import AccountInfo from "./AccountInfo";
 import StockPortfolio from "./StockPortfolio";
 import CirculatingStocks from "./CirculatingStocks";

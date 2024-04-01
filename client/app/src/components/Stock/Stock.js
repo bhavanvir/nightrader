@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 
-import Header from "../Dashboard/Header";
+import Header from "../Header/Header";
 import BuyTrigger from "./BuyTrigger";
 import SellTrigger from "./SellTrigger";
 import StockTransactions from "./StockTransactions";

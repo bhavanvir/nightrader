@@ -18,6 +18,10 @@ export default function Header({ user, showAlert }) {
     navigate("/signin");
   };
 
+  const handleClick = (user) => {
+    navigate("/history", { state: { user } });
+  };
+
   // Function to generate the Gravatar URL
   const getGravatarURL = (username) => {
     const hash = CryptoJS.MD5(username.trim().toLowerCase()).toString();
@@ -50,13 +54,13 @@ export default function Header({ user, showAlert }) {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a href="/" className="justify-between">
-                Profile
+              <button
+                className="justify-between"
+                onClick={() => handleClick(user)}
+              >
+                History
                 <span className="badge">New</span>
-              </a>
-            </li>
-            <li>
-              <a href="/">Settings</a>
+              </button>
             </li>
             <li>
               <button onClick={handleLogout}>Logout</button>

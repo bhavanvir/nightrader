@@ -20,7 +20,7 @@ export default function StockPortfolio({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching your stock portfolio. Please try again",
+          "There was an error fetching your stock portfolio. Please try again"
         );
       });
   };
