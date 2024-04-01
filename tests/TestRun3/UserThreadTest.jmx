@@ -71,12 +71,12 @@
           </elementProp>
           <elementProp name="stockFile" elementType="Argument">
             <stringProp name="Argument.name">stockFile</stringProp>
-            <stringProp name="Argument.value">tests/TestRun3/Config/stockIds.csv</stringProp>
+            <stringProp name="Argument.value">C:\Users\Poomon\Desktop\programing projects\Go\Stock Trading Platform\day-trader\tests\TestRun3\Config\stockIds.csv</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="userFile" elementType="Argument">
             <stringProp name="Argument.name">userFile</stringProp>
-            <stringProp name="Argument.value">tests/TestRun3/UserFiles/UserCreds_1000.csv</stringProp>
+            <stringProp name="Argument.value">C:\Users\Poomon\Desktop\programing projects\Go\Stock Trading Platform\day-trader\tests\TestRun3\UserFiles\UserCreds_1000.csv</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <elementProp name="numUsers" elementType="Argument">
@@ -181,7 +181,7 @@
         </HTTPSamplerProxy>
         <hashTree>
           <ConstantTimer guiclass="ConstantTimerGui" testclass="ConstantTimer" testname="500ms Constant Timer" enabled="true">
-            <stringProp name="ConstantTimer.delay">500</stringProp>
+            <stringProp name="ConstantTimer.delay">1000</stringProp>
           </ConstantTimer>
           <hashTree/>
           <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="true">
