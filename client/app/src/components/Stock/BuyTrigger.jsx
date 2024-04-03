@@ -13,7 +13,7 @@ export default function BuyTrigger({ Stock, showAlert }) {
   const handleClick = async () => {
     await axios
       .post(
-        "http://localhost:8585/placeStockOrder",
+        "http://localhost/engine/placeStockOrder",
         {
           stock_id: Stock.StockId,
           is_buy: true,

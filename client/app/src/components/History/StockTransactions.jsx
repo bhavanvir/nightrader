@@ -8,7 +8,7 @@ export default function StockTransactions({ user, showAlert }) {
 
   const fetchStockPortfolio = async () => {
     await axios
-      .get("http://localhost:5433/getStockTransactions", {
+      .get("http://localhost/transaction/getStockTransactions", {
         withCredentials: true,
         headers: {
           token: localStorage.getItem("token"),

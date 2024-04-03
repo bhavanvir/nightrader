@@ -8,7 +8,7 @@ export default function WalletTransactions({ user, showAlert }) {
 
   const fetchWalletTransactions = async () => {
     await axios
-      .get("http://localhost:5433/getWalletTransactions", {
+      .get("http://localhost/transaction/getWalletTransactions", {
         withCredentials: true,
         headers: {
           token: localStorage.getItem("token"),
