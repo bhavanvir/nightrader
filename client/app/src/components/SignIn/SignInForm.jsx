@@ -70,14 +70,14 @@ export default function SignInForm() {
     if (isValid) {
       axios
         .post(
-          "http://localhost:8888/login",
+          "http://localhost/authentication/login",
           {
             user_name: formData.username,
             password: formData.password,
           },
           {
             withCredentials: true,
-          },
+          }
         )
         .then(function (response) {
           localStorage.setItem("token", response.data.data.token);

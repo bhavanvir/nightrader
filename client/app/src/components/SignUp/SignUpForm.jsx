@@ -74,7 +74,7 @@ export default function SignUpForm() {
     if (isValid) {
       axios
         .post(
-          "http://localhost:8888/register",
+          "http://localhost/authentication/register",
           {
             name: formData.name,
             user_name: formData.username,
@@ -82,7 +82,7 @@ export default function SignUpForm() {
           },
           {
             withCredentials: true,
-          },
+          }
         )
         .then(function (response) {
           if (response.data.success) {

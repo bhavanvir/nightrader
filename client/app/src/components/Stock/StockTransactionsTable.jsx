@@ -58,7 +58,7 @@ export default function StockTransactionsTable({
   const handleClick = async (stock) => {
     await axios
       .post(
-        "http://localhost:8585/cancelStockTransaction",
+        "http://localhost/engine/cancelStockTransaction",
         {
           stock_tx_id: stock.stock_tx_id,
         },

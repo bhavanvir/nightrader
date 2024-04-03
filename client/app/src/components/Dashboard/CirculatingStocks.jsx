@@ -9,7 +9,7 @@ export default function CirculatingStocks({ user, showAlert }) {
 
   const fetchCirculatingStocks = async () => {
     await axios
-      .get("http://localhost:5433/getStockPrices", {
+      .get("http://localhost/transaction/getStockPrices", {
         withCredentials: true,
         headers: {
           token: localStorage.getItem("token"),
