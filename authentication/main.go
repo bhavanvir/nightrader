@@ -136,8 +136,6 @@ func postRegister(c *gin.Context) {
         return
     }
 
-    fmt.Println("Using global database connection")
-
     var count int
     err := db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", newRegister.UserName).Scan(&count)
     if err != nil {
