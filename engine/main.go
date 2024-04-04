@@ -16,6 +16,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var db *sql.DB
+
 const (
 	host = "database"
 	// host     = "localhost" // for local testing
@@ -737,15 +739,8 @@ func completeSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice *float
 
 /** === BUY/SELL Order === **/
 func updateWalletTransaction(userName string, order Order, amount float64) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// Update the wallet transaction
-	_, err = db.Exec(`UPDATE wallet_transactions SET amount = $1 WHERE user_name = $2 AND wallet_tx_id = $3`, amount, userName, order.WalletTxID)
+	_, err := db.Exec(`UPDATE wallet_transactions SET amount = $1 WHERE user_name = $2 AND wallet_tx_id = $3`, amount, userName, order.WalletTxID)
 	if err != nil {
 		return fmt.Errorf("Failed to update wallet transaction: %w", err)
 	}
@@ -754,20 +749,13 @@ func updateWalletTransaction(userName string, order Order, amount float64) error
 }
 
 func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// Calculate total to be added or deducted
 	if !isAdded {
 		amount = amount * (-1) // Reduce funds if buying
 	}
 
 	// Update the user's wallet
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, amount, userName)
 	if err != nil {
 		return fmt.Errorf("Failed to update wallet: %w", err)
@@ -778,13 +766,6 @@ func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
 /** === END SELL Order === **/
 
 func updateStockPortfolio(userName string, order Order, quantity float64, isAdded bool) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// Calculate total to be added or deducted
 	total := quantity
 	if !isAdded {
@@ -836,13 +817,6 @@ func updateStockPortfolio(userName string, order Order, quantity float64, isAdde
 
 // Store completed wallet transactions based on order matched
 func setWalletTransaction(userName string, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to insert stock transaction: %w", err)
-	}
-	defer db.Close()
-
 	// isDebit = True if money is deducted from wallet.
 	// isDebit = False if money is added to wallet
 	var isDebit bool
@@ -851,7 +825,7 @@ func setWalletTransaction(userName string, walletTxID string, timestamp string, 
 	amount := (*price) * float64(quantity)
 
 	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
 		VALUES ($1, $2, $3, $4, $5)`, walletTxID, userName, isDebit, amount, timestamp)
 	if err != nil {
@@ -861,15 +835,8 @@ func setWalletTransaction(userName string, walletTxID string, timestamp string, 
 }
 
 func deleteWalletTransaction(userName string, order Order) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		DELETE FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, order.WalletTxID)
 	if err != nil {
 		return fmt.Errorf("Failed to delete wallet transaction: %w", err)
@@ -878,16 +845,9 @@ func deleteWalletTransaction(userName string, order Order) error {
 }
 
 func getWalletTransactionsAmount(userName string, walletTxID string) (float64, error) {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return 0, fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// Query the database to get the total amount of wallet transactions for the specified user and wallet ID
 	var totalAmount float64
-	err = db.QueryRow("SELECT SUM(amount) FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2", userName, walletTxID).Scan(&totalAmount)
+	err := db.QueryRow("SELECT SUM(amount) FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2", userName, walletTxID).Scan(&totalAmount)
 	if err != nil {
 		return 0, fmt.Errorf("Failed to get wallet transactions amount: %w", err)
 	}
@@ -897,13 +857,6 @@ func getWalletTransactionsAmount(userName string, walletTxID string) (float64, e
 
 // Store transaction based on the order user created
 func setStockTransaction(userName string, tx Order, price *float64, quantity float64) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to insert stock transaction: %w", err)
-	}
-	defer db.Close()
-
 	// Check if a wallet transaction has been made for this order yet
 	rows, err := db.Query(`
 		SELECT wallet_tx_id FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, tx.WalletTxID)
@@ -935,15 +888,8 @@ func deleteStockTransaction(userName string, order Order) error {
 		return fmt.Errorf("Cannot delete completed or partially completed transactions")
 	}
 
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		DELETE FROM stock_transactions WHERE user_name = $1 AND stock_tx_id = $2`, userName, order.StockTxID)
 	if err != nil {
 		return fmt.Errorf("Failed to delete stock transaction: %w", err)
@@ -952,19 +898,12 @@ func deleteStockTransaction(userName string, order Order) error {
 }
 
 func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	if status == "PARTIAL_FULFILLED" {
 		order.Status = status
 	}
 
 	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
+	_, err := db.Exec(`
 		UPDATE stock_transactions SET order_status = $1 WHERE user_name = $2 AND stock_tx_id = $3`, status, order.UserName, order.StockTxID)
 	if err != nil {
 		return fmt.Errorf("Failed to update status: %w", err)
@@ -1016,15 +955,8 @@ func processOrder(book *OrderBook, order Order) {
 // For UI display only, backend will NOT use the last sold price to find Market price
 // Backend will use the top of the queue for the Market price 
 func updateMarketStockPrice(stockID string, price *float64) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// Update the stock price
-	_, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *price, stockID)
+	_, err := db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *price, stockID)
 	if err != nil {
 		return fmt.Errorf("Failed to update stock price: %w", err)
 	}
@@ -1049,16 +981,9 @@ func getStockOrderPrice(book *OrderBook, order Order) *float64 {
 }
 
 func verifyWalletBeforeTransaction(userName string, book *OrderBook, order Order) error {
-	// Connect to the database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// get stock id
 	var stockID string
-	err = db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
+	err := db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
 	if err != nil {
 		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
 	}
@@ -1121,16 +1046,9 @@ func verifyQueueBeforeMarketTransaction(book *OrderBook, order Order) error {
 }
 
 func verifyStockBeforeTransaction(userName string, order Order) error {
-	// Connect to the database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
 	// get stock id
 	var stockID string
-	err = db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
+	err := db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
 	if err != nil {
 		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
 	}
@@ -1193,6 +1111,18 @@ func isOrderExpired(order *Order) bool {
 }
 
 func main() {
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+    var err error
+    db, err = sql.Open("postgres", postgresqlDbInfo)
+    if err != nil {
+        fmt.Printf("Failed to connect to the database: %v\n", err)
+        return
+    }
+    defer db.Close()
+
+    db.SetMaxOpenConns(10) // Set maximum number of open connections
+    db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
