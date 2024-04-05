@@ -81,34 +81,23 @@ func postLogin(c *gin.Context) {
         return
     }
 
-    fmt.Println("Using global database connection")
-
-    var count int
-    err := db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", login.UserName).Scan(&count)
+    // Prepare the SELECT statement to check if the username exists and password is correct
+    stmtLogin, err := db.Prepare("SELECT name, (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2")
     if err != nil {
-        handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
+        handleError(c, http.StatusInternalServerError, "Failed to prepare statement", err)
         return
     }
-    if count == 0 {
-        handleError(c, http.StatusBadRequest, "Username does not exist", nil)
-        return
-    }
+    defer stmtLogin.Close()
 
+    var name string
     var correctPassword bool
-    err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
+    err = stmtLogin.QueryRow(login.Password, login.UserName).Scan(&name, &correctPassword)
     if err != nil {
         handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
         return
     }
     if !correctPassword {
         handleError(c, http.StatusOK, "Incorrect password", nil)
-        return
-    }
-
-    var name string
-    err = db.QueryRow("SELECT name FROM users WHERE user_name = $1", login.UserName).Scan(&name)
-    if err != nil {
-        handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
         return
     }
 
@@ -128,6 +117,7 @@ func postLogin(c *gin.Context) {
     c.IndentedJSON(http.StatusOK, loginResponse)
 }
 
+
 func postRegister(c *gin.Context) {
     var newRegister Register
 
@@ -136,8 +126,16 @@ func postRegister(c *gin.Context) {
         return
     }
 
+    // Prepare the SELECT statement to check if the username already exists
+    stmtExist, err := db.Prepare("SELECT COUNT(*) FROM users WHERE user_name = $1")
+    if err != nil {
+        handleError(c, http.StatusInternalServerError, "Failed to prepare statement", err)
+        return
+    }
+    defer stmtExist.Close()
+
     var count int
-    err := db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", newRegister.UserName).Scan(&count)
+    err = stmtExist.QueryRow(newRegister.UserName).Scan(&count)
     if err != nil {
         handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
         return
@@ -147,7 +145,15 @@ func postRegister(c *gin.Context) {
         return
     }
 
-    _, err = db.Exec("INSERT INTO users (user_name, name, user_pass) VALUES ($1, $2, $3)", newRegister.UserName, newRegister.Name, newRegister.Password)
+    // Prepare the INSERT statement to add a new user
+    stmtInsert, err := db.Prepare("INSERT INTO users (user_name, name, user_pass) VALUES ($1, $2, $3)")
+    if err != nil {
+        handleError(c, http.StatusInternalServerError, "Failed to prepare statement", err)
+        return
+    }
+    defer stmtInsert.Close()
+
+    _, err = stmtInsert.Exec(newRegister.UserName, newRegister.Name, newRegister.Password)
     if err != nil {
         handleError(c, http.StatusInternalServerError, "Failed to insert new user to the database", err)
         return
