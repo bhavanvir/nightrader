@@ -503,26 +503,27 @@ func executeBuyTrade(buyOrder *Order, sellOrder *Order, buyPrice *float64, sellP
 }
 
 func completeBuyOrder(buyOrder *Order, tradeQuantity float64, buyPrice *float64, sellPrice *float64) {
+	// Calculate refund amount
 	refundAmount := (*buyPrice - *sellPrice) * float64(tradeQuantity)
 
+	// Refund deducted money to the Buy user's wallet, adjusting for any price differences
 	if refundAmount > 0 {
-		totalSoldAmount := (*sellPrice) * float64(tradeQuantity)
-
-		// Refund deducted money to the Buy user's wallet, adjusting for any price differences
 		if err := updateMoneyWallet(buyOrder.UserName, refundAmount, true); err != nil {
 			fmt.Println("Error updating different price refund to wallet: ", err)
 		}
 
-		// update wallet_transactions from BUY order
-		if err := updateWalletTransaction(buyOrder.UserName, *buyOrder, totalSoldAmount); err != nil {
+		// Update wallet transactions from BUY order
+		if err := updateWalletTransaction(buyOrder.UserName, *buyOrder, (*sellPrice)*tradeQuantity); err != nil {
 			fmt.Println("Error updating wallet transaction: ", err)
 		}
-	} 
+	}
 
+	// Update stock portfolio
 	if err := updateStockPortfolio(buyOrder.UserName, *buyOrder, tradeQuantity, true); err != nil {
 		fmt.Println("Error updating stock portfolio: ", err)
 	}
 
+	// Set order status to COMPLETED
 	if err := setStatus(buyOrder, "COMPLETED", false); err != nil {
 		fmt.Println("Error setting status: ", err)
 	}
@@ -749,14 +750,11 @@ func updateWalletTransaction(userName string, order Order, amount float64) error
 }
 
 func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
-	// Calculate total to be added or deducted
+	// Adjust the amount based on the transaction type
 	if !isAdded {
-		amount = amount * (-1) // Reduce funds if buying
+		amount *= -1 // Deduct funds if buying
 	}
-
-	// Update the user's wallet
-	_, err := db.Exec(`
-		UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, amount, userName)
+	_, err := db.Exec(`UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, amount, userName)
 	if err != nil {
 		return fmt.Errorf("Failed to update wallet: %w", err)
 	}
@@ -766,70 +764,47 @@ func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
 /** === END SELL Order === **/
 
 func updateStockPortfolio(userName string, order Order, quantity float64, isAdded bool) error {
-	// Calculate total to be added or deducted
+	// Calculate the total quantity to be added or deducted
 	total := quantity
 	if !isAdded {
-		total = total * (-1) // Reduce stocks if selling
+		total *= -1 // Reduce stocks if selling
 	}
 
-	rows, err := db.Query(`
-		SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
-	if err != nil {
+	// Check if user already owns this stock
+	var currentQuantity float64
+	err := db.QueryRow(`
+		SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID).Scan(&currentQuantity)
+	if err != nil && err != sql.ErrNoRows {
 		return fmt.Errorf("Failed to query user stocks: %w", err)
 	}
-	defer rows.Close()
 
-	// User already owns this stock
-	if rows.Next() {
-		// Update the user's stocks
-		var amount float64
-		if err := rows.Scan(&amount); err != nil {
-			return fmt.Errorf("Error while scanning row: %w", err)
-		}
-		if total < 0 && (amount+total) <= 0 {
-			_, err = db.Exec(`
-				DELETE FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
-			if err != nil {
-				return fmt.Errorf("Failed to update user stocks: %w", err)
-			}
-		} else {
-			_, err = db.Exec(`
-				UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
-			if err != nil {
-				return fmt.Errorf("Failed to update user stocks: %w", err)
-			}
-		}
+	if currentQuantity+total <= 0 {
+		// Delete user's stock if the total quantity becomes zero or negative
+		_, err = db.Exec(`DELETE FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
+	} else if currentQuantity > 0 {
+		// Update user's stock quantity
+		_, err = db.Exec(`
+			UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
 	} else {
-		// For wallet transactions, update the wallet regardless of the order type
-		if total <= 0 {
-			return fmt.Errorf("No stocks to deduct")
-		} else {
-			_, err = db.Exec(`
-				INSERT INTO user_stocks VALUES($1, $2, $3)`, userName, order.StockID, quantity)
-			if err != nil {
-				return fmt.Errorf("Failed to create user_stock: %w", err)
-			}
-		}
+		// Insert new user's stock
+		_, err = db.Exec(`INSERT INTO user_stocks VALUES ($1, $2, $3)`, userName, order.StockID, quantity)
 	}
-
+	if err != nil {
+		return fmt.Errorf("Failed to update user stocks: %w", err)
+	}
 	return nil
 }
 
 // Store completed wallet transactions based on order matched
 func setWalletTransaction(userName string, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {
-	// isDebit = True if money is deducted from wallet.
-	// isDebit = False if money is added to wallet
-	var isDebit bool
-	isDebit = !isAdded
+	amount := *price * quantity // Calculate transaction amount
+	isDebit := !isAdded         // Determine if it's a debit transaction
 
-	amount := (*price) * float64(quantity)
-
-	// Insert transaction to wallet transactions
 	_, err := db.Exec(`
 		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
 		VALUES ($1, $2, $3, $4, $5)`, walletTxID, userName, isDebit, amount, timestamp)
 	if err != nil {
-		return fmt.Errorf("Failed to commit transaction: %w", err)
+		return fmt.Errorf("Failed to commit wallet transaction: %w", err)
 	}
 	return nil
 }
@@ -981,24 +956,31 @@ func getStockOrderPrice(book *OrderBook, order Order) *float64 {
 }
 
 func verifyWalletBeforeTransaction(userName string, book *OrderBook, order Order) error {
-	// get stock id
+	// Construct the SQL query to get stock ID and user wallet in a single query
+	query := `
+		SELECT s.stock_id, u.wallet
+		FROM stocks s
+		JOIN users u ON u.user_name = $1
+		WHERE s.stock_id = $2`
+
+	// Execute the SQL query
+	row := db.QueryRow(query, userName, order.StockID)
+
+	// Declare variables to store the results
 	var stockID string
-	err := db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
+	var wallet float64
+
+	// Scan the results into variables
+	err := row.Scan(&stockID, &wallet)
 	if err != nil {
-		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
+		return fmt.Errorf("Failed to get stock ID and user wallet: %w", err)
 	}
 
+	// Calculate the order price
 	price := getStockOrderPrice(book, order)
 
-	// get user wallet
-	var wallet float64
-	err = db.QueryRow("SELECT wallet FROM users WHERE user_name = $1", userName).Scan(&wallet)
-	if err != nil {
-		return fmt.Errorf("Failed to get user wallet: %w", err)
-	}
-
-	// check if user has enough money to buy the stock
-	if wallet < (*price) * float64(order.Quantity) {
+	// Check if user has enough funds to buy the stock
+	if wallet < (*price)*float64(order.Quantity) {
 		return fmt.Errorf("Insufficient funds")
 	}
 
@@ -1046,26 +1028,19 @@ func verifyQueueBeforeMarketTransaction(book *OrderBook, order Order) error {
 }
 
 func verifyStockBeforeTransaction(userName string, order Order) error {
-	// get stock id
-	var stockID string
-	err := db.QueryRow("SELECT stock_id FROM stocks WHERE stock_id = $1", order.StockID).Scan(&stockID)
-	if err != nil {
-		return fmt.Errorf("Stock not exist - Failed to get stock id: %w", err)
-	}
+    // Get stock id and check if it exists
+    var quantity float64
+    err := db.QueryRow("SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2", userName, order.StockID).Scan(&quantity)
+    if err != nil {
+        return fmt.Errorf("failed to get user stock portfolio: %w", err)
+    }
 
-	// get user stock portfolio
-	var quantity float64
-	err = db.QueryRow("SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2", userName, order.StockID).Scan(&quantity)
-	if err != nil {
-		return fmt.Errorf("Failed to get user stock portfolio: %w", err)
-	}
+    // Check if user has enough stock to sell
+    if quantity < order.Quantity {
+        return fmt.Errorf("insufficient stock")
+    }
 
-	// check if user has enough stock to sell
-	if quantity < order.Quantity {
-		return fmt.Errorf("Insufficient stock")
-	}
-
-	return nil
+    return nil
 }
 
 func checkAndRemoveExpiredOrders() {
