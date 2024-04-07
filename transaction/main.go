@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/gin-contrib/cors"
@@ -20,6 +21,15 @@ const (
 	user     = "nt_user"
 	password = "db123"
 	dbname   = "nt_db"
+)
+
+var (
+	stmtAddMoney *sql.Stmt
+	stmtWalletBalance *sql.Stmt
+	stmtStockPortfolio *sql.Stmt
+	stmtWalletTransactions *sql.Stmt
+	stmtStockTransactions *sql.Stmt
+	stmtStockPrices *sql.Stmt
 )
 
 type ErrorResponse struct {
@@ -125,7 +135,7 @@ func addMoneyToWallet(c *gin.Context) {
 		return
 	}
 
-	_, err := db.Exec("UPDATE users SET wallet = wallet + $1 WHERE user_name = $2", addMoney.Amount, userName)
+	_, err := stmtAddMoney.Exec(addMoney.Amount, userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to update wallet", err)
 		return
@@ -147,7 +157,7 @@ func getWalletBalance(c *gin.Context) {
 	}
 
 	var balance float64
-	err := db.QueryRow("SELECT wallet FROM users WHERE user_name = $1", userName).Scan(&balance)
+	err := stmtWalletBalance.QueryRow(userName).Scan(&balance)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query wallet balance", err)
 		return
@@ -163,17 +173,7 @@ func getWalletBalance(c *gin.Context) {
 }
 
 func getStockPrices(c *gin.Context) {
-	userName, _ := c.Get("user_name")
-
-	if userName == nil {
-		handleError(c, http.StatusBadRequest, "Failed to obtain the user name", nil)
-		return
-	}
-
-	rows, err := db.Query(`
-		SELECT stock_id, stock_name, current_price
-		FROM stocks
-		ORDER BY time_added ASC`)
+	rows, err := stmtStockPrices.Query()
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query stock prices", err)
 		return
@@ -205,15 +205,7 @@ func getStockPortfolio(c *gin.Context) {
 		return
 	}
 
-	// Retrieves the stock ID, stock name, and quantity owned for all stocks
-	// associated with a particular user. Performs a join operation between the 'user_stocks'
-	// and 'stocks' tables
-	rows, err := db.Query(`
-        SELECT s.stock_id, s.stock_name, us.quantity
-        FROM user_stocks us
-        JOIN stocks s ON s.stock_id = us.stock_id
-        WHERE us.user_name = $1
-		ORDER BY us.time_added ASC`, userName)
+	rows, err := stmtStockPortfolio.Query(userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio", err)
 		return
@@ -250,31 +242,26 @@ func getWalletTransactions(c *gin.Context) {
 		return
 	}
 
-	rows, err := db.Query(`
-        SELECT wt.wallet_tx_id, st.stock_tx_id, wt.is_debit, wt.amount, wt.time_stamp
-        FROM wallet_transactions wt
-        JOIN stock_transactions st ON st.wallet_tx_id = wt.wallet_tx_id
-        WHERE wt.user_name = $1
-		ORDER BY wt.time_stamp ASC`, userName)
+	rows, err := stmtWalletTransactions.Query(userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query wallet transactions", err)
 		return
 	}
 	defer rows.Close()
 
-	var wallet_transactions []WalletTransactionItem
+	var walletTransactions []WalletTransactionItem
 	for rows.Next() {
 		var item WalletTransactionItem
 		if err := rows.Scan(&item.WalletTxID, &item.StockTxID, &item.IsDebit, &item.Amount, &item.TimeStamp); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
-		wallet_transactions = append(wallet_transactions, item)
+		walletTransactions = append(walletTransactions, item)
 	}
 
 	response := WalletTransactionResponse{
 		Success: true,
-		Data:    wallet_transactions,
+		Data:    walletTransactions,
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
@@ -287,44 +274,124 @@ func getStockTransactions(c *gin.Context) {
 		return
 	}
 
-	rows, err := db.Query(`
-        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
-        FROM stock_transactions
-        WHERE user_name = $1
-		ORDER BY time_stamp ASC`, userName)
+	rows, err := stmtStockTransactions.Query(userName)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query stock transactions", err)
 		return
 	}
 	defer rows.Close()
 
-	var stock_transactions []StockTransactionItem
+	var stockTransactions []StockTransactionItem
 	for rows.Next() {
 		var item StockTransactionItem
 		if err := rows.Scan(&item.StockTxID, &item.StockID, &item.WalletTxID, &item.OrderStatus, &item.ParentTxID, &item.IsBuy, &item.OrderType, &item.StockPrice, &item.Quantity, &item.TimeStamp); err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to scan row", err)
 			return
 		}
-
-		stock_transactions = append(stock_transactions, item)
+		stockTransactions = append(stockTransactions, item)
 	}
 
 	response := StockTransactionResponse{
 		Success: true,
-		Data:    stock_transactions,
+		Data:    stockTransactions,
 	}
 	c.IndentedJSON(http.StatusOK, response)
 }
 
+func initializeDB() error {
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	var err error
+	db, err = sql.Open("postgres", postgresqlDbInfo)
+	if err != nil {
+		return fmt.Errorf("failed to connect to the database: %v", err)
+	}
+
+	// Ensure the database connection is fully established
+	for {
+		err = db.Ping()
+		if err == nil {
+			break
+		}
+		fmt.Println("Waiting for the database connection to be established...")
+		time.Sleep(1 * time.Second)
+	}
+
+	return nil
+}
+
+func prepareStatements() error {
+	var err error
+
+	stmtAddMoney, err = db.Prepare("UPDATE users SET wallet = wallet + $1 WHERE user_name = $2")
+	if err != nil {
+		return fmt.Errorf("failed to prepare addMoney statement: %v", err)
+	}
+
+	stmtWalletBalance, err = db.Prepare("SELECT wallet FROM users WHERE user_name = $1")
+	if err != nil {
+		return fmt.Errorf("failed to prepare walletBalance statement: %v", err)
+	}
+
+	stmtStockPortfolio, err = db.Prepare(`
+        SELECT s.stock_id, s.stock_name, us.quantity
+        FROM user_stocks us
+        JOIN stocks s ON s.stock_id = us.stock_id
+        WHERE us.user_name = $1
+		ORDER BY us.time_added ASC`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare stockPortfolio statement: %v", err)
+	}
+
+	stmtWalletTransactions, err = db.Prepare(`
+        SELECT wt.wallet_tx_id, st.stock_tx_id, wt.is_debit, wt.amount, wt.time_stamp
+        FROM wallet_transactions wt
+        JOIN stock_transactions st ON st.wallet_tx_id = wt.wallet_tx_id
+        WHERE wt.user_name = $1
+		ORDER BY wt.time_stamp ASC`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare walletTransactions statement: %v", err)
+	}
+
+	stmtStockTransactions, err = db.Prepare(`
+        SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
+        FROM stock_transactions
+        WHERE user_name = $1
+		ORDER BY time_stamp ASC`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare stockTransactions statement: %v", err)
+	}
+
+	stmtStockPrices, err = db.Prepare(`
+		SELECT stock_id, stock_name, current_price
+		FROM stocks
+		ORDER BY time_added ASC`)
+	if err != nil {
+		return fmt.Errorf("failed to prepare stockPrices statement: %v", err)
+	}
+
+	return nil
+}
+
 func main() {
-    postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-    var err error
-    db, err = sql.Open("postgres", postgresqlDbInfo)
-    if err != nil {
-        fmt.Printf("Failed to connect to the database: %v\n", err)
-        return
-    }
-    defer db.Close()
+	err := initializeDB()
+	if err != nil {
+		fmt.Printf("Failed to initialize the database: %v\n", err)
+		return
+	}
+	defer db.Close()
+
+	err = prepareStatements()
+	if err != nil {
+		fmt.Printf("Failed to prepare SQL statements: %v\n", err)
+		return
+	}
+
+	defer stmtAddMoney.Close()
+	defer stmtWalletBalance.Close()
+	defer stmtStockPortfolio.Close()
+	defer stmtWalletTransactions.Close()
+	defer stmtStockTransactions.Close()
+	defer stmtStockPrices.Close()
 
     db.SetMaxOpenConns(10) // Set maximum number of open connections
     db.SetMaxIdleConns(5) // Set maximum number of idle connections
