@@ -379,6 +379,18 @@ func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
 	return nil
 }
 
+// func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
+//     // Adjust the amount based on the transaction type
+//     if !isAdded {
+//         amount *= -1 // Deduct funds if buying
+//     }
+//     _, err := stmtUpdateMoneyWallet.Exec(amount, userName)
+//     if err != nil {
+//         return fmt.Errorf("Failed to update wallet: %w", err)
+//     }
+//     return nil
+// }
+
 func updateWalletTransaction(userName string, order Order, amount float64) error {
 	// Connect to database
 	db, err := openConnection()
@@ -395,6 +407,16 @@ func updateWalletTransaction(userName string, order Order, amount float64) error
 
 	return nil
 }
+
+// func updateWalletTransaction(userName string, order Order, amount float64) error {
+//     // Update the wallet transaction
+//     _, err := stmtUpdateWalletTransaction.Exec(amount, userName, order.WalletTxID)
+//     if err != nil {
+//         return fmt.Errorf("Failed to update wallet transaction: %w", err)
+//     }
+
+//     return nil
+// }
 
 func updateStockPortfolio(userName string, order Order, quantity float64, isAdded bool) error {
 	fmt.Println("Deducting stock from portfolio")
@@ -454,6 +476,36 @@ func updateStockPortfolio(userName string, order Order, quantity float64, isAdde
 
 	return nil
 }
+
+// func updateStockPortfolio(userName string, order Order, quantity float64, isAdded bool) error {
+//     // Calculate the total quantity to be added or deducted
+//     total := quantity
+//     if !isAdded {
+//         total *= -1 // Reduce stocks if selling
+//     }
+
+//     // Check if user already owns this stock
+//     var currentQuantity float64
+//     err := stmtCheckUserStocks.QueryRow(userName, order.StockID).Scan(&currentQuantity)
+//     if err != nil && err != sql.ErrNoRows {
+//         return fmt.Errorf("Failed to query user stocks: %w", err)
+//     }
+
+//     if currentQuantity+total <= 0 {
+//         // Delete user's stock if the total quantity becomes zero or negative
+//         _, err = stmtDeleteUserStocks.Exec(userName, order.StockID)
+//     } else if currentQuantity > 0 {
+//         // Update user's stock quantity
+//         _, err = stmtUpdateUserStocks.Exec(total, userName, order.StockID)
+//     } else {
+//         // Insert new user's stock
+//         _, err = stmtInsertUserStocks.Exec(userName, order.StockID, quantity)
+//     }
+//     if err != nil {
+//         return fmt.Errorf("Failed to update user stocks: %w", err)
+//     }
+//     return nil
+// }
 
 func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
 	// Connect to database
@@ -529,6 +581,18 @@ func setWalletTransaction(userName string, walletTxID string, timestamp string, 
 	return nil
 }
 
+// Store completed wallet transactions based on order matched
+// func setWalletTransaction(userName string, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {
+//     amount := *price * quantity // Calculate transaction amount
+//     isDebit := !isAdded         // Determine if it's a debit transaction
+
+//     _, err := stmtSetWalletTransaction.Exec(walletTxID, userName, isDebit, amount, timestamp)
+//     if err != nil {
+//         return fmt.Errorf("Failed to commit wallet transaction: %w", err)
+//     }
+//     return nil
+// }
+
 // Store transaction based on the order user created
 func setStockTransaction(userName string, tx Order, price *float64, quantity float64) error {
 	fmt.Println("Setting stock transaction")
@@ -566,6 +630,31 @@ func setStockTransaction(userName string, tx Order, price *float64, quantity flo
 	return nil
 }
 
+// Store transaction based on the order user created
+// func setStockTransaction(userName string, tx Order, price *float64, quantity float64) error {
+//     // Check if a wallet transaction has been made for this order yet
+//     rows, err := stmtCheckWalletTransaction.Query(userName, tx.WalletTxID)
+//     if err != nil {
+//         return fmt.Errorf("Error querying wallet transactions: %w", err)
+//     }
+//     defer rows.Close()
+
+//     var wallet_tx_id *string
+
+//     // if a wallet transaction is found in wallet_transaction table db, then add it to stock_transaction table OR,
+//     // if status is COMPLETED, the stock transaction need to a wallet transaction
+//     if rows.Next() || tx.Status == "COMPLETED" {
+//         wallet_tx_id = &tx.WalletTxID
+//     }
+
+//     // Insert transaction to stock transactions
+//     _, err = stmtSetStockTransaction.Exec(tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, *price, quantity, tx.TimeStamp)
+//     if err != nil {
+//         return fmt.Errorf("Failed to commit transaction: %w", err)
+//     }
+//     return nil
+// }
+
 // Update db of Market price of a stock X to the last sold price of a stock X
 // For UI display only, backend will NOT use the last sold price to find Market price
 // Backend will use the top of the queue for the Market price 
@@ -589,6 +678,18 @@ func updateMarketStockPrice(stockID string, price *float64) error {
 	}
 	return nil
 }
+
+// Update db of Market price of a stock X to the last sold price of a stock X
+// For UI display only, backend will NOT use the last sold price to find Market price
+// Backend will use the top of the queue for the Market price 
+// func updateMarketStockPrice(stockID string, price *float64) error {
+//     // Update the stock price
+//     _, err := stmtUpdateMarketStockPrice.Exec(*price, stockID)
+//     if err != nil {
+//         return fmt.Errorf("Failed to update stock price: %w", err)
+//     }
+//     return nil
+// }
 
 /** === END BUY/SELL support === **/
 

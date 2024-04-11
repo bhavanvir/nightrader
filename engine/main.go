@@ -17,6 +17,28 @@ import (
 	_ "github.com/lib/pq"
 )
 
+var db *sql.DB
+
+var (
+    stmtUpdateWalletTransaction *sql.Stmt
+    stmtUpdateMoneyWallet       *sql.Stmt
+    stmtCheckUserStocks         *sql.Stmt
+    stmtDeleteUserStocks        *sql.Stmt
+    stmtInsertUserStocks        *sql.Stmt
+    stmtSetWalletTransaction    *sql.Stmt
+    stmtDeleteWalletTransaction *sql.Stmt
+    stmtGetWalletTransactionsAmount *sql.Stmt
+    stmtSetStockTransaction     *sql.Stmt
+    stmtDeleteStockTransaction  *sql.Stmt
+    stmtSetStatus               *sql.Stmt
+    stmtUpdateWalletTxId        *sql.Stmt
+    stmtVerifyWalletBeforeTransaction *sql.Stmt
+    stmtVerifyStockBeforeTransaction  *sql.Stmt
+    stmtUpdateMarketStockPrice        *sql.Stmt
+    stmtUpdateUserStocks              *sql.Stmt
+    stmtCheckWalletTransaction      *sql.Stmt
+)
+
 const (
     host = "database"
     // host     = "localhost" // for local testing
@@ -264,7 +286,8 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        LogBuyOrder(order)
+        printq(book)
+        // LogBuyOrder(order)
     } else {
         if err := verifyStockBeforeTransaction(userName, order); err != nil {
             handleError(c, http.StatusBadRequest, "Failed to verify stocks", err)
@@ -282,7 +305,8 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        LogSellOrder(order)
+        printq(book)
+        // LogSellOrder(order)
     }
 
     response := PlaceStockOrderResponse{
@@ -607,8 +631,10 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 			fmt.Println("Error executing Market Sell order: ", err)
 		}
 
-        // execute the trade
-        executeSellTrade(highestBuyOrder, &order, buyPrice, sellPrice)
+        // if highestBuyOrder.Quantity <= order.Quantity {
+		if highestBuyOrder.Quantity == 0 {
+			highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
+		}
 
 		fmt.Printf("\nMarket Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 		&order.StockTxID, &order.Quantity, *(&order.Price), highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price)
