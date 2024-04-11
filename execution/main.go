@@ -344,6 +344,17 @@ func getWalletTransactionsAmount(userName string, walletTxID string) (float64, e
 	return totalAmount, nil
 }
 
+// func getWalletTransactionsAmount(userName string, walletTxID string) (float64, error) {
+//     // Query the database to get the total amount of wallet transactions for the specified user and wallet ID
+//     var totalAmount float64
+//     err := stmtGetWalletTransactionsAmount.QueryRow(userName, walletTxID).Scan(&totalAmount)
+//     if err != nil {
+//         return 0, fmt.Errorf("Failed to get wallet transactions amount: %w", err)
+//     }
+
+//     return totalAmount, nil
+// }
+
 func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
 	fmt.Println("Deducting money from wallet")
 
@@ -471,6 +482,25 @@ func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
 
 	return nil
 }
+
+// func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
+//     if status == "PARTIAL_FULFILLED" {
+//         order.Status = status
+//     }
+
+//     // Insert transaction to wallet transactions
+//     _, err := stmtSetStatus.Exec(status, order.UserName, order.StockTxID)
+//     if err != nil {
+//         return fmt.Errorf("Failed to update status: %w", err)
+//     }
+
+//     // assign wallet_tx_id to stock_tx_id if the Sell order is completed
+//     if isUpdateWalletTxId {
+//         _, err = stmtUpdateWalletTxId.Exec(order.WalletTxID, order.UserName, order.StockTxID)
+//     }
+
+//     return nil
+// }
 
 // Store completed wallet transactions based on order matched
 func setWalletTransaction(userName string, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {

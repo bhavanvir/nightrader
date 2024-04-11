@@ -15,7 +15,7 @@ export default function AccountInfo({ user, showAlert }) {
 
   const fetchWalletBalance = async () => {
     await axios
-      .get("http://localhost:5433/getWalletBalance", {
+      .get("http://localhost/transaction/getWalletBalance", {
         withCredentials: true,
         headers: {
           token: localStorage.getItem("token"),
@@ -37,7 +37,7 @@ export default function AccountInfo({ user, showAlert }) {
     const fundsModal = document.getElementById("funds-modal");
     await axios
       .post(
-        "http://localhost:5433/addMoneyToWallet",
+        "http://localhost/transaction/addMoneyToWallet",
         {
           amount: parseInt(fundsInput),
         },
