@@ -14,6 +14,22 @@ import (
 // Global variable for the database connection
 var db *sql.DB
 
+var (
+    stmtUpdateWalletTransaction *sql.Stmt
+    stmtUpdateMoneyWallet       *sql.Stmt
+    stmtCheckUserStocks         *sql.Stmt
+    stmtDeleteUserStocks        *sql.Stmt
+    stmtInsertUserStocks        *sql.Stmt
+    stmtSetWalletTransaction    *sql.Stmt
+    stmtGetWalletTransactionsAmount *sql.Stmt
+    stmtSetStockTransaction     *sql.Stmt
+    stmtSetStatus               *sql.Stmt
+    stmtUpdateWalletTxId        *sql.Stmt
+    stmtUpdateMarketStockPrice        *sql.Stmt
+    stmtUpdateUserStocks              *sql.Stmt
+    stmtCheckWalletTransaction      *sql.Stmt
+)
+
 const (
 	host = "database"
 	// host     = "localhost" // for local testing
@@ -327,384 +343,272 @@ func executeSellTrade(c *gin.Context) {
 /** === BUY/SELL support === **/
 
 func getWalletTransactionsAmount(userName string, walletTxID string) (float64, error) {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return 0, fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
+    // Query the database to get the total amount of wallet transactions for the specified user and wallet ID
+    var totalAmount float64
+    err := stmtGetWalletTransactionsAmount.QueryRow(userName, walletTxID).Scan(&totalAmount)
+    if err != nil {
+        return 0, fmt.Errorf("Failed to get wallet transactions amount: %w", err)
+    }
 
-	// Query the database to get the total amount of wallet transactions for the specified user and wallet ID
-	var totalAmount float64
-	err = db.QueryRow("SELECT SUM(amount) FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2", userName, walletTxID).Scan(&totalAmount)
-	if err != nil {
-		return 0, fmt.Errorf("Failed to get wallet transactions amount: %w", err)
-	}
-
-	return totalAmount, nil
+    return totalAmount, nil
 }
-
-// func getWalletTransactionsAmount(userName string, walletTxID string) (float64, error) {
-//     // Query the database to get the total amount of wallet transactions for the specified user and wallet ID
-//     var totalAmount float64
-//     err := stmtGetWalletTransactionsAmount.QueryRow(userName, walletTxID).Scan(&totalAmount)
-//     if err != nil {
-//         return 0, fmt.Errorf("Failed to get wallet transactions amount: %w", err)
-//     }
-
-//     return totalAmount, nil
-// }
 
 func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
-	fmt.Println("Deducting money from wallet")
-
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
-	// Calculate total to be added or deducted
-	if !isAdded {
-		amount = amount * (-1) // Reduce funds if buying
-	}
-
-	// Update the user's wallet
-	_, err = db.Exec(`
-		UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`, amount, userName)
-	if err != nil {
-		return fmt.Errorf("Failed to update wallet: %w", err)
-	}
-	return nil
+    // Adjust the amount based on the transaction type
+    if !isAdded {
+        amount *= -1 // Deduct funds if buying
+    }
+    _, err := stmtUpdateMoneyWallet.Exec(amount, userName)
+    if err != nil {
+        return fmt.Errorf("Failed to update wallet: %w", err)
+    }
+    return nil
 }
-
-// func updateMoneyWallet(userName string, amount float64, isAdded bool) error {
-//     // Adjust the amount based on the transaction type
-//     if !isAdded {
-//         amount *= -1 // Deduct funds if buying
-//     }
-//     _, err := stmtUpdateMoneyWallet.Exec(amount, userName)
-//     if err != nil {
-//         return fmt.Errorf("Failed to update wallet: %w", err)
-//     }
-//     return nil
-// }
 
 func updateWalletTransaction(userName string, order Order, amount float64) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
+    // Update the wallet transaction
+    _, err := stmtUpdateWalletTransaction.Exec(amount, userName, order.WalletTxID)
+    if err != nil {
+        return fmt.Errorf("Failed to update wallet transaction: %w", err)
+    }
 
-	// Update the wallet transaction
-	_, err = db.Exec(`UPDATE wallet_transactions SET amount = $1 WHERE user_name = $2 AND wallet_tx_id = $3`, amount, userName, order.WalletTxID)
-	if err != nil {
-		return fmt.Errorf("Failed to update wallet transaction: %w", err)
-	}
-
-	return nil
+    return nil
 }
-
-// func updateWalletTransaction(userName string, order Order, amount float64) error {
-//     // Update the wallet transaction
-//     _, err := stmtUpdateWalletTransaction.Exec(amount, userName, order.WalletTxID)
-//     if err != nil {
-//         return fmt.Errorf("Failed to update wallet transaction: %w", err)
-//     }
-
-//     return nil
-// }
 
 func updateStockPortfolio(userName string, order Order, quantity float64, isAdded bool) error {
-	fmt.Println("Deducting stock from portfolio")
+    // Calculate the total quantity to be added or deducted
+    total := quantity
+    if !isAdded {
+        total *= -1 // Reduce stocks if selling
+    }
 
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
+    // Check if user already owns this stock
+    var currentQuantity float64
+    err := stmtCheckUserStocks.QueryRow(userName, order.StockID).Scan(&currentQuantity)
+    if err != nil && err != sql.ErrNoRows {
+        return fmt.Errorf("Failed to query user stocks: %w", err)
+    }
 
-	// Calculate total to be added or deducted
-	total := quantity
-	if !isAdded {
-		total = total * (-1) // Reduce stocks if selling
-	}
-
-	rows, err := db.Query(`
-		SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
-	if err != nil {
-		return fmt.Errorf("Failed to query user stocks: %w", err)
-	}
-	defer rows.Close()
-
-	// User already owns this stock
-	if rows.Next() {
-		// Update the user's stocks
-		var amount float64
-		if err := rows.Scan(&amount); err != nil {
-			return fmt.Errorf("Error while scanning row: %w", err)
-		}
-		if total < 0 && (amount+total) <= 0 {
-			_, err = db.Exec(`
-				DELETE FROM user_stocks WHERE user_name = $1 AND stock_id = $2`, userName, order.StockID)
-			if err != nil {
-				return fmt.Errorf("Failed to update user stocks: %w", err)
-			}
-		} else {
-			_, err = db.Exec(`
-				UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`, total, userName, order.StockID)
-			if err != nil {
-				return fmt.Errorf("Failed to update user stocks: %w", err)
-			}
-		}
-	} else {
-		// For wallet transactions, update the wallet regardless of the order type
-		if total <= 0 {
-			return fmt.Errorf("No stocks to deduct")
-		} else {
-			_, err = db.Exec(`
-				INSERT INTO user_stocks VALUES($1, $2, $3)`, userName, order.StockID, quantity)
-			if err != nil {
-				return fmt.Errorf("Failed to create user_stock: %w", err)
-			}
-		}
-	}
-
-	return nil
+    if currentQuantity+total <= 0 {
+        // Delete user's stock if the total quantity becomes zero or negative
+        _, err = stmtDeleteUserStocks.Exec(userName, order.StockID)
+    } else if currentQuantity > 0 {
+        // Update user's stock quantity
+        _, err = stmtUpdateUserStocks.Exec(total, userName, order.StockID)
+    } else {
+        // Insert new user's stock
+        _, err = stmtInsertUserStocks.Exec(userName, order.StockID, quantity)
+    }
+    if err != nil {
+        return fmt.Errorf("Failed to update user stocks: %w", err)
+    }
+    return nil
 }
-
-// func updateStockPortfolio(userName string, order Order, quantity float64, isAdded bool) error {
-//     // Calculate the total quantity to be added or deducted
-//     total := quantity
-//     if !isAdded {
-//         total *= -1 // Reduce stocks if selling
-//     }
-
-//     // Check if user already owns this stock
-//     var currentQuantity float64
-//     err := stmtCheckUserStocks.QueryRow(userName, order.StockID).Scan(&currentQuantity)
-//     if err != nil && err != sql.ErrNoRows {
-//         return fmt.Errorf("Failed to query user stocks: %w", err)
-//     }
-
-//     if currentQuantity+total <= 0 {
-//         // Delete user's stock if the total quantity becomes zero or negative
-//         _, err = stmtDeleteUserStocks.Exec(userName, order.StockID)
-//     } else if currentQuantity > 0 {
-//         // Update user's stock quantity
-//         _, err = stmtUpdateUserStocks.Exec(total, userName, order.StockID)
-//     } else {
-//         // Insert new user's stock
-//         _, err = stmtInsertUserStocks.Exec(userName, order.StockID, quantity)
-//     }
-//     if err != nil {
-//         return fmt.Errorf("Failed to update user stocks: %w", err)
-//     }
-//     return nil
-// }
 
 func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
+    if status == "PARTIAL_FULFILLED" {
+        order.Status = status
+    }
 
-	if status == "PARTIAL_FULFILLED" {
-		order.Status = status
-	}
+    // Insert transaction to wallet transactions
+    _, err := stmtSetStatus.Exec(status, order.UserName, order.StockTxID)
+    if err != nil {
+        return fmt.Errorf("Failed to update status: %w", err)
+    }
 
-	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
-		UPDATE stock_transactions SET order_status = $1 WHERE user_name = $2 AND stock_tx_id = $3`, status, order.UserName, order.StockTxID)
-	if err != nil {
-		return fmt.Errorf("Failed to update status: %w", err)
-	}
+    // assign wallet_tx_id to stock_tx_id if the Sell order is completed
+    if isUpdateWalletTxId {
+        _, err = stmtUpdateWalletTxId.Exec(order.WalletTxID, order.UserName, order.StockTxID)
+    }
 
-	// assign wallet_tx_id to stock_tx_id if the Sell order is completed
-	if isUpdateWalletTxId {
-		_, err = db.Exec(`
-			UPDATE stock_transactions SET wallet_tx_id = $1 WHERE user_name = $2 AND stock_tx_id = $3`, order.WalletTxID, order.UserName, order.StockTxID)
-	}
-
-	return nil
+    return nil
 }
-
-// func setStatus(order *Order, status string, isUpdateWalletTxId bool) error {
-//     if status == "PARTIAL_FULFILLED" {
-//         order.Status = status
-//     }
-
-//     // Insert transaction to wallet transactions
-//     _, err := stmtSetStatus.Exec(status, order.UserName, order.StockTxID)
-//     if err != nil {
-//         return fmt.Errorf("Failed to update status: %w", err)
-//     }
-
-//     // assign wallet_tx_id to stock_tx_id if the Sell order is completed
-//     if isUpdateWalletTxId {
-//         _, err = stmtUpdateWalletTxId.Exec(order.WalletTxID, order.UserName, order.StockTxID)
-//     }
-
-//     return nil
-// }
 
 // Store completed wallet transactions based on order matched
 func setWalletTransaction(userName string, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {
-	fmt.Println("Setting wallet transaction")
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to insert stock transaction: %w", err)
-	}
-	defer db.Close()
+    amount := *price * quantity // Calculate transaction amount
+    isDebit := !isAdded         // Determine if it's a debit transaction
 
-	// isDebit = True if money is deducted from wallet.
-	// isDebit = False if money is added to wallet
-	var isDebit bool
-	isDebit = !isAdded
-
-	amount := (*price) * float64(quantity)
-
-	// Insert transaction to wallet transactions
-	_, err = db.Exec(`
-		INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
-		VALUES ($1, $2, $3, $4, $5)`, walletTxID, userName, isDebit, amount, timestamp)
-	if err != nil {
-		return fmt.Errorf("Failed to commit transaction: %w", err)
-	}
-	return nil
+    _, err := stmtSetWalletTransaction.Exec(walletTxID, userName, isDebit, amount, timestamp)
+    if err != nil {
+        return fmt.Errorf("Failed to commit wallet transaction: %w", err)
+    }
+    return nil
 }
-
-// Store completed wallet transactions based on order matched
-// func setWalletTransaction(userName string, walletTxID string, timestamp string, price *float64, quantity float64, isAdded bool) error {
-//     amount := *price * quantity // Calculate transaction amount
-//     isDebit := !isAdded         // Determine if it's a debit transaction
-
-//     _, err := stmtSetWalletTransaction.Exec(walletTxID, userName, isDebit, amount, timestamp)
-//     if err != nil {
-//         return fmt.Errorf("Failed to commit wallet transaction: %w", err)
-//     }
-//     return nil
-// }
 
 // Store transaction based on the order user created
 func setStockTransaction(userName string, tx Order, price *float64, quantity float64) error {
-	fmt.Println("Setting stock transaction")
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to insert stock transaction: %w", err)
-	}
-	defer db.Close()
+    // Check if a wallet transaction has been made for this order yet
+    rows, err := stmtCheckWalletTransaction.Query(userName, tx.WalletTxID)
+    if err != nil {
+        return fmt.Errorf("Error querying wallet transactions: %w", err)
+    }
+    defer rows.Close()
 
-	// Check if a wallet transaction has been made for this order yet
-	rows, err := db.Query(`
-		SELECT wallet_tx_id FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`, userName, tx.WalletTxID)
-	if err != nil {
-		return fmt.Errorf("Error querying wallet transactions: %w", err)
-	}
-	defer rows.Close()
+    var wallet_tx_id *string
 
-	var wallet_tx_id *string
+    // if a wallet transaction is found in wallet_transaction table db, then add it to stock_transaction table OR,
+    // if status is COMPLETED, the stock transaction need to a wallet transaction
+    if rows.Next() || tx.Status == "COMPLETED" {
+        wallet_tx_id = &tx.WalletTxID
+    }
 
-	// if a wallet transaction is found in wallet_transaction table db, then add it to stock_transaction table OR,
-	// if status is COMPLETED, the stock transaction need to a wallet transaction
-	if rows.Next() || tx.Status == "COMPLETED" {
-		fmt.Println("Wallet transaction: ", wallet_tx_id)
-		wallet_tx_id = &tx.WalletTxID
-	}
-
-	// Insert transaction to stock transactions
-	_, err = db.Exec(`
-		INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
-	    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, *price, quantity, tx.TimeStamp)
-	if err != nil {
-		return fmt.Errorf("Failed to commit transaction: %w", err)
-	}
-	return nil
+    // Insert transaction to stock transactions
+    _, err = stmtSetStockTransaction.Exec(tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, *price, quantity, tx.TimeStamp)
+    if err != nil {
+        return fmt.Errorf("Failed to commit transaction: %w", err)
+    }
+    return nil
 }
-
-// Store transaction based on the order user created
-// func setStockTransaction(userName string, tx Order, price *float64, quantity float64) error {
-//     // Check if a wallet transaction has been made for this order yet
-//     rows, err := stmtCheckWalletTransaction.Query(userName, tx.WalletTxID)
-//     if err != nil {
-//         return fmt.Errorf("Error querying wallet transactions: %w", err)
-//     }
-//     defer rows.Close()
-
-//     var wallet_tx_id *string
-
-//     // if a wallet transaction is found in wallet_transaction table db, then add it to stock_transaction table OR,
-//     // if status is COMPLETED, the stock transaction need to a wallet transaction
-//     if rows.Next() || tx.Status == "COMPLETED" {
-//         wallet_tx_id = &tx.WalletTxID
-//     }
-
-//     // Insert transaction to stock transactions
-//     _, err = stmtSetStockTransaction.Exec(tx.StockTxID, userName, tx.StockID, wallet_tx_id, tx.Status, tx.ParentTxID, tx.IsBuy, tx.OrderType, *price, quantity, tx.TimeStamp)
-//     if err != nil {
-//         return fmt.Errorf("Failed to commit transaction: %w", err)
-//     }
-//     return nil
-// }
 
 // Update db of Market price of a stock X to the last sold price of a stock X
 // For UI display only, backend will NOT use the last sold price to find Market price
 // Backend will use the top of the queue for the Market price 
 func updateMarketStockPrice(stockID string, price *float64) error {
-	
-	fmt.Println("Starting Execution Service \n\n\n ===============")
-
-	fmt.Println("Updating stock price")
-	
-	// Connect to database
-	db, err := openConnection()
-	if err != nil {
-		return fmt.Errorf("Failed to connect to database: %w", err)
-	}
-	defer db.Close()
-
-	// Update the stock price
-	_, err = db.Exec("UPDATE stocks SET current_price = $1 WHERE stock_id = $2", *price, stockID)
-	if err != nil {
-		return fmt.Errorf("Failed to update stock price: %w", err)
-	}
-	return nil
+    // Update the stock price
+    _, err := stmtUpdateMarketStockPrice.Exec(*price, stockID)
+    if err != nil {
+        return fmt.Errorf("Failed to update stock price: %w", err)
+    }
+    return nil
 }
-
-// Update db of Market price of a stock X to the last sold price of a stock X
-// For UI display only, backend will NOT use the last sold price to find Market price
-// Backend will use the top of the queue for the Market price 
-// func updateMarketStockPrice(stockID string, price *float64) error {
-//     // Update the stock price
-//     _, err := stmtUpdateMarketStockPrice.Exec(*price, stockID)
-//     if err != nil {
-//         return fmt.Errorf("Failed to update stock price: %w", err)
-//     }
-//     return nil
-// }
 
 /** === END BUY/SELL support === **/
 
+func prepareStatements() error {
+    var err error
+
+    stmtUpdateWalletTransaction, err = db.Prepare(`
+        UPDATE wallet_transactions SET amount = $1 WHERE user_name = $2 AND wallet_tx_id = $3`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare update wallet transaction statement: %v", err)
+    }
+
+    stmtUpdateMoneyWallet, err = db.Prepare(`
+        UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare update money wallet statement: %v", err)
+    }
+
+    stmtCheckUserStocks, err = db.Prepare(`
+        SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare check user stocks statement: %v", err)
+    }
+
+    stmtDeleteUserStocks, err = db.Prepare(`
+        DELETE FROM user_stocks WHERE user_name = $1 AND stock_id = $2`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare delete user stocks statement: %v", err)
+    }
+
+    stmtInsertUserStocks, err = db.Prepare(`
+        INSERT INTO user_stocks VALUES ($1, $2, $3)`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare insert user stocks statement: %v", err)
+    }
+
+    stmtSetWalletTransaction, err = db.Prepare(`
+        INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
+        VALUES ($1, $2, $3, $4, $5)`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare set wallet transaction statement: %v", err)
+    }
+
+    stmtGetWalletTransactionsAmount, err = db.Prepare(`
+        SELECT SUM(amount) FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare get wallet transactions amount statement: %v", err)
+    }
+
+    stmtSetStockTransaction, err = db.Prepare(`
+        INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare set stock transaction statement: %v", err)
+    }
+
+    stmtSetStatus, err = db.Prepare(`
+        UPDATE stock_transactions SET order_status = $1 WHERE user_name = $2 AND stock_tx_id = $3`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare set status statement: %v", err)
+    }
+
+    stmtUpdateWalletTxId, err = db.Prepare(`
+        UPDATE stock_transactions SET wallet_tx_id = $1 WHERE user_name = $2 AND stock_tx_id = $3`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare update wallet transaction ID statement: %v", err)
+    }
+
+    stmtUpdateMarketStockPrice, err = db.Prepare(`
+        UPDATE stocks SET current_price = $1 WHERE stock_id = $2`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare update market stock price statement: %v", err)
+    }
+
+    stmtUpdateUserStocks, err = db.Prepare(`
+        UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare update user stocks statement: %v", err)
+    }
+
+    stmtCheckWalletTransaction, err = db.Prepare(`
+		SELECT wallet_tx_id FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`)
+    if err != nil {
+        return fmt.Errorf("failed to prepare check wallet transaction statement: %v", err)
+    }
+
+    return nil
+}
+
+func initializeDB() error {
+    postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+    var err error
+    db, err = sql.Open("postgres", postgresqlDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the database: %v", err)
+    }
+
+    // Ensure the database connection is fully established
+    for {
+        err = db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+    return nil
+}
+
 func main() {
-	router := gin.Default()
+	err := initializeDB()
+    if err != nil {
+        fmt.Printf("Failed to initialize the database: %v\n", err)
+        return
+    }
+    defer db.Close()
 
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"}
-	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "token"}
-	config.AllowCredentials = true
-	router.Use(cors.New(config))
+    err = prepareStatements()
+    if err != nil {
+        fmt.Printf("Failed to prepare SQL statements: %v\n", err)
+        return
+    }
+    defer stmtUpdateWalletTransaction.Close()
+    defer stmtUpdateMoneyWallet.Close()
+    defer stmtCheckUserStocks.Close()
+    defer stmtDeleteUserStocks.Close()
+    defer stmtInsertUserStocks.Close()
+    defer stmtSetWalletTransaction.Close()
+    defer stmtGetWalletTransactionsAmount.Close()
+    defer stmtSetStockTransaction.Close()
+    defer stmtSetStatus.Close()
+    defer stmtUpdateWalletTxId.Close()
+    defer stmtUpdateUserStocks.Close()
+    defer stmtCheckWalletTransaction.Close()
 
-	router.POST("/executeSellTrade", executeSellTrade)
-	router.POST("/executeBuyTrade", executeBuyTrade)
 
-	router.Run(":5555")
+    db.SetMaxOpenConns(10) // Set maximum number of open connections
+    db.SetMaxIdleConns(5) // Set maximum number of idle connections
 }

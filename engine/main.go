@@ -9,7 +9,8 @@ import (
 	"time"
 	"bytes"
 	"encoding/json"
-	
+    
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/gin-contrib/cors"
 	"github.com/Poomon001/day-trading-package/identification"
 	"github.com/gin-gonic/gin"
@@ -286,7 +287,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        printq(book)
+        // printq(book)
         // LogBuyOrder(order)
     } else {
         if err := verifyStockBeforeTransaction(userName, order); err != nil {
@@ -305,7 +306,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        printq(book)
+        // printq(book)
         // LogSellOrder(order)
     }
 
@@ -380,7 +381,6 @@ func postprocessingRemoveBuyOrder(order Order) {
             fmt.Println("Error deleting stock transaction: ", err)
         }
     } else {
-        fmt.Println("Remove PARTIAL_FULFILLED buy order")
         if err := updateMoneyWallet(order.UserName, amount, true); err != nil {
             fmt.Println("Error updating wallet: ", err)
         }
