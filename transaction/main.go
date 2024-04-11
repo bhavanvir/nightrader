@@ -15,8 +15,8 @@ import (
 var db *sql.DB
 
 const (
-	host = "database"
-	// host = "localhost" // for local testing
+	// host = "database"
+	host = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"

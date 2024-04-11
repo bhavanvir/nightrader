@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-	"bytes"
 	"encoding/json"
     
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -41,14 +40,28 @@ var (
 )
 
 const (
-    host = "database"
-    // host     = "localhost" // for local testing
+    // host = "database"
+    host     = "localhost" // for local testing
     port     = 5432
     user     = "nt_user"
     password = "db123"
     dbname   = "nt_db"
 
     namespaceUUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+)
+
+const (
+	// rabbitHost = "rabbitmq"
+	rabbitHost     = "localhost" // for local testing
+	rabbitPort     = "5672"
+	rabbitUser     = "guest"
+	rabbitPassword = "guest"
+    rabbitRoutingKey = "order_execution_queue"
+)
+
+var (
+    rabbitMQConnect *amqp.Connection
+    rabbitMQChannel *amqp.Channel
 )
 
 type ErrorResponse struct {
@@ -113,6 +126,54 @@ type PriorityQueue struct {
 type TradePayload struct {
 	BuyOrder  Order   `json:"buy_order"`
 	SellOrder Order   `json:"sell_order"`
+    IsBuyExecuted bool `json:"is_buy_executed"`
+}
+
+type ResponsePayload struct {
+	BuyQuantity float64 `json:"buy_quantity"`
+	SellQuantity float64 `json:"sell_quantity"`
+	IsBuyExecuted bool `json:"is_buy_executed"`
+}
+
+// Define the structure of the order book map
+type OrderBookMap struct {
+    OrderBooks map[string]*OrderBook // Map of stock ID to order book
+    mu         sync.Mutex            // Mutex to synchronize access to the map
+}
+
+// Initialize the order book map
+var orderBookMap = OrderBookMap{
+    OrderBooks: make(map[string]*OrderBook),
+}
+
+func createRabbitMQChannel() error {
+	var err error
+    if rabbitMQChannel == nil {
+        rabbitMQChannel, err = rabbitMQConnect.Channel()
+        if err != nil {
+			return fmt.Errorf("Failed to open a channel: %v", err)
+        }
+    }
+	return nil
+}
+
+func closeRabbitMQChannel() error {
+    if rabbitMQChannel != nil {
+        err := rabbitMQChannel.Close()
+        if err != nil {
+            return fmt.Errorf("Failed to close the channel: %v", err)
+        }
+    }
+    return nil
+}
+
+func createRabbitMQQueue(queueName string) error {
+    _, err := rabbitMQChannel.QueueDeclare(queueName, false, false, false, false, nil)
+    if err != nil {
+        fmt.Println("Failed to declare a queue: ", err)
+		return err
+    }
+    return nil
 }
 
 // handleError is a helper function to send error responses
@@ -287,7 +348,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        // printq(book)
+        printq(book)
         // LogBuyOrder(order)
     } else {
         if err := verifyStockBeforeTransaction(userName, order); err != nil {
@@ -306,7 +367,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        // printq(book)
+        printq(book)
         // LogSellOrder(order)
     }
 
@@ -449,17 +510,6 @@ func HandleCancelStockTransaction(c *gin.Context) {
     handleError(c, http.StatusOK, errorMessage, nil)
 }
 
-// Define the structure of the order book map
-type OrderBookMap struct {
-    OrderBooks map[string]*OrderBook // Map of stock ID to order book
-    mu         sync.Mutex            // Mutex to synchronize access to the map
-}
-
-// Initialize the order book map
-var orderBookMap = OrderBookMap{
-    OrderBooks: make(map[string]*OrderBook),
-}
-
 /** === BUY Order === **/
 func matchLimitBuyOrder(book *OrderBook, order Order) {
 	// Add the buy order to the buy queue
@@ -474,7 +524,7 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 		if *lowestSellOrder.Price <= *highestBuyOrder.Price {
 
 			// execute the trade
-			err := buyOrderExecution(highestBuyOrder, lowestSellOrder); if err != nil {
+			err := orderExecution(highestBuyOrder, lowestSellOrder, true); if err != nil {
 				fmt.Println("Error executing Limit Buy order: ", err)
 			}
 
@@ -516,7 +566,7 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 		order.Price = getStockOrderPrice(book, order);
 		
 		// execute the trade
-		err := buyOrderExecution(&order, lowestSellOrder); if err != nil {
+		err := orderExecution(&order, lowestSellOrder, true); if err != nil {
 			fmt.Println("Error executing Market Buy order: ", err)
 		}
 		
@@ -530,12 +580,13 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 	}
 }
 
-func buyOrderExecution(buyOrder *Order, sellOrder *Order) error {
-	// url := "http://localhost:5555/executeBuyTrade"
-	url := "http://execution:5555/executeBuyTrade"
+var wg sync.WaitGroup
+
+func orderExecution(buyOrder *Order, sellOrder *Order, isBuyExecuted bool) error {
 	payload := TradePayload{
 		BuyOrder:  *buyOrder,
 		SellOrder: *sellOrder,
+        IsBuyExecuted: isBuyExecuted,
 	}
 
 	payloadBytes, err := json.Marshal(payload)
@@ -543,25 +594,69 @@ func buyOrderExecution(buyOrder *Order, sellOrder *Order) error {
 		return err
 	}
 
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	err = rabbitMQChannel.Publish(
+        "",				// exchange
+        rabbitRoutingKey,	// routing key
+        false,			// mandatory
+        false,			// immediate
+        amqp.Publishing{
+            ContentType: "application/json",
+            Body:        payloadBytes,
+        },
+    )
+    if err != nil {
+        return fmt.Errorf("Failed to publish a message: %w", err)
+    }
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
+    // Increment the wait group counter
+    wg.Add(1)
+    
+    messages, err := rabbitMQChannel.Consume(
+        "response_queue", // queue
+        "",        // consumer
+        true,     // auto-ack
+        false,     // exclusive
+        false,     // no-local
+        false,     // no-wait
+        nil,       // args
+    )
+    if err != nil {
+        fmt.Printf("Failed to consume messages: %v", err)
+    }
+
+    var remainingBuyQuantity float64
+    var remainingSellQuantity float64
 
 	// Handle response if needed
-	var responsePayload TradePayload
-	if err := json.NewDecoder(resp.Body).Decode(&responsePayload); err != nil {
-		return fmt.Errorf("Fail to decode Buy order response: %d - %s", resp.StatusCode, err.Error())
-	}
+    var responsePayload ResponsePayload
+    go func() {
+        for msg := range messages {
+            fmt.Println("Received message loop: ")
+            err := json.Unmarshal(msg.Body, &responsePayload)
+            if err != nil {
+                fmt.Println("Failed to parse JSON: ", err)
+                continue
+            }
+            
+            remainingBuyQuantity = responsePayload.BuyQuantity
+            remainingSellQuantity = responsePayload.SellQuantity
+            
+            fmt.Printf("Buy Quantity: %.2f, Sell Quantity: %.2f\n", remainingBuyQuantity, remainingSellQuantity)
+            wg.Done()
+        }
+    }()
 
-	// Update the order values
-	*buyOrder = responsePayload.BuyOrder
-	*sellOrder = responsePayload.SellOrder
+    // Wait for the goroutine to finish
+    fmt.Println("Waiting for response...")
+    wg.Wait()
+    fmt.Println("Response received")
+
+    buyOrder.Quantity = remainingBuyQuantity
+    sellOrder.Quantity = remainingSellQuantity
+
+    fmt.Printf("\nBuy Trade Executed - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
+	sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price, buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price)
+
 	return nil
 }
 
@@ -588,7 +683,7 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 		if *lowestSellOrder.Price <= *highestBuyOrder.Price {
 			
 			// execute the trade
-			err := sellOrderExecution(highestBuyOrder, lowestSellOrder); if err != nil {
+			err := orderExecution(highestBuyOrder, lowestSellOrder, false); if err != nil {
 				fmt.Println("Error executing Limit Sell order: ", err)
 			}
 			
@@ -596,9 +691,10 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 				highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
 			}
 
-			fmt.Printf("\nLimit Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-			lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price, highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price)
-		} else {
+			fmt.Printf("Limit Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
+            lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price, highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price)
+            break
+        } else {
 			fmt.Println("No match found, putting back in the buy queue")
 			break
 		}
@@ -627,7 +723,7 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 		order.Price = getStockOrderPrice(book, order);
 		
 		// execute the trade
-		err := sellOrderExecution(highestBuyOrder, &order); if err != nil {
+		err := orderExecution(highestBuyOrder, &order, false); if err != nil {
 			fmt.Println("Error executing Market Sell order: ", err)
 		}
 
@@ -639,42 +735,6 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 		fmt.Printf("\nMarket Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 		&order.StockTxID, &order.Quantity, *(&order.Price), highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price)
 	}
-}
-
-func sellOrderExecution(buyOrder *Order, sellOrder *Order) error {
-	// url := "http://localhost:5555/executeBuyTrade"
-	url := "http://execution:5555/executeBuyTrade"
-	
-	payload := TradePayload{
-		BuyOrder:  *buyOrder,
-		SellOrder: *sellOrder,
-	}
-
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	// Handle response if needed
-	var responsePayload TradePayload
-	if err := json.NewDecoder(resp.Body).Decode(&responsePayload); err != nil {
-		return fmt.Errorf("Fail to decode Buy order response: %d - %s", resp.StatusCode, err.Error())
-	}
-
-	// Update the order values
-	*buyOrder = responsePayload.BuyOrder
-	*sellOrder = responsePayload.SellOrder
-	return nil
 }
 
 /** === End SELL Order === **/
@@ -1131,9 +1191,30 @@ func main() {
     defer stmtUpdateUserStocks.Close()
     defer stmtCheckWalletTransaction.Close()
 
-
     db.SetMaxOpenConns(10) // Set maximum number of open connections
     db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+    if rabbitMQConnect == nil {
+        amqpURI := fmt.Sprintf("amqp://%s:%s@%s:%s/", rabbitUser, rabbitPassword, rabbitHost, rabbitPort)
+        rabbitMQConnect, err = amqp.Dial(amqpURI)
+        if err != nil {
+			fmt.Println("Failed to connect to RabbitMQ", err)
+			return
+        }
+    }
+    err = createRabbitMQChannel()
+    if err != nil {
+        fmt.Println("Failed to create RabbitMQ channels", err)
+        return
+    }
+    err = createRabbitMQQueue(rabbitRoutingKey)
+    if err != nil {
+        fmt.Println("Failed to create RabbitMQ queues", err)
+        return
+    }
+	
+    defer rabbitMQConnect.Close()
+    defer rabbitMQChannel.Close()
 
     router := gin.Default()
 

@@ -2,13 +2,16 @@ package main
 
 import (
     "database/sql"
-	"net/http"
     "fmt"
-    "github.com/gin-contrib/cors"
+	"encoding/json"
     "github.com/gin-gonic/gin"
     _ "github.com/lib/pq"
 	"github.com/google/uuid"
 	"time"
+	"os"
+	"os/signal"
+	"syscall"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // Global variable for the database connection
@@ -31,12 +34,26 @@ var (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
 	dbname   = "nt_db"
+)
+
+const (
+	// rabbitHost = "rabbitmq"
+	rabbitHost     = "localhost" // for local testing
+	rabbitPort     = "5672"
+	rabbitUser     = "guest"
+	rabbitPassword = "guest"
+    rabbitRoutingKey = "order_execution_queue"
+)
+
+var (
+    rabbitMQConnect *amqp.Connection
+    rabbitMQChannel *amqp.Channel
 )
 
 type Order struct {
@@ -61,11 +78,38 @@ type ErrorResponse struct {
 type TradePayload struct {
 	BuyOrder  Order   `json:"buy_order"`
 	SellOrder Order   `json:"sell_order"`
+	IsBuyExecuted bool `json:"is_buy_executed"`
+}
+
+type ResponsePayload struct {
+	BuyQuantity float64 `json:"buy_quantity"`
+	SellQuantity float64 `json:"sell_quantity"`
+	IsBuyExecuted bool `json:"is_buy_executed"`
 }
 
 func openConnection() (*sql.DB, error) {
 	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	return sql.Open("postgres", postgresqlDbInfo)
+}
+
+func createRabbitMQChannel() error {
+	var err error
+    if rabbitMQChannel == nil {
+        rabbitMQChannel, err = rabbitMQConnect.Channel()
+        if err != nil {
+			return fmt.Errorf("Failed to open a channel: %v", err)
+        }
+    }
+	return nil
+}
+
+func createRabbitMQQueue(queueName string) error {
+    _, err := rabbitMQChannel.QueueDeclare(queueName, false, false, false, false, nil)
+    if err != nil {
+        fmt.Println("Failed to declare a queue: ", err)
+		return err
+    }
+    return nil
 }
 
 // handleError is a helper function to send error responses
@@ -292,52 +336,80 @@ func completeSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice *float
 
 /** === END BUY/SELL Order === **/
 
-func executeBuyTrade(c *gin.Context) {
-	var payload TradePayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+func executeTrade() {
+	fmt.Println("Executing Trade")
+	msgs, err := rabbitMQChannel.Consume(
+		rabbitRoutingKey, // queue
+		"",        // consumer
+		true,     // auto-ack
+		false,     // exclusive
+		false,     // no-local
+		false,     // no-wait
+		nil,       // args
+	)
+	if err != nil {
+		fmt.Printf("Failed to consume messages: %v", err)
 	}
 
-	buyOrder := &payload.BuyOrder
-	sellOrder := &payload.SellOrder
+	// Consume messages in a separate goroutine
+	go func() {
+		for msg := range msgs {
+			var payload TradePayload
+			err := json.Unmarshal(msg.Body, &payload)
+			if err != nil {
+				// Handle JSON parsing error
+				fmt.Println("Failed to parse JSON:", err)
+				continue // Move to the next message
+			}
 
-	// Handle the buy trade execution here
-	handleBuyTrade(buyOrder, sellOrder)
+			buyOrder := &payload.BuyOrder
+			sellOrder := &payload.SellOrder
 
-	fmt.Printf("\nBuy Trade Executed - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-	sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price, buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price)
-	
-	responsepayload := TradePayload{
-		BuyOrder:  *buyOrder,
-		SellOrder: *sellOrder,
-	}
+			// Handle the buy trade execution here
+			if payload.IsBuyExecuted {
+				handleBuyTrade(buyOrder, sellOrder)
+			} else {
+				handleSellTrade(buyOrder, sellOrder)
+			}
+			
+			fmt.Printf("\nBuy Trade Executed - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
+			sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price, buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price)
 
-	c.JSON(http.StatusOK, responsepayload)
-}
+			responsePayload := ResponsePayload{
+				BuyQuantity: buyOrder.Quantity,
+				SellQuantity: sellOrder.Quantity,
+				IsBuyExecuted: payload.IsBuyExecuted,
+			}
 
-func executeSellTrade(c *gin.Context) {
-	var payload TradePayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+			responseDataBytes, err := json.Marshal(responsePayload)
+			if err != nil {
+				fmt.Println("Failed to marshal response data:", err)
+			}
 
-	buyOrder := &payload.BuyOrder
-	sellOrder := &payload.SellOrder
+			err = rabbitMQChannel.Publish(
+				"",                // exchange
+				"response_queue",  // routing key
+				false,             // mandatory
+				false,             // immediate
+				amqp.Publishing{
+					ContentType: "application/json",
+					Body:        responseDataBytes,
+				},
+			)
+			if err != nil {
+				fmt.Println("Failed to publish response message:", err)
+			}
+			fmt.Println("+++ Response message sent +++")
+		}
+	}()
 
-	// Handle the sell trade execution here
-	handleSellTrade(buyOrder, sellOrder)
+	fmt.Println("Press Ctrl + C to exit")
 
-	fmt.Printf("\nSell Trade Executed - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-	sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price, buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price)
-	
-	responsepayload := TradePayload{
-		BuyOrder:  *buyOrder,
-		SellOrder: *sellOrder,
-	}
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	<-sig
 
-	c.JSON(http.StatusOK, responsepayload)
+	fmt.Println("Shutting down...")
 }
 
 /** === BUY/SELL support === **/
@@ -611,4 +683,29 @@ func main() {
 
     db.SetMaxOpenConns(10) // Set maximum number of open connections
     db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+	if rabbitMQConnect == nil {
+        amqpURI := fmt.Sprintf("amqp://%s:%s@%s:%s/", rabbitUser, rabbitPassword, rabbitHost, rabbitPort)
+        rabbitMQConnect, err = amqp.Dial(amqpURI)
+        if err != nil {
+			fmt.Println("Failed to connect to RabbitMQ", err)
+			return
+        }
+    }
+    err = createRabbitMQChannel()
+    if err != nil {
+        fmt.Println("Failed to create RabbitMQ channels", err)
+        return
+    }
+
+	err = createRabbitMQQueue("response_queue")
+    if err != nil {
+        fmt.Println("Failed to create RabbitMQ queues", err)
+        return
+    }
+	
+    defer rabbitMQConnect.Close()
+    defer rabbitMQChannel.Close()
+
+	executeTrade()
 }

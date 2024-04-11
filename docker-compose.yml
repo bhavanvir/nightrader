@@ -37,6 +37,17 @@ services:
     networks:
       - nt-network
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    volumes:
+      - ./db-data:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - nt-network
+
   engine:
     container_name: engine
     build:
@@ -49,6 +60,7 @@ services:
     depends_on:
       - mongo
       - execution
+      - rabbitmq
     networks:
       - nt-network
 
@@ -61,6 +73,8 @@ services:
     environment:
       PORT: 5555
       GIN_MODE: release
+    depends_on:
+      - rabbitmq
     networks:
       - nt-network
 
