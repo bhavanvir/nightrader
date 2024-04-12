@@ -43,7 +43,7 @@ const (
 )
 
 const (
-	rabbitHost = "rabbitmq"
+	rabbitHost = "rabbitmq3"
 	// rabbitHost     = "localhost" // for local testing
 	rabbitPort     = "5672"
 	rabbitUser     = "guest"

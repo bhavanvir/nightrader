@@ -12,6 +12,4 @@ RUN go get github.com/rabbitmq/amqp091-go
 
 RUN go build -v -o app .
 
-EXPOSE 5555
-
 CMD ["./app"]

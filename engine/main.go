@@ -53,7 +53,7 @@ const (
 var wg sync.WaitGroup
 
 const (
-	rabbitHost = "rabbitmq"
+	rabbitHost = "rabbitmq3"
 	// rabbitHost     = "localhost" // for local testing
 	rabbitPort     = "5672"
 	rabbitUser     = "guest"
@@ -361,7 +361,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        // printq(book) // dont remove for debugging
+        printq(book) // dont remove for debugging
         // LogBuyOrder(order)
     } else {
         if err := verifyStockBeforeTransaction(userName, order); err != nil {
@@ -380,7 +380,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        // printq(book) // dont remove for debugging
+        printq(book) // dont remove for debugging
         // LogSellOrder(order)
     }
 

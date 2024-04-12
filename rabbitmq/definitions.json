@@ -1,0 +1,41 @@
+{
+  "users": [
+    {
+      "name": "guest",
+      "password": "guest",
+      "tags": "administrator"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "policies": [],
+  "queues": [
+    {
+      "name": "order_execution_queue",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "response_queue",
+      "vhost": "/",
+      "durable": false,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ]
+}
