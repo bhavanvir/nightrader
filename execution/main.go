@@ -34,8 +34,8 @@ var (
 )
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
+	// host = "database"
+	host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -43,8 +43,8 @@ const (
 )
 
 const (
-	rabbitHost = "rabbitmq"
-	// rabbitHost     = "localhost" // for local testing
+	// rabbitHost = "rabbitmq"
+	rabbitHost     = "localhost" // for local testing
 	rabbitPort     = "5672"
 	rabbitUser     = "guest"
 	rabbitPassword = "guest"
