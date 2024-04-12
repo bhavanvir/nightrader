@@ -7,3 +7,4 @@
 /tests/**/*
 **/stockIds.csv
 execute.go
+/db-data
