@@ -40,8 +40,8 @@ var (
 )
 
 const (
-    // host = "database"
-    host     = "localhost" // for local testing
+    host = "database"
+    // host     = "localhost" // for local testing
     port     = 5432
     user     = "nt_user"
     password = "db123"
@@ -50,9 +50,11 @@ const (
     namespaceUUID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
 )
 
+var wg sync.WaitGroup
+
 const (
-	// rabbitHost = "rabbitmq"
-	rabbitHost     = "localhost" // for local testing
+	rabbitHost = "rabbitmq"
+	// rabbitHost     = "localhost" // for local testing
 	rabbitPort     = "5672"
 	rabbitUser     = "guest"
 	rabbitPassword = "guest"
@@ -63,6 +65,13 @@ var (
     rabbitMQConnect *amqp.Connection
     rabbitMQChannel *amqp.Channel
 )
+
+type quantityData struct {
+    remainingBuyQuantity  float64
+    remainingSellQuantity float64
+}
+
+var qd quantityData
 
 type ErrorResponse struct {
     Success bool              `json:"success"`
@@ -535,7 +544,6 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 			
 			fmt.Printf("\nLimit Buy Engine - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
 				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
-			break
 		} else {
 			// If the lowest sell order price is greater than the buy order price, put it back in the sell queue
 			fmt.Println("No match found, putting back in the buy queue")
@@ -580,8 +588,6 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 	}
 }
 
-var wg sync.WaitGroup
-
 func orderExecution(buyOrder *Order, sellOrder *Order, isBuyExecuted bool) error {
 	payload := TradePayload{
 		BuyOrder:  *buyOrder,
@@ -610,54 +616,33 @@ func orderExecution(buyOrder *Order, sellOrder *Order, isBuyExecuted bool) error
 
     // Increment the wait group counter
     wg.Add(1)
-    
-    messages, err := rabbitMQChannel.Consume(
-        "response_queue", // queue
-        "",        // consumer
-        true,     // auto-ack
-        false,     // exclusive
-        false,     // no-local
-        false,     // no-wait
-        nil,       // args
-    )
-    if err != nil {
-        fmt.Printf("Failed to consume messages: %v", err)
-    }
-
-    var remainingBuyQuantity float64
-    var remainingSellQuantity float64
-
-	// Handle response if needed
-    var responsePayload ResponsePayload
-    go func() {
-        for msg := range messages {
-            fmt.Println("Received message loop: ")
-            err := json.Unmarshal(msg.Body, &responsePayload)
-            if err != nil {
-                fmt.Println("Failed to parse JSON: ", err)
-                continue
-            }
-            
-            remainingBuyQuantity = responsePayload.BuyQuantity
-            remainingSellQuantity = responsePayload.SellQuantity
-            
-            fmt.Printf("Buy Quantity: %.2f, Sell Quantity: %.2f\n", remainingBuyQuantity, remainingSellQuantity)
-            wg.Done()
-        }
-    }()
 
     // Wait for the goroutine to finish
     fmt.Println("Waiting for response...")
     wg.Wait()
     fmt.Println("Response received")
 
-    buyOrder.Quantity = remainingBuyQuantity
-    sellOrder.Quantity = remainingSellQuantity
+    // This will be updated by the goroutine: processMessage whenever there is a response message
+    buyOrder.Quantity = qd.remainingBuyQuantity
+    sellOrder.Quantity = qd.remainingSellQuantity
 
-    fmt.Printf("\nBuy Trade Executed - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-	sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price, buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price)
-
+    fmt.Printf("Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
+        buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price, sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price)
 	return nil
+}
+
+func processMessages(qd *quantityData, messages <-chan amqp.Delivery, wg *sync.WaitGroup) {
+    for msg := range messages {
+        var responsePayload ResponsePayload
+        err := json.Unmarshal(msg.Body, &responsePayload)
+        if err != nil {
+            fmt.Println("Failed to parse JSON: ", err)
+            continue
+        }
+        qd.remainingBuyQuantity = responsePayload.BuyQuantity
+        qd.remainingSellQuantity = responsePayload.SellQuantity
+        wg.Done()
+    }
 }
 
 /** === END BUY Order === **/
@@ -693,7 +678,6 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 
 			fmt.Printf("Limit Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
             lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price, highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price)
-            break
         } else {
 			fmt.Println("No match found, putting back in the buy queue")
 			break
@@ -1212,6 +1196,21 @@ func main() {
         fmt.Println("Failed to create RabbitMQ queues", err)
         return
     }
+
+    messages, err := rabbitMQChannel.Consume(
+        "response_queue", // queue
+        "",        // consumer
+        true,     // auto-ack
+        false,     // exclusive
+        false,     // no-local
+        false,     // no-wait
+        nil,       // args
+    )
+    if err != nil {
+        fmt.Printf("Failed to consume messages: %v", err)
+    }
+
+    go processMessages(&qd, messages, &wg)
 	
     defer rabbitMQConnect.Close()
     defer rabbitMQChannel.Close()
