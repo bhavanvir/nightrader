@@ -16,7 +16,6 @@ export default function StockTransactions({ user, Stock, showAlert }) {
       })
       .then(function (response) {
         setStockTransactions(response.data.data);
-        console.log(response.data.data);
       })
       .catch(function (error) {
         showAlert(

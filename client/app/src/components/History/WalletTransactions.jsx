@@ -20,8 +20,6 @@ export default function WalletTransactions({ user, showAlert }) {
       .catch(function (error) {});
   };
 
-  console.log(walletTransactions);
-
   useEffect(() => {
     fetchWalletTransactions(); // eslint-disable-next-line
   }, []);
