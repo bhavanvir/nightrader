@@ -40,8 +40,8 @@ var (
 )
 
 const (
-    // host = "database"
-    host     = "localhost" // for local testing
+    host = "database"
+    // host     = "localhost" // for local testing
     port     = 5432
     user     = "nt_user"
     password = "db123"
@@ -53,8 +53,8 @@ const (
 var wg sync.WaitGroup
 
 const (
-	// rabbitHost = "rabbitmq"
-	rabbitHost     = "localhost" // for local testing
+	rabbitHost = "rabbitmq"
+	// rabbitHost     = "localhost" // for local testing
 	rabbitPort     = "5672"
 	rabbitUser     = "guest"
 	rabbitPassword = "guest"
@@ -65,13 +65,6 @@ var (
     rabbitMQConnect *amqp.Connection
     rabbitMQChannel *amqp.Channel
 )
-
-type quantityData struct {
-    remainingBuyQuantity  float64
-    remainingSellQuantity float64
-}
-
-var qd quantityData
 
 type ErrorResponse struct {
     Success bool              `json:"success"`
@@ -141,8 +134,19 @@ type TradePayload struct {
 type ResponsePayload struct {
 	BuyQuantity float64 `json:"buy_quantity"`
 	SellQuantity float64 `json:"sell_quantity"`
+	BuyStatus string `json:"buy_status"`
+	SellStatus string `json:"sell_status"`
 	IsBuyExecuted bool `json:"is_buy_executed"`
 }
+
+type quantityData struct {
+    remainingBuyQuantity  float64
+    remainingSellQuantity float64
+    buyStatus string
+    sellStatus string
+}
+
+var qd quantityData
 
 // Define the structure of the order book map
 type OrderBookMap struct {
@@ -357,7 +361,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        printq(book)
+        // printq(book) // dont remove for debugging
         // LogBuyOrder(order)
     } else {
         if err := verifyStockBeforeTransaction(userName, order); err != nil {
@@ -376,7 +380,7 @@ func HandlePlaceStockOrder(c *gin.Context) {
         }
 
         processOrder(book, order)
-        printq(book)
+        // printq(book) // dont remove for debugging
         // LogSellOrder(order)
     }
 
@@ -541,12 +545,8 @@ func matchLimitBuyOrder(book *OrderBook, order Order) {
 			if lowestSellOrder.Quantity == 0 {
 				lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
 			}
-			
-			fmt.Printf("\nLimit Buy Engine - Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-				highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price, lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price)
 		} else {
 			// If the lowest sell order price is greater than the buy order price, put it back in the sell queue
-			fmt.Println("No match found, putting back in the buy queue")
 			break
 		}
 	}
@@ -582,9 +582,6 @@ func matchMarketBuyOrder(book *OrderBook, order Order) {
 		if lowestSellOrder.Quantity == 0 {
 			lowestSellOrder = heap.Pop(&book.SellOrders).(*Order)
 		}
-
-		fmt.Printf("\nMarket Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-		lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price, &order.StockTxID, &order.Quantity, *(&order.Price))
 	}
 }
 
@@ -617,17 +614,15 @@ func orderExecution(buyOrder *Order, sellOrder *Order, isBuyExecuted bool) error
     // Increment the wait group counter
     wg.Add(1)
 
-    // Wait for the goroutine to finish
-    fmt.Println("Waiting for response...")
+    // Wait for the goroutine processMessage to consume the response message
     wg.Wait()
-    fmt.Println("Response received")
 
     // This will be updated by the goroutine: processMessage whenever there is a response message
     buyOrder.Quantity = qd.remainingBuyQuantity
     sellOrder.Quantity = qd.remainingSellQuantity
+    buyOrder.Status = qd.buyStatus
+    sellOrder.Status = qd.sellStatus
 
-    fmt.Printf("Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f | Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-        buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price, sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price)
 	return nil
 }
 
@@ -641,6 +636,10 @@ func processMessages(qd *quantityData, messages <-chan amqp.Delivery, wg *sync.W
         }
         qd.remainingBuyQuantity = responsePayload.BuyQuantity
         qd.remainingSellQuantity = responsePayload.SellQuantity
+        qd.buyStatus = responsePayload.BuyStatus
+        qd.sellStatus = responsePayload.SellStatus
+
+        // Decrement the wait group counter
         wg.Done()
     }
 }
@@ -675,9 +674,6 @@ func matchLimitSellOrder(book *OrderBook, order Order) {
 			if highestBuyOrder.Quantity == 0 {
 				highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
 			}
-
-			fmt.Printf("Limit Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-            lowestSellOrder.StockTxID, lowestSellOrder.Quantity, *lowestSellOrder.Price, highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price)
         } else {
 			fmt.Println("No match found, putting back in the buy queue")
 			break
@@ -715,9 +711,6 @@ func matchMarketSellOrder(book *OrderBook, order Order) {
 		if highestBuyOrder.Quantity == 0 {
 			highestBuyOrder = heap.Pop(&book.BuyOrders).(*Order)
 		}
-
-		fmt.Printf("\nMarket Sell Engine - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-		&order.StockTxID, &order.Quantity, *(&order.Price), highestBuyOrder.StockTxID, highestBuyOrder.Quantity, *highestBuyOrder.Price)
 	}
 }
 

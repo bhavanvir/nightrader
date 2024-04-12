@@ -34,8 +34,8 @@ var (
 )
 
 const (
-	// host = "database"
-	host     = "localhost" // for local testing
+	host = "database"
+	// host     = "localhost" // for local testing
 	port     = 5432
 	user     = "nt_user"
 	password = "db123"
@@ -43,8 +43,8 @@ const (
 )
 
 const (
-	// rabbitHost = "rabbitmq"
-	rabbitHost     = "localhost" // for local testing
+	rabbitHost = "rabbitmq"
+	// rabbitHost     = "localhost" // for local testing
 	rabbitPort     = "5672"
 	rabbitUser     = "guest"
 	rabbitPassword = "guest"
@@ -84,6 +84,8 @@ type TradePayload struct {
 type ResponsePayload struct {
 	BuyQuantity float64 `json:"buy_quantity"`
 	SellQuantity float64 `json:"sell_quantity"`
+	BuyStatus string `json:"buy_status"`
+	SellStatus string `json:"sell_status"`
 	IsBuyExecuted bool `json:"is_buy_executed"`
 }
 
@@ -185,9 +187,6 @@ func generateUID() string {
 /** === BUY/SELL Order === **/
 
 func partialFulfillBuyOrder(order *Order, tradeQuantity float64, buyPrice *float64, sellPrice *float64) {
-	fmt.Println("Buy User: ", order.UserName)
-	fmt.Println("Buy Wallet_tx: === ", order.WalletTxID)
-
 	refundAmount := (*buyPrice - *sellPrice) * float64(tradeQuantity)
 
 	if refundAmount > 0 {
@@ -197,7 +196,6 @@ func partialFulfillBuyOrder(order *Order, tradeQuantity float64, buyPrice *float
 		}
 		
 		// Refund deducted money to the Buy user's wallet, adjusting for any price differences
-		fmt.Printf("Refund Amount: [%f] to User: [%s]\n", refundAmount, order.UserName)
 		if err := updateMoneyWallet(order.UserName, refundAmount, true); err != nil {
 			fmt.Println("Error updating different price refund to wallet: ", err)
 		}
@@ -241,8 +239,6 @@ func partialFulfillBuyOrder(order *Order, tradeQuantity float64, buyPrice *float
 }
 
 func partialFulfillSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice *float64) {
-	fmt.Println("Sell User: ", sellOrder.UserName)
-
 	if err := updateMarketStockPrice(sellOrder.StockID, sellPrice); err != nil {
 		fmt.Println("Failed to update Market Stock Price after Limit Sell: ", err)
 	}
@@ -270,8 +266,6 @@ func partialFulfillSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice 
 		UserName:   sellOrder.UserName,
 	}
 
-	fmt.Println("Completed wallet tx: ", completedOrder.WalletTxID)
-
 	// setWalletTransaction should always be before the setStockTransaction
 	if err := setWalletTransaction(sellOrder.UserName, completedOrder.WalletTxID, completedOrder.TimeStamp, sellPrice, tradeQuantity, true); err != nil {
 		fmt.Println("Error setting wallet transaction: ", err)
@@ -283,16 +277,12 @@ func partialFulfillSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice 
 }
 
 func completeBuyOrder(buyOrder *Order, tradeQuantity float64, buyPrice *float64, sellPrice *float64) {
-	fmt.Println("Buy User: ", buyOrder.UserName)
-	fmt.Println("Buy Wallet_tx: === ", buyOrder.WalletTxID)
-
 	refundAmount := (*buyPrice - *sellPrice) * float64(tradeQuantity)
 
 	if refundAmount > 0 {
 		totalSoldAmount := (*sellPrice) * float64(tradeQuantity)
 
 		// Refund deducted money to the Buy user's wallet, adjusting for any price differences
-		fmt.Printf("Refund Amount: [%f] to User: [%s]\n", refundAmount, buyOrder.UserName)
 		if err := updateMoneyWallet(buyOrder.UserName, refundAmount, true); err != nil {
 			fmt.Println("Error updating different price refund to wallet: ", err)
 		}
@@ -313,9 +303,6 @@ func completeBuyOrder(buyOrder *Order, tradeQuantity float64, buyPrice *float64,
 }
 
 func completeSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice *float64) {
-	fmt.Println("Sell User: ", sellOrder.UserName)
-	fmt.Println("Sell Wallet_tx: === ", sellOrder.WalletTxID)
-
 	if err := updateMarketStockPrice(sellOrder.StockID, sellPrice); err != nil {
 		fmt.Println("Failed to update Market Stock Price after Limit Sell: ", err)
 	}
@@ -337,7 +324,6 @@ func completeSellOrder(sellOrder *Order, tradeQuantity float64, sellPrice *float
 /** === END BUY/SELL Order === **/
 
 func executeTrade() {
-	fmt.Println("Executing Trade")
 	msgs, err := rabbitMQChannel.Consume(
 		rabbitRoutingKey, // queue
 		"",        // consumer
@@ -371,13 +357,13 @@ func executeTrade() {
 			} else {
 				handleSellTrade(buyOrder, sellOrder)
 			}
-			
-			fmt.Printf("\nBuy Trade Executed - Sell Order: ID=%s, Quantity=%.2f, Price=$%.2f | Buy Order: ID=%s, Quantity=%.2f, Price=$%.2f\n",
-			sellOrder.StockTxID, sellOrder.Quantity, *sellOrder.Price, buyOrder.StockTxID, buyOrder.Quantity, *buyOrder.Price)
 
+			// Send response message
 			responsePayload := ResponsePayload{
 				BuyQuantity: buyOrder.Quantity,
 				SellQuantity: sellOrder.Quantity,
+				BuyStatus: buyOrder.Status,
+				SellStatus: sellOrder.Status,
 				IsBuyExecuted: payload.IsBuyExecuted,
 			}
 
@@ -399,7 +385,6 @@ func executeTrade() {
 			if err != nil {
 				fmt.Println("Failed to publish response message:", err)
 			}
-			fmt.Println("+++ Response message sent +++")
 		}
 	}()
 
