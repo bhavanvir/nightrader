@@ -60,8 +60,8 @@ services:
     networks:
       - nt-network
 
-  database:
-    container_name: database
+  user_database:
+    container_name: user_database
     image: postgres:16-bullseye
     restart: always
     environment:
@@ -71,7 +71,37 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./user_init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nt-network
+
+  stock_database:
+    container_name: stock_database
+    image: postgres:16-bullseye
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: db123
+      POSTGRES_USER: nt_user
+      POSTGRES_DB: nt_db
+    ports:
+      - 5431:5431
+    volumes:
+      - ./stock_init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nt-network
+
+  tx_database:
+    container_name: tx_database
+    image: postgres:16-bullseye
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: db123
+      POSTGRES_USER: nt_user
+      POSTGRES_DB: nt_db
+    ports:
+      - 5430:5430
+    volumes:
+      - ./tx_init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - nt-network
 
@@ -96,7 +126,9 @@ services:
       - authentication
       - transaction
       - engine
-      - database
+      - user_database
+      - stock_database
+      - tx_database
       - mongo
     networks:
       - nt-network
@@ -114,7 +146,9 @@ services:
       - authentication
       - transaction
       - engine
-      - database
+      - user_database
+      - stock_database
+      - tx_database
     command: -n -t /tests/Seng468_Report1_No_Delay.jmx -l /tests/results.jtl
     network_mode: host
 

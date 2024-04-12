@@ -12,15 +12,21 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
+var user_db *sql.DB
+var stock_db *sql.DB
+var tx_db *sql.DB
 
 const (
-	host = "database"
-	// host = "localhost" // for local testing
-	port     = 5432
-	user     = "nt_user"
-	password = "db123"
-	dbname   = "nt_db"
+    user_host = "user_database"
+    stock_host = "stock_database"
+    tx_host = "tx_database"
+    // host     = "localhost" // for local testing
+    user_port     = 5432
+    stock_port    = 5431
+    tx_port      = 5430
+    user     = "nt_user"
+    password = "db123"
+    dbname   = "nt_db"
 )
 
 var (
@@ -299,22 +305,52 @@ func getStockTransactions(c *gin.Context) {
 }
 
 func initializeDB() error {
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	var err error
-	db, err = sql.Open("postgres", postgresqlDbInfo)
-	if err != nil {
-		return fmt.Errorf("failed to connect to the database: %v", err)
-	}
+    postgresqlUserDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", user_host, user_port, user, password, dbname)
+    user_db, err = sql.Open("postgres", postgresqlUserDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the user database: %v", err)
+    }
+
+    postgresqlStockDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", stock_host, stock_port, user, password, dbname)
+    stock_db, err = sql.Open("postgres", postgresqlStockDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the stock database: %v", err)
+    }
+
+    postgresqlTxDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", tx_host, tx_port, user, password, dbname)
+    tx_db, err = sql.Open("postgres", postgresqlTxDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the transaction database: %v", err)
+    }
 
 	// Ensure the database connection is fully established
-	for {
-		err = db.Ping()
-		if err == nil {
-			break
-		}
-		fmt.Println("Waiting for the database connection to be established...")
-		time.Sleep(1 * time.Second)
-	}
+    for {
+        err = user_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the user database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+    for {
+        err = stock_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the stock database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+    for {
+        err = tx_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the transaction database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
 
 	return nil
 }
@@ -322,17 +358,17 @@ func initializeDB() error {
 func prepareStatements() error {
 	var err error
 
-	stmtAddMoney, err = db.Prepare("UPDATE users SET wallet = wallet + $1 WHERE user_name = $2")
+	stmtAddMoney, err = user_db.Prepare("UPDATE users SET wallet = wallet + $1 WHERE user_name = $2")
 	if err != nil {
 		return fmt.Errorf("failed to prepare addMoney statement: %v", err)
 	}
 
-	stmtWalletBalance, err = db.Prepare("SELECT wallet FROM users WHERE user_name = $1")
+	stmtWalletBalance, err = user_db.Prepare("SELECT wallet FROM users WHERE user_name = $1")
 	if err != nil {
 		return fmt.Errorf("failed to prepare walletBalance statement: %v", err)
 	}
 
-	stmtStockPortfolio, err = db.Prepare(`
+	stmtStockPortfolio, err = stock_db.Prepare(`
         SELECT s.stock_id, s.stock_name, us.quantity
         FROM user_stocks us
         JOIN stocks s ON s.stock_id = us.stock_id
@@ -342,7 +378,7 @@ func prepareStatements() error {
 		return fmt.Errorf("failed to prepare stockPortfolio statement: %v", err)
 	}
 
-	stmtWalletTransactions, err = db.Prepare(`
+	stmtWalletTransactions, err = tx_db.Prepare(`
         SELECT wt.wallet_tx_id, st.stock_tx_id, wt.is_debit, wt.amount, wt.time_stamp
         FROM wallet_transactions wt
         JOIN stock_transactions st ON st.wallet_tx_id = wt.wallet_tx_id
@@ -352,7 +388,7 @@ func prepareStatements() error {
 		return fmt.Errorf("failed to prepare walletTransactions statement: %v", err)
 	}
 
-	stmtStockTransactions, err = db.Prepare(`
+	stmtStockTransactions, err = tx_db.Prepare(`
         SELECT stock_tx_id, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity, time_stamp
         FROM stock_transactions
         WHERE user_name = $1
@@ -361,7 +397,7 @@ func prepareStatements() error {
 		return fmt.Errorf("failed to prepare stockTransactions statement: %v", err)
 	}
 
-	stmtStockPrices, err = db.Prepare(`
+	stmtStockPrices, err = stock_db.Prepare(`
 		SELECT stock_id, stock_name, current_price
 		FROM stocks
 		ORDER BY time_added ASC`)
@@ -378,7 +414,9 @@ func main() {
 		fmt.Printf("Failed to initialize the database: %v\n", err)
 		return
 	}
-	defer db.Close()
+    defer user_db.Close()
+    defer stock_db.Close()
+    defer tx_db.Close()
 
 	err = prepareStatements()
 	if err != nil {
@@ -393,8 +431,14 @@ func main() {
 	defer stmtStockTransactions.Close()
 	defer stmtStockPrices.Close()
 
-    db.SetMaxOpenConns(10) // Set maximum number of open connections
-    db.SetMaxIdleConns(5) // Set maximum number of idle connections
+    user_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    user_db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+    stock_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    stock_db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+    tx_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    tx_db.SetMaxIdleConns(5) // Set maximum number of idle connections
 
 	router := gin.Default()
 
