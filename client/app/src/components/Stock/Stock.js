@@ -1,11 +1,26 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import Header from "../Header/Header";
-import AccountInfo from "./AccountInfo";
-import StockPortfolio from "./StockPortfolio";
-import CirculatingStocks from "./CirculatingStocks";
+import BuyTrigger from "./BuyTrigger";
+import SellTrigger from "./SellTrigger";
+import StockTransactions from "./StockTransactions";
 
-const Dashboard = ({ user }) => {
+const Stock = ({ stock, user }) => {
+  let canadianDollar = new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+    minimumFractionDigits: 0,
+  });
+
+  const state = useLocation();
+  const { stock_id, stock_name, current_price } = state.state.stock;
+  const Stock = {
+    StockId: stock_id,
+    StockName: stock_name,
+    CurrentPrice: current_price,
+  };
+
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState("");
   const [message, setMessage] = useState("");
@@ -64,15 +79,30 @@ const Dashboard = ({ user }) => {
         </div>
       )}
       <Header user={user} showAlert={showAlertMessage} />
-      <div className="container mx-auto">
-        <AccountInfo user={user} showAlert={showAlertMessage} />
-        <div className="grid grid-cols-2 gap-6">
-          <CirculatingStocks user={user} showAlert={showAlertMessage} />
-          <StockPortfolio user={user} showAlert={showAlertMessage} />
+      <div>
+        <div className="grid grid-rows-2 justify-center pt-12">
+          <div className="font-bold text-4xl text-center">
+            {Stock.StockName}
+          </div>
+          <div className="text-2xl text-center pt-2">
+            {canadianDollar.format(Stock.CurrentPrice)}
+          </div>
+        </div>
+
+        <div className="container mx-auto w-[75rem]">
+          <div className="grid grid-cols-2 gap-6">
+            <BuyTrigger Stock={Stock} showAlert={showAlertMessage} />
+            <SellTrigger Stock={Stock} showAlert={showAlertMessage} />
+          </div>
+          <StockTransactions
+            user={user}
+            Stock={Stock}
+            showAlert={showAlertMessage}
+          />
         </div>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default Stock;

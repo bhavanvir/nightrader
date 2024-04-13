@@ -12,6 +12,8 @@ import SignIn from "./components/SignIn/SignIn";
 import SignUp from "./components/SignUp/SignUp";
 import Dashboard from "./components/Dashboard/Dashboard";
 import AuthApi from "./AuthApi";
+import Stock from "./components/Stock/Stock";
+import History from "./components/History/History";
 
 function App() {
   const [auth, setAuth] = useState(false);
@@ -45,6 +47,8 @@ const AllRoutes = ({ user }) => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route exact path="/history" element={<History user={user} />} />
+      <Route path="/stock/:stockId" element={<Stock user={user} />} />
       <Route
         path="/signin"
         element={<ProtectedLogin auth={Auth.auth} element={<SignIn />} />}

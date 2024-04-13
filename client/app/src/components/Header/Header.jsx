@@ -1,9 +1,13 @@
 import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+
 import LogoIcon from "../../assets/icons/LogoIcon";
 import CryptoJS from "crypto-js";
 import AuthApi from "../../AuthApi";
 
 export default function Header({ user, showAlert }) {
+  const navigate = useNavigate();
+
   // Use the useContext hook inside the functional component
   const Auth = useContext(AuthApi);
 
@@ -11,6 +15,11 @@ export default function Header({ user, showAlert }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     Auth.setAuth(false);
+    navigate("/signin");
+  };
+
+  const handleClick = (user) => {
+    navigate("/history", { state: { user } });
   };
 
   // Function to generate the Gravatar URL
@@ -45,13 +54,13 @@ export default function Header({ user, showAlert }) {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a href="/" className="justify-between">
-                Profile
+              <button
+                className="justify-between"
+                onClick={() => handleClick(user)}
+              >
+                History
                 <span className="badge">New</span>
-              </a>
-            </li>
-            <li>
-              <a href="/">Settings</a>
+              </button>
             </li>
             <li>
               <button onClick={handleLogout}>Logout</button>

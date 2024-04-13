@@ -15,7 +15,7 @@ export default function AccountInfo({ user, showAlert }) {
 
   const fetchWalletBalance = async () => {
     await axios
-      .get("http://localhost:5433/getWalletBalance", {
+      .get("http://localhost/transaction/getWalletBalance", {
         withCredentials: true,
         headers: {
           token: localStorage.getItem("token"),
@@ -27,7 +27,7 @@ export default function AccountInfo({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error fetching your wallet balance. Please try again",
+          "There was an error fetching your wallet balance. Please try again"
         );
       });
   };
@@ -37,7 +37,7 @@ export default function AccountInfo({ user, showAlert }) {
     const fundsModal = document.getElementById("funds-modal");
     await axios
       .post(
-        "http://localhost:5433/addMoneyToWallet",
+        "http://localhost/transaction/addMoneyToWallet",
         {
           amount: parseInt(fundsInput),
         },
@@ -46,7 +46,7 @@ export default function AccountInfo({ user, showAlert }) {
           headers: {
             token: localStorage.getItem("token"),
           },
-        },
+        }
       )
       .then(function (response) {
         showAlert("success", "Successfully added funds to your wallet!");
@@ -56,14 +56,14 @@ export default function AccountInfo({ user, showAlert }) {
       .catch(function (error) {
         showAlert(
           "error",
-          "There was an error adding funds to your wallet. Please try again",
+          "There was an error adding funds to your wallet. Please try again"
         );
       });
   };
 
-  // eslint-disable-next-line
   useEffect(() => {
     fetchWalletBalance();
+    // eslint-disable-next-line
   }, []);
 
   return (
@@ -81,7 +81,7 @@ export default function AccountInfo({ user, showAlert }) {
           <div className="card bg-base-300 shadow-xl">
             <div className="card-body">
               <h1 className="text-xl font-bold">Account balance</h1>
-              <div class="flex items-center justify-start gap-6">
+              <div className="flex items-center justify-between">
                 <h2 className="text-4xl">{canadianDollar.format(balance)}</h2>
                 <button
                   className="btn"
@@ -113,7 +113,7 @@ export default function AccountInfo({ user, showAlert }) {
                           } else if (event.key === "-") {
                             // Disable the button if the input is negative
                             document.getElementById(
-                              "funds-modal-input",
+                              "funds-modal-input"
                             ).disabled = true;
                           }
                         }}

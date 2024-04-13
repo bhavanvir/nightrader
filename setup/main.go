@@ -18,12 +18,16 @@ type Stock struct {
 }
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
-	port     = 5432
-	user     = "nt_user"
-	password = "db123"
-	dbname   = "nt_db"
+    user_host = "user_database"
+    stock_host = "stock_database"
+    tx_host = "tx_database"
+    // host     = "localhost" // for local testing
+    user_port     = 5432
+    stock_port    = 5431
+    tx_port      = 5430
+    user     = "nt_user"
+    password = "db123"
+    dbname   = "nt_db"
 )
 
 type AddStockRequest struct {
@@ -83,7 +87,7 @@ func createStock(c *gin.Context) {
 
 func saveStockToDatabase(stock Stock, stockID string) error {
 	// Define formatted string for database connection
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", stock_host, stock_port, user, password, dbname)
 
 	// Attempt to connect to database
 	db, err := sql.Open("postgres", postgresqlDbInfo)
@@ -116,7 +120,7 @@ func addStockToUser(c *gin.Context) {
 	}
 
 	// Connect to the PostgreSQL database
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", stock_host, stock_port, user, password, dbname))
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
 		return
@@ -152,19 +156,19 @@ func wipeDatabaseTables(c *gin.Context) {
 		will cause certain tests to fail
 	*/
 
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
+	stock_db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", stock_host, stock_port, user, password, dbname))
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
 		return
 	}
-	defer db.Close()
+	defer stock_db.Close()
 
 	// Define a list of tables to truncate
-	tables := []string{"stock_transactions", "stocks", "user_stocks", "users", "wallet_transactions"}
+	stock_tables := []string{"stocks", "user_stocks"}
 
 	// Truncate each table. This will delete all rows in the table
-	for _, table := range tables {
-		_, err = db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table))
+	for _, stock_table := range stock_tables {
+		_, err = stock_db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", stock_table))
 		if err != nil {
 			handleError(c, http.StatusInternalServerError, "Failed to truncate table", err)
 			return
@@ -174,10 +178,48 @@ func wipeDatabaseTables(c *gin.Context) {
 	// Reset the stock_id sequence to start at  1 after truncating the stocks table. This is necessary because
 	// when we test the endpoint in the postman collection, the stock_id will be auto incremented by 1, causing
 	// the test to fail
-	_, err = db.Exec("ALTER SEQUENCE stocks_stock_id_seq RESTART WITH  1")
+	_, err = stock_db.Exec("ALTER SEQUENCE stocks_stock_id_seq RESTART WITH  1")
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to reset stock_id sequence", err)
 		return
+	}
+
+	user_db, user_err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", user_host, user_port, user, password, dbname))
+	if user_err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer user_db.Close()
+
+	// Define a list of tables to truncate
+	user_tables := []string{"users"}
+
+	// Truncate each table. This will delete all rows in the table
+	for _, user_table := range user_tables {
+		_, err = user_db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", user_table))
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to truncate table", err)
+			return
+		}
+	}
+
+	tx_db, tx_err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", tx_host, tx_port, user, password, dbname))
+	if tx_err != nil {
+		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
+		return
+	}
+	defer tx_db.Close()
+
+	// Define a list of tables to truncate
+	tx_tables := []string{"stock_transactions", "wallet_transactions"}
+
+	// Truncate each table. This will delete all rows in the table
+	for _, tx_table := range tx_tables {
+		_, err = tx_db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", tx_table))
+		if err != nil {
+			handleError(c, http.StatusInternalServerError, "Failed to truncate table", err)
+			return
+		}
 	}
 
 	response := PostResponse{

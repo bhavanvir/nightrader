@@ -6,24 +6,38 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Poomon001/day-trading-package/identification"
-	"github.com/Poomon001/day-trading-package/tester"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
+// Global variables for the prepared statements
+var (
+	stmtLogin  *sql.Stmt
+	stmtExist  *sql.Stmt
+	stmtInsert *sql.Stmt
+)
+
+// Global variable for the database connection
+var user_db *sql.DB
+var stock_db *sql.DB
+var tx_db *sql.DB
+
 // TODO: need env to store secret key
 var secretKey = []byte("secret")
 
 const (
-	host = "database"
-	// host     = "localhost" // for local testing
-	port     = 5432
-	user     = "nt_user"
-	password = "db123"
-	dbname   = "nt_db"
+    user_host = "user_database"
+    stock_host = "stock_database"
+    tx_host = "tx_database"
+    // host     = "localhost" // for local testing
+    user_port     = 5432
+    stock_port    = 5431
+    tx_port      = 5430
+    user     = "nt_user"
+    password = "db123"
+    dbname   = "nt_db"
 )
 
 type ErrorResponse struct {
@@ -31,7 +45,6 @@ type ErrorResponse struct {
 	Data    map[string]string `json:"data"`
 }
 
-// user_name is a primary key in the DB used to identify user
 type Register struct {
 	UserName string `json:"user_name"`
 	Name     string `json:"name"`
@@ -77,58 +90,23 @@ func createToken(name string, username string, expirationTime time.Time) (string
 func postLogin(c *gin.Context) {
 	var login Login
 
-	// Verify request body
 	if err := c.BindJSON(&login); err != nil {
 		handleError(c, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
-	db, err := sql.Open("postgres", postgresqlDbInfo)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
-	fmt.Println("Successfully connected to the database")
-
-	// Check if the username exists in DB
-	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", login.UserName).Scan(&count)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
-		return
-	}
-	if count == 0 {
-		handleError(c, http.StatusBadRequest, "Username does not exist", nil)
-		return
-	}
-
-	// Check password for the username
+	var name string
 	var correctPassword bool
-
-	err = db.QueryRow("SELECT (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2", login.Password, login.UserName).Scan(&correctPassword)
+	err := stmtLogin.QueryRow(login.Password, login.UserName).Scan(&name, &correctPassword)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
 		return
 	}
 	if !correctPassword {
-		// Update to return a 200 error if the password is incorrect
 		handleError(c, http.StatusOK, "Incorrect password", nil)
 		return
 	}
 
-	// Get the user's name
-	var name string
-	err = db.QueryRow("SELECT name FROM users WHERE user_name = $1", login.UserName).Scan(&name)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
-		return
-	}
-
-	// Create token
 	minutes := 30 * time.Minute
 	expirationTime := time.Now().Add(minutes)
 	token, err := createToken(name, login.UserName, expirationTime)
@@ -137,7 +115,6 @@ func postLogin(c *gin.Context) {
 		return
 	}
 
-	// Respond
 	loginResponse := Response{
 		Success: true,
 		Data:    map[string]interface{}{"token": token},
@@ -147,17 +124,6 @@ func postLogin(c *gin.Context) {
 }
 
 func postRegister(c *gin.Context) {
-	postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-
-	db, err := sql.Open("postgres", postgresqlDbInfo)
-	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to connect to the database", err)
-		return
-	}
-	defer db.Close()
-
-	fmt.Println("Successfully connected to the database")
-
 	var newRegister Register
 
 	if err := c.BindJSON(&newRegister); err != nil {
@@ -165,27 +131,23 @@ func postRegister(c *gin.Context) {
 		return
 	}
 
-	// Check if the username already exists in DB
 	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE user_name = $1", newRegister.UserName).Scan(&count)
+	err := stmtExist.QueryRow(newRegister.UserName).Scan(&count)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to query the database", err)
 		return
 	}
 	if count > 0 {
-		// Return 200 StatusOK if the username already exists
 		handleError(c, http.StatusOK, "Username already exists", nil)
 		return
 	}
 
-	// Insert new user to DB
-	_, err = db.Exec("INSERT INTO users (user_name, name, user_pass) VALUES ($1, $2, $3)", newRegister.UserName, newRegister.Name, newRegister.Password)
+	_, err = stmtInsert.Exec(newRegister.UserName, newRegister.Name, newRegister.Password)
 	if err != nil {
 		handleError(c, http.StatusInternalServerError, "Failed to insert new user to the database", err)
 		return
 	}
 
-	// Format JSON response
 	successResponse := Response{
 		Success: true,
 		Data:    nil,
@@ -194,19 +156,116 @@ func postRegister(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, successResponse)
 }
 
+func initializeDB() error {
+	var err error
+    postgresqlUserDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", user_host, user_port, user, password, dbname)
+    user_db, err = sql.Open("postgres", postgresqlUserDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the user database: %v", err)
+    }
+
+    postgresqlStockDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", stock_host, stock_port, user, password, dbname)
+    stock_db, err = sql.Open("postgres", postgresqlStockDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the stock database: %v", err)
+    }
+
+    postgresqlTxDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", tx_host, tx_port, user, password, dbname)
+    tx_db, err = sql.Open("postgres", postgresqlTxDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the transaction database: %v", err)
+    }
+
+	// Ensure the database connection is fully established
+    for {
+        err = user_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the user database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+    for {
+        err = stock_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the stock database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+    for {
+        err = tx_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the transaction database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+	return nil
+}
+
+func prepareStatements() error {
+	var err error
+
+	stmtLogin, err = user_db.Prepare("SELECT name, (user_pass = crypt($1, user_pass)) AS is_valid FROM users WHERE user_name = $2")
+	if err != nil {
+		return fmt.Errorf("failed to prepare login statement: %v", err)
+	}
+
+	stmtExist, err = user_db.Prepare("SELECT COUNT(*) FROM users WHERE user_name = $1")
+	if err != nil {
+		return fmt.Errorf("failed to prepare exist statement: %v", err)
+	}
+
+	stmtInsert, err = user_db.Prepare("INSERT INTO users (user_name, name, user_pass) VALUES ($1, $2, $3)")
+	if err != nil {
+		return fmt.Errorf("failed to prepare insert statement: %v", err)
+	}
+
+	return nil
+}
+
 func main() {
+	err := initializeDB()
+	if err != nil {
+		fmt.Printf("Failed to initialize the database: %v\n", err)
+		return
+	}
+    defer user_db.Close()
+    defer stock_db.Close()
+    defer tx_db.Close()
+
+	err = prepareStatements()
+	if err != nil {
+		fmt.Printf("Failed to prepare SQL statements: %v\n", err)
+		return
+	}
+	defer stmtLogin.Close()
+	defer stmtExist.Close()
+	defer stmtInsert.Close()
+
+    user_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    user_db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+    stock_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    stock_db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+    tx_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    tx_db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
 	router := gin.Default()
 
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowOrigins = []string{"http://localhost:3000", "http://localhost"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "token"}
 	config.AllowCredentials = true
 	router.Use(cors.New(config))
 
-	identification.Test()
-	tester.TestUser()                                               // example how to use function from a package
-	router.POST("/login", identification.TestMiddleware, postLogin) // example how to use middlware from a package
+	router.POST("/login", postLogin)
 	router.POST("/register", postRegister)
 	router.Run(":8888")
 }
