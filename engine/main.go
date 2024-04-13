@@ -17,21 +17,19 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var db *sql.DB
+var user_db *sql.DB
+var stock_db *sql.DB
+var tx_db *sql.DB
 
 var (
-    stmtUpdateWalletTransaction *sql.Stmt
     stmtUpdateMoneyWallet       *sql.Stmt
     stmtCheckUserStocks         *sql.Stmt
     stmtDeleteUserStocks        *sql.Stmt
     stmtInsertUserStocks        *sql.Stmt
     stmtSetWalletTransaction    *sql.Stmt
     stmtDeleteWalletTransaction *sql.Stmt
-    stmtGetWalletTransactionsAmount *sql.Stmt
     stmtSetStockTransaction     *sql.Stmt
     stmtDeleteStockTransaction  *sql.Stmt
-    stmtSetStatus               *sql.Stmt
-    stmtUpdateWalletTxId        *sql.Stmt
     stmtVerifyWalletBeforeTransaction *sql.Stmt
     stmtVerifyStockBeforeTransaction  *sql.Stmt
     stmtUpdateMarketStockPrice        *sql.Stmt
@@ -40,9 +38,13 @@ var (
 )
 
 const (
-    host = "database"
+    user_host = "user_database"
+    stock_host = "stock_database"
+    tx_host = "tx_database"
     // host     = "localhost" // for local testing
-    port     = 5432
+    user_port     = 5432
+    stock_port    = 5431
+    tx_port      = 5430
     user     = "nt_user"
     password = "db123"
     dbname   = "nt_db"
@@ -200,11 +202,6 @@ func handleError(c *gin.Context, statusCode int, message string, err error) {
         Data:    map[string]string{"error": errorMessage},
     }
     c.IndentedJSON(statusCode, errorResponse)
-}
-
-func openConnection() (*sql.DB, error) {
-    postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-    return sql.Open("postgres", postgresqlDbInfo)
 }
 
 /** standard heap interface **/
@@ -880,18 +877,18 @@ func getStockOrderPrice(book *OrderBook, order Order) *float64 {
     return order.Price
 }
 
+// APRIL 10/24 - Removed join from query to support database split 
 func verifyWalletBeforeTransaction(userName string, book *OrderBook, order Order) error {
     // Execute the SQL query
-    row := stmtVerifyWalletBeforeTransaction.QueryRow(userName, order.StockID)
+    row := stmtVerifyWalletBeforeTransaction.QueryRow(userName)
 
     // Declare variables to store the results
-    var stockID string
     var wallet float64
 
     // Scan the results into variables
-    err := row.Scan(&stockID, &wallet)
+    err := row.Scan(&wallet)
     if err != nil {
-        return fmt.Errorf("Failed to get stock ID and user wallet: %w", err)
+        return fmt.Errorf("Failed to get user wallet: %w", err)
     }
 
     // Calculate the order price
@@ -1006,108 +1003,81 @@ func isOrderExpired(order *Order) bool {
 func prepareStatements() error {
     var err error
 
-    stmtUpdateWalletTransaction, err = db.Prepare(`
-        UPDATE wallet_transactions SET amount = $1 WHERE user_name = $2 AND wallet_tx_id = $3`)
-    if err != nil {
-        return fmt.Errorf("failed to prepare update wallet transaction statement: %v", err)
-    }
-
-    stmtUpdateMoneyWallet, err = db.Prepare(`
+    stmtUpdateMoneyWallet, err = user_db.Prepare(`
         UPDATE users SET wallet = wallet + $1 WHERE user_name = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare update money wallet statement: %v", err)
     }
 
-    stmtCheckUserStocks, err = db.Prepare(`
+    stmtCheckUserStocks, err = stock_db.Prepare(`
         SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare check user stocks statement: %v", err)
     }
 
-    stmtDeleteUserStocks, err = db.Prepare(`
+    stmtDeleteUserStocks, err = stock_db.Prepare(`
         DELETE FROM user_stocks WHERE user_name = $1 AND stock_id = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare delete user stocks statement: %v", err)
     }
 
-    stmtInsertUserStocks, err = db.Prepare(`
+    stmtInsertUserStocks, err = stock_db.Prepare(`
         INSERT INTO user_stocks VALUES ($1, $2, $3)`)
     if err != nil {
         return fmt.Errorf("failed to prepare insert user stocks statement: %v", err)
     }
 
-    stmtSetWalletTransaction, err = db.Prepare(`
+    stmtSetWalletTransaction, err = tx_db.Prepare(`
         INSERT INTO wallet_transactions (wallet_tx_id, user_name, is_debit, amount, time_stamp)
         VALUES ($1, $2, $3, $4, $5)`)
     if err != nil {
         return fmt.Errorf("failed to prepare set wallet transaction statement: %v", err)
     }
 
-    stmtDeleteWalletTransaction, err = db.Prepare(`
+    stmtDeleteWalletTransaction, err = tx_db.Prepare(`
         DELETE FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare delete wallet transaction statement: %v", err)
     }
 
-    stmtGetWalletTransactionsAmount, err = db.Prepare(`
-        SELECT SUM(amount) FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`)
-    if err != nil {
-        return fmt.Errorf("failed to prepare get wallet transactions amount statement: %v", err)
-    }
-
-    stmtSetStockTransaction, err = db.Prepare(`
+    stmtSetStockTransaction, err = tx_db.Prepare(`
         INSERT INTO stock_transactions (stock_tx_id, user_name, stock_id, wallet_tx_id, order_status, parent_stock_tx_id, is_buy, order_type, stock_price, quantity,  time_stamp)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`)
     if err != nil {
         return fmt.Errorf("failed to prepare set stock transaction statement: %v", err)
     }
 
-    stmtDeleteStockTransaction, err = db.Prepare(`
+    stmtDeleteStockTransaction, err = tx_db.Prepare(`
         DELETE FROM stock_transactions WHERE user_name = $1 AND stock_tx_id = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare delete stock transaction statement: %v", err)
     }
 
-    stmtSetStatus, err = db.Prepare(`
-        UPDATE stock_transactions SET order_status = $1 WHERE user_name = $2 AND stock_tx_id = $3`)
-    if err != nil {
-        return fmt.Errorf("failed to prepare set status statement: %v", err)
-    }
-
-    stmtUpdateWalletTxId, err = db.Prepare(`
-        UPDATE stock_transactions SET wallet_tx_id = $1 WHERE user_name = $2 AND stock_tx_id = $3`)
-    if err != nil {
-        return fmt.Errorf("failed to prepare update wallet transaction ID statement: %v", err)
-    }
-
-    stmtVerifyWalletBeforeTransaction, err = db.Prepare(`
-        SELECT s.stock_id, u.wallet
-        FROM stocks s
-        JOIN users u ON u.user_name = $1
-        WHERE s.stock_id = $2`)
+    stmtVerifyWalletBeforeTransaction, err = user_db.Prepare(`
+        SELECT wallet FROM users WHERE user_name = $1`)
     if err != nil {
         return fmt.Errorf("failed to prepare verify wallet before transaction statement: %v", err)
     }
 
-    stmtVerifyStockBeforeTransaction, err = db.Prepare(`
+    stmtVerifyStockBeforeTransaction, err = stock_db.Prepare(`
         SELECT quantity FROM user_stocks WHERE user_name = $1 AND stock_id = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare verify stock before transaction statement: %v", err)
     }
 
-    stmtUpdateMarketStockPrice, err = db.Prepare(`
+    stmtUpdateMarketStockPrice, err = stock_db.Prepare(`
         UPDATE stocks SET current_price = $1 WHERE stock_id = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare update market stock price statement: %v", err)
     }
 
-    stmtUpdateUserStocks, err = db.Prepare(`
+    stmtUpdateUserStocks, err = stock_db.Prepare(`
         UPDATE user_stocks SET quantity = quantity + $1 WHERE user_name = $2 AND stock_id = $3`)
     if err != nil {
         return fmt.Errorf("failed to prepare update user stocks statement: %v", err)
     }
 
-    stmtCheckWalletTransaction, err = db.Prepare(`
+    stmtCheckWalletTransaction, err = tx_db.Prepare(`
 		SELECT wallet_tx_id FROM wallet_transactions WHERE user_name = $1 AND wallet_tx_id = $2`)
     if err != nil {
         return fmt.Errorf("failed to prepare check wallet transaction statement: %v", err)
@@ -1118,20 +1088,50 @@ func prepareStatements() error {
 
 
 func initializeDB() error {
-    postgresqlDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
     var err error
-    db, err = sql.Open("postgres", postgresqlDbInfo)
+    postgresqlUserDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", user_host, user_port, user, password, dbname)
+    user_db, err = sql.Open("postgres", postgresqlUserDbInfo)
     if err != nil {
-        return fmt.Errorf("failed to connect to the database: %v", err)
+        return fmt.Errorf("failed to connect to the user database: %v", err)
+    }
+
+    postgresqlStockDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", stock_host, stock_port, user, password, dbname)
+    stock_db, err = sql.Open("postgres", postgresqlStockDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the stock database: %v", err)
+    }
+
+    postgresqlTxDbInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", tx_host, tx_port, user, password, dbname)
+    tx_db, err = sql.Open("postgres", postgresqlTxDbInfo)
+    if err != nil {
+        return fmt.Errorf("failed to connect to the transaction database: %v", err)
     }
 
     // Ensure the database connection is fully established
     for {
-        err = db.Ping()
+        err = user_db.Ping()
         if err == nil {
             break
         }
-        fmt.Println("Waiting for the database connection to be established...")
+        fmt.Println("Waiting for the user database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+    for {
+        err = stock_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the stock database connection to be established...")
+        time.Sleep(1 * time.Second)
+    }
+
+    for {
+        err = tx_db.Ping()
+        if err == nil {
+            break
+        }
+        fmt.Println("Waiting for the transaction database connection to be established...")
         time.Sleep(1 * time.Second)
     }
 
@@ -1144,32 +1144,37 @@ func main() {
         fmt.Printf("Failed to initialize the database: %v\n", err)
         return
     }
-    defer db.Close()
+    defer user_db.Close()
+    defer stock_db.Close()
+    defer tx_db.Close()
 
     err = prepareStatements()
     if err != nil {
         fmt.Printf("Failed to prepare SQL statements: %v\n", err)
         return
     }
-    defer stmtUpdateWalletTransaction.Close()
+
     defer stmtUpdateMoneyWallet.Close()
     defer stmtCheckUserStocks.Close()
     defer stmtDeleteUserStocks.Close()
     defer stmtInsertUserStocks.Close()
     defer stmtSetWalletTransaction.Close()
     defer stmtDeleteWalletTransaction.Close()
-    defer stmtGetWalletTransactionsAmount.Close()
     defer stmtSetStockTransaction.Close()
     defer stmtDeleteStockTransaction.Close()
-    defer stmtSetStatus.Close()
-    defer stmtUpdateWalletTxId.Close()
     defer stmtVerifyWalletBeforeTransaction.Close()
     defer stmtVerifyStockBeforeTransaction.Close()
     defer stmtUpdateUserStocks.Close()
     defer stmtCheckWalletTransaction.Close()
 
-    db.SetMaxOpenConns(10) // Set maximum number of open connections
-    db.SetMaxIdleConns(5) // Set maximum number of idle connections
+    user_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    user_db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+    stock_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    stock_db.SetMaxIdleConns(5) // Set maximum number of idle connections
+
+    tx_db.SetMaxOpenConns(10) // Set maximum number of open connections
+    tx_db.SetMaxIdleConns(5) // Set maximum number of idle connections
 
     if rabbitMQConnect == nil {
         amqpURI := fmt.Sprintf("amqp://%s:%s@%s:%s/", rabbitUser, rabbitPassword, rabbitHost, rabbitPort)
