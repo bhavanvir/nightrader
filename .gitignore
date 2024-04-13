@@ -2,5 +2,9 @@
 **/test.http
 *.log
 *.jtl
+/tests
+/tests/*
+/tests/**/*
 **/stockIds.csv
-tests/
+execute.go
+/db-data

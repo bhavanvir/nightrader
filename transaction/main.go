@@ -213,7 +213,7 @@ func getStockPortfolio(c *gin.Context) {
 
 	rows, err := stmtStockPortfolio.Query(userName)
 	if err != nil {
-		handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio", err)
+		handleError(c, http.StatusInternalServerError, "Failed to query stock portfolio" + err.Error() , err)
 		return
 	}
 	defer rows.Close()

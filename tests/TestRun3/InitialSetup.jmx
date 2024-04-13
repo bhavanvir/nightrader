@@ -71,7 +71,7 @@
           </elementProp>
           <elementProp name="configPath" elementType="Argument">
             <stringProp name="Argument.name">configPath</stringProp>
-            <stringProp name="Argument.value">tests/TestRun3/Config/</stringProp>
+            <stringProp name="Argument.value">C:\Users\Poomon\Desktop\programing projects\Go\Stock Trading Platform\day-trader\tests\TestRun3\Config\</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>

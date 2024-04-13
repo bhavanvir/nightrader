@@ -71,7 +71,7 @@
           </elementProp>
           <elementProp name="configPath" elementType="Argument">
             <stringProp name="Argument.name">configPath</stringProp>
-            <stringProp name="Argument.value">tests/TestRun2/Config</stringProp>
+            <stringProp name="Argument.value">C:/Users/Poomon/Desktop/programing projects/Go/Stock Trading Platform/day-trader/tests/TestRun2/Config/</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>
@@ -884,7 +884,7 @@ csvFile.append(appleStockId);</stringProp>
         </DebugSampler>
         <hashTree/>
       </hashTree>
-      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
         <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>

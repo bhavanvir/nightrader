@@ -68,11 +68,16 @@ type Claims struct {
 }
 
 func handleError(c *gin.Context, statusCode int, message string, err error) {
-	errorResponse := ErrorResponse{
-		Success: false,
-		Data:    map[string]string{"error": message},
-	}
-	c.IndentedJSON(statusCode, errorResponse)
+    errMessage := ""
+    if err != nil {
+        errMessage = err.Error()
+    }
+
+    errorResponse := ErrorResponse{
+        Success: false,
+        Data:    map[string]string{"error": message + ": " + errMessage},
+    }
+    c.IndentedJSON(statusCode, errorResponse)
 }
 
 func createToken(name string, username string, expirationTime time.Time) (string, error) {

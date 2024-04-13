@@ -37,6 +37,27 @@ services:
     networks:
       - nt-network
 
+  rabbitmq3:
+    image: rabbitmq:3-management
+    build:
+      context: ./rabbitmq
+    hostname: rabbitmq3
+    container_name: rabbitmq3
+    environment:
+      - RABBIMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.config
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - nt-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
   engine:
     container_name: engine
     build:
@@ -47,7 +68,25 @@ services:
       PORT: 8585
       GIN_MODE: release
     depends_on:
-      - mongo
+      mongo:
+        condition: service_started
+      execution:
+        condition: service_started
+      rabbitmq3:
+        condition: service_healthy
+    networks:
+      - nt-network
+
+  execution:
+    container_name: execution
+    build:
+      context: ./execution
+    environment:
+      - RABBITMQ_HOST=rabbitmq3
+    depends_on:
+      rabbitmq3:
+        condition: service_healthy
+    restart: on-failure
     networks:
       - nt-network
 
@@ -126,6 +165,7 @@ services:
       - authentication
       - transaction
       - engine
+      - execution
       - user_database
       - stock_database
       - tx_database
