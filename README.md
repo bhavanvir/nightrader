@@ -2,6 +2,8 @@
 
 Nightrader is a robust stock trading platform built on microservices architecture. We leverage Docker for orchestration, Go and Gin-Gonic for the backend API, PostgreSQL for our database, and React with Daisy UI and TailwindCSS for the frontend.
 
+Report: https://docs.google.com/document/d/1oVEG4dLL3xDYKPcaBWg5wAPF0FnfVdA73cYewMwVkJk/edit?usp=sharing
+
 ## Services
 
 - **Engine** (Port `8585`): Implements the matching engine, which processes buy and sell orders using a Pro Rata algorithm.
